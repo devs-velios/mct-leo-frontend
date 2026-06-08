@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseFetch, hasSupabaseEnv } from "@/lib/server/supabase";
 import { signSession } from "@/lib/server/session";
+import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/config";
 
 export const SESSION_COOKIE = "mct_session";
 /** Supabase access token (JWT) — forwarded as Bearer by the /api/leo proxy when RBAC is on. */
@@ -44,8 +45,8 @@ async function trySupabaseLogin(email: string, password: string): Promise<Supaba
 
 // Demo login, validated against server-only env vars. No hardcoded fallback.
 function tryDemoLogin(email: string, password: string): SessionUser | null {
-  const demoEmail = process.env.DEMO_EMAIL;
-  const demoPassword = process.env.DEMO_PASSWORD;
+  const demoEmail = DEMO_EMAIL;
+  const demoPassword = DEMO_PASSWORD;
   if (demoEmail && demoPassword && email === demoEmail && password === demoPassword) {
     return { email };
   }

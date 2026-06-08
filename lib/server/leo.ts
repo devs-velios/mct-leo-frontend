@@ -2,7 +2,9 @@
 // Browser calls /api/leo/<path>; the proxy route forwards here, attaching the user's JWT
 // (when present) so nothing but a same-origin call is exposed to the client.
 
-export const LEO_API_URL = process.env.LEO_API_URL ?? "http://localhost:8000";
+import { LEO_API_URL as CONFIG_LEO_API_URL } from "@/lib/config";
+
+export const LEO_API_URL = CONFIG_LEO_API_URL;
 
 /** Cookie holding the Supabase access token (set at login). */
 export const TOKEN_COOKIE = "mct_token";

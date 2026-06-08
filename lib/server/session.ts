@@ -6,10 +6,12 @@
 // Secret: SESSION_SECRET if set, else the server-only Supabase service-role key as a
 // strong fallback (never exposed to the browser). Set SESSION_SECRET in prod.
 
+import { SESSION_SECRET } from "@/lib/config";
+
 const enc = new TextEncoder();
 
 function getSecret(): string {
-  return process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  return SESSION_SECRET || "";
 }
 
 function toB64Url(bytes: ArrayBuffer | Uint8Array): string {

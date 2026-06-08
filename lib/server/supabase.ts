@@ -3,8 +3,10 @@
 // app/api/*. Keeping the URL + key here is what lets us proxy every request so
 // nothing Supabase-related leaks into the browser console / network tab.
 
-export const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
-export const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+import { SUPABASE_URL as CONFIG_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "@/lib/config";
+
+export const SUPABASE_URL = CONFIG_SUPABASE_URL;
+export const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY;
 
 export function hasSupabaseEnv(): boolean {
   return Boolean(SUPABASE_URL && SUPABASE_KEY);
