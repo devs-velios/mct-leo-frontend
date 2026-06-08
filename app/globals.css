@@ -1,0 +1,291 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F5F5F7;
+  --foreground: #1A1A1A;
+  
+  --color-mct-bg: #F5F5F7;
+  --color-mct-card: #FFFFFF;
+  --color-mct-heading: #2D2A56;
+  --color-mct-gold: #EA5B2D;
+  --color-mct-coral: #EA5B2D;
+  --color-mct-muted: #5A5A7A;
+}
+
+@theme {
+  --color-mct-bg: var(--color-mct-bg);
+  --color-mct-card: var(--color-mct-card);
+  --color-mct-heading: var(--color-mct-heading);
+  --color-mct-gold: var(--color-mct-gold);
+  --color-mct-coral: var(--color-mct-coral);
+  --color-mct-muted: var(--color-mct-muted);
+
+  /* shadcn/ui tokens — mapped to the MCT palette (navy / orange / cream). */
+  --color-background: #f5f5f7;
+  --color-foreground: #1a1a1a;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #2d2a56;
+  --color-primary: #ea5b2d;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #2d2a56;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #2d2a56;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #5a5a7a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a1a1a;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  /* Sidebar — MCT navy with cream text. */
+  --color-sidebar: #2d2a56;
+  --color-sidebar-foreground: #f5f0e8;
+  --color-sidebar-accent: rgba(255, 255, 255, 0.08);
+  --color-sidebar-accent-foreground: #f5f0e8;
+  --color-sidebar-border: rgba(255, 255, 255, 0.10);
+  --color-sidebar-ring: #ea5b2d;
+  --color-sidebar-primary: #ea5b2d;
+  --color-sidebar-primary-foreground: #ffffff;
+}
+
+body {
+  background-color: var(--color-mct-bg);
+  color: var(--color-mct-muted);
+  font-family: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Typography System Enhancements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-poppins), sans-serif;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Custom styles for animations and premium look */
+.font-serif-mct {
+  font-family: var(--font-poppins), sans-serif;
+  letter-spacing: -0.025em;
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+.animate-float-1 {
+  animation: float-slow 15s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-reverse 18s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Glassmorphism overlays */
+.glass-panel {
+  background: rgba(45, 43, 85, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 240, 232, 0.08);
+}
+
+/* Premium Custom Global Scrollbar matching the website's Navy & Coral theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(90, 90, 122, 0.4) transparent;
+}
+
+/* Chrome, Edge, Safari, Opera */
+*::-webkit-scrollbar {
+  width: 8px; /* Slim and elegant */
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent; /* Seamless transparent track */
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(90, 90, 122, 0.35); /* Elegant semi-transparent slate matching --color-mct-muted */
+  border-radius: 9999px; /* Rounded pill shape */
+  border: 2px solid transparent; /* Padding spacing */
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #EA5B2D; /* Glowing brand coral/orange on hover! */
+  background-clip: padding-box;
+}
+
+/* Retain custom-scrollbar class for specific overrides, using the same premium design */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(90, 90, 122, 0.4) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(90, 90, 122, 0.35);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #EA5B2D;
+}
+
+/* Scrollable but with no visible scrollbar (used by dropdown menus, chips rows, …) */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+  width: 0;
+  height: 0;
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgb(226 232 240 / 0.7);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Premium Glow & Shine Effects */
+.glow-effect {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.glow-effect::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-20deg);
+  animation: shine 6s infinite;
+}
+
+.glow-effect:hover {
+  box-shadow: 0 15px 40px rgba(45, 42, 86, 0.08), 0 0 20px rgba(234, 91, 45, 0.15);
+  transform: translateY(-4px);
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  20% {
+    left: 200%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* Custom Interactive Hover Shine & Glow for Analytics Cards */
+.premium-card-hover {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-card-hover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: none;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.premium-card-hover:hover::after {
+  left: 200%;
+  transition: left 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mobile sidebar (Sheet) — smooth slide in/out from the left */
+@keyframes sidebar-sheet-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sidebar-sheet-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+[data-mobile="true"][data-state="open"] {
+  animation: sidebar-sheet-in 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+[data-mobile="true"][data-state="closed"] {
+  animation: sidebar-sheet-out 0.25s ease-in;
+}
+
+/* Sheet backdrop fade */
+@keyframes sheet-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-overlay-out { from { opacity: 1; } to { opacity: 0; } }
+[data-radix-dialog-overlay][data-state="open"] {
+  animation: sheet-overlay-in 0.3s ease;
+}
+[data-radix-dialog-overlay][data-state="closed"] {
+  animation: sheet-overlay-out 0.25s ease;
+}
+

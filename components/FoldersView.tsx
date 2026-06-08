@@ -1,0 +1,194 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Menu, FolderPlus, Save, Pencil } from "lucide-react";
+import { useFoldersContext, type Folder } from "@/lib/features/folders";
+import { useDialog } from "@/components/ui/DialogProvider";
+import Select from "@/components/ui/Select";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?: (o: boolean) => void }) {
+  const {
+    folders,
+    routing,
+    isLoading: loading,
+    ensureLoaded,
+    addFolder: createFolder,
+    renameFolder: updateFolder,
+    repoint: repointRouting,
+  } = useFoldersContext();
+  const { prompt } = useDialog();
+  const [newName, setNewName] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+
+  const addFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    setMsg("");
+    try {
+      await createFolder({ name: newName.trim(), label: newLabel.trim() || undefined });
+      setNewName("");
+      setNewLabel("");
+    } catch {
+      setMsg("Impossible d'ajouter ce dossier (nom déjà existant ?).");
+    }
+  };
+
+  const renameFolder = async (f: Folder) => {
+    const res = await prompt({
+      title: "Renommer le dossier",
+      submitLabel: "Renommer",
+      fields: [{ name: "label", label: "Libellé du dossier", defaultValue: f.label ?? f.name, required: true }],
+    });
+    if (!res) return;
+    try {
+      await updateFolder(f.id, { label: res.label });
+    } catch {
+      setMsg("Échec du renommage.");
+    }
+  };
+
+  const repoint = async (doc_key: string, folder_name: string) => {
+    await repointRouting(doc_key, folder_name).catch(() => {});
+  };
+
+  return (
+    <>
+      <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
+        <div className="mb-2 flex items-center justify-between md:hidden">
+          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+        <div>
+          <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Dossiers Drive</h1>
+          <p className="text-xs text-[#5A5A7A]">Catalogue des dossiers et routage des documents</p>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50/30">
+        {loading ? (
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
+            {[0, 1].map((col) => (
+              <div key={col} className="rounded-3xl border border-slate-100/80 bg-white p-6 space-y-3">
+                <Skeleton className="h-5 w-40 mb-4" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-7 w-28 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
+            {/* Folders List Card */}
+            <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.04)] transition-all duration-300">
+              <h2 className="mb-4 font-serif-mct text-lg font-bold text-[#2D2A56] flex items-center justify-between">
+                <span>Dossiers</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#EA5B2D] px-2.5 py-0.5 rounded-md bg-orange-50 border border-orange-100/50">
+                  {folders.length} configurés
+                </span>
+              </h2>
+              
+              <ul className="space-y-2 max-h-[360px] overflow-y-auto custom-scrollbar pr-1">
+                {folders.map((f) => (
+                  <li
+                    key={f.id}
+                    className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 text-sm hover:bg-slate-50/50 transition hover:shadow-sm"
+                  >
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="font-bold text-[#2D2A56] truncate">{f.label ?? f.name}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {f.name} {f.is_review ? " · révision" : ""}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => renameFolder(f)}
+                      title="Renommer"
+                      className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#2D2A56] cursor-pointer transition active:scale-90"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Folder Creation Form */}
+              <form onSubmit={addFolder} className="mt-6 space-y-4 border-t border-slate-100 pt-5">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
+                      Nom du dossier
+                    </label>
+                    <input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Ex: 07_Nouveau"
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
+                      Libellé
+                    </label>
+                    <input
+                      value={newLabel}
+                      onChange={(e) => setNewLabel(e.target.value)}
+                      placeholder="Libellé du dossier"
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+                
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 rounded-xl bg-[#EA5B2D] hover:bg-[#d24e24] px-4 py-2.5 text-xs font-extrabold text-white cursor-pointer transition active:scale-95 shadow-md"
+                >
+                  <FolderPlus className="h-4 w-4 text-[#EA5B2D]" /> Ajouter
+                </button>
+                
+                {msg && <p className="text-[11px] font-bold text-red-600 animate-pulse">{msg}</p>}
+              </form>
+            </div>
+
+            {/* Document Routing Card */}
+            <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.04)] transition-all duration-300">
+              <h2 className="mb-4 font-serif-mct text-lg font-bold text-[#2D2A56] flex items-center justify-between">
+                <span>Routage des documents</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-100/50">
+                  Automatisé
+                </span>
+              </h2>
+              
+              <div className="space-y-2 max-h-[520px] overflow-y-auto custom-scrollbar pr-1">
+                {routing.map((r) => (
+                  <div
+                    key={r.doc_key}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-100 px-4 py-3 text-sm hover:bg-slate-50/50 transition hover:shadow-sm"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Save className="h-4 w-4 text-[#EA5B2D] shrink-0" />
+                      <span className="truncate font-bold text-[#2D2A56]">{r.doc_key}</span>
+                    </div>
+                    <Select
+                      value={r.folder_name}
+                      options={folders.map((f) => ({ value: f.name, label: f.name }))}
+                      onChange={(v) => repoint(r.doc_key, v)}
+                      className="shrink-0 w-full sm:w-44"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
