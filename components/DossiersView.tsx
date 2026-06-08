@@ -1,14 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
-  Folder,
-  Clock,
-  AlertTriangle,
-  Building,
   Search,
-  ChevronDown,
   List,
   Kanban as KanbanIcon,
   Menu,
@@ -20,8 +15,18 @@ import DossiersKanban from "./dossiers/DossiersKanban";
 import { useDossiersContext } from "@/lib/features/dossiers";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Select from "@/components/ui/Select";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { BulkActionBar } from "@/components/ui/bulk-action-bar";
+
+const PHASE_OPTIONS = [
+  { value: "all", label: "Toutes les phases" },
+  { value: "Signature", label: "Signature" },
+  { value: "Onboarding", label: "Onboarding" },
+  { value: "Dépôt", label: "Dépôt agrément" },
+  { value: "Ouvert", label: "Ouvert" },
+  { value: "Suivi qualité", label: "Suivi qualité" },
+];
 
 interface DossiersViewProps {
   onOpenDossier?: (id: string) => void;
@@ -46,8 +51,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
     }
   };
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNetwork, setSelectedNetwork] = useState<string>("Toutes enseignes");
-  const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"tableau" | "kanban">("tableau");
 
   // Drag and Drop local states
@@ -58,30 +62,15 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Auto close dropdown
-  useEffect(() => {
-    if (!isNetworkDropdownOpen) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".network-dropdown-container")) {
-        setIsNetworkDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, [isNetworkDropdownOpen]);
-
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSubFilter, searchQuery, selectedNetwork]);
+  }, [selectedSubFilter, searchQuery, selectedPhase]);
 
   // Filter dossiers logic
   const filteredDossiers = dossiersList.filter((item) => {
-    // 1. Enseigne Network Filter
-    if (selectedNetwork !== "Toutes enseignes") {
-      if (item.enseigne !== selectedNetwork) return false;
-    }
+    // 1. Phase filter
+    if (selectedPhase !== "all" && item.phase !== selectedPhase) return false;
 
     // 2. Search Query filter
     if (searchQuery) {
@@ -194,28 +183,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 w-full min-w-0 custom-scrollbar">
         <div className="max-w-[1400px] mx-auto space-y-6">
 
-          {/* 2. KPI CARDS (minimal) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-            {[
-              { label: "Total", value: statTotal, hint: "dossiers actifs", Icon: Folder, tone: "bg-slate-100 text-[#332151]" },
-              { label: "À relancer", value: statRelancer, hint: "≥ 5j sans activité", Icon: Clock, tone: "bg-[#E34F2D]/10 text-[#E34F2D]" },
-              { label: "Bloqués", value: statBloques, hint: "agrément ou ≥ 14j", Icon: AlertTriangle, tone: "bg-rose-50 text-rose-600" },
-              { label: "Ouverts", value: statOuverts, hint: "centres ouverts", Icon: Building, tone: "bg-emerald-50 text-emerald-600" },
-            ].map(({ label, value, hint, Icon, tone }) => (
-              <div key={label} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{label}</p>
-                  <h3 className="mt-1 text-2xl font-bold text-[#332151]">{value}</h3>
-                  <p className="mt-0.5 text-[10px] text-slate-400">{hint}</p>
-                </div>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 3. FILTERS ROW */}
+          {/* FILTERS ROW */}
           <div className="relative z-20 bg-white p-5 rounded-3xl border border-slate-100/80 shadow-[0_8px_30px_rgba(45,42,86,0.015)] flex flex-col xl:flex-row xl:items-center justify-between gap-5">
 
             {/* Left filter status tabs */}
@@ -259,48 +227,13 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
                 )}
               </div>
 
-              {/* Custom Enseigne / Network Dropdown */}
-              <div className="relative min-w-[170px] network-dropdown-container">
-                <button
-                  type="button"
-                  onClick={() => setIsNetworkDropdownOpen(!isNetworkDropdownOpen)}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200/20 pl-4 pr-8 py-2.5 text-[10.5px] font-bold text-[#332151] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors shadow-sm"
-                >
-                  <span>{selectedNetwork}</span>
-                  <ChevronDown className={`h-3.5 w-3.5 text-[#332151] transition-transform duration-200 ${isNetworkDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-
-                <AnimatePresence>
-                  {isNetworkDropdownOpen && (
-                    <motion.div
-                      key="network-dropdown-menu"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute z-30 top-full mt-2 left-0 right-0 bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5"
-                    >
-                      {["Toutes enseignes", "Norauto", "Speedy", "Feu Vert", "Indépendant"].map((network) => (
-                        <button
-                          key={network}
-                          type="button"
-                          onClick={() => {
-                            setSelectedNetwork(network);
-                            setIsNetworkDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer rounded-lg mb-0.5 last:mb-0 ${
-                            selectedNetwork === network
-                              ? "bg-[#E34F2D]/10 text-[#E34F2D]"
-                              : "text-slate-600 hover:bg-slate-50 hover:text-[#332151]"
-                          }`}
-                        >
-                          {network}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Phase filter (prebuilt Select) */}
+              <Select
+                value={selectedPhase}
+                options={PHASE_OPTIONS}
+                onChange={setSelectedPhase}
+                className="min-w-[170px]"
+              />
 
               {/* Table / Kanban view toggle */}
               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "tableau" | "kanban")} className="shrink-0">

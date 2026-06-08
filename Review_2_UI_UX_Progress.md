@@ -44,14 +44,14 @@
 - [x] Specific page layout structure. 💬 KPIs → full-width trend → pipeline → 2 donuts → (doc tracking + reminders). Shared `dashboard/Panel.tsx` shell.
 - [x] Explicit empty states when data is missing. 💬 Shared `EmptyState` (icon + message + hint) used by every block.
 
-### Files (List)
+### Files (List)  ✅ complete
 
-- [ ] Clicking a center opens the CENTER PROFILE, not a file.
-- [ ] Display required columns.
-- [ ] Replace brand filter with proper filters.
-- [ ] Bulk selection, deletion, and pagination. 💬 Selection primitives ready to reuse; delete needs backend route (BACKEND_NOTES §1).
-- [ ] Reduce font weight in tables.
-- [ ] Keep Kanban view here.
+- [x] Clicking a center opens the CENTER PROFILE, not a file. 💬 New `app/dashboard/centres/[id]/page.tsx` → dedicated minimal `centres/CentreDetailView.tsx` (all centre info: identity, adresse, dossiers, pièces). Centres-list button renamed "Voir le détail"; layout navigation routes centre clicks straight to `/dashboard/centres/:id`.
+- [x] Display required columns. 💬 Centre (name + code) · Ville (own column) · Phase · Créé le · Action.
+- [x] Replace brand filter with proper filters. 💬 Removed the dead *enseigne* dropdown (backend rows were all "Indépendant"); replaced with a working **Phase** filter using the prebuilt `ui/Select`.
+- [x] Bulk selection, deletion, and pagination. 💬 Row select + `BulkActionBar` + pagination wired. ⚠️ delete is UI-only — backend route pending (BACKEND_NOTES §1).
+- [x] Reduce font weight in tables. 💬 Rows lightened (extrabold/bold → semibold/medium/normal); phase badge is now a single neutral pill (no emerald/amber).
+- [x] Keep Kanban view here. 💬 Tableau ⇄ Kanban toggle retained; Kanban cards also open the centre profile.
 
 ### File Details
 

@@ -3,10 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Clock,
   AlertCircle,
-  CheckCircle2,
-  Cpu,
   Search,
   Calendar,
   Eye,
@@ -205,14 +202,6 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     return true;
   });
 
-  // Calculate dynamic stats
-  const countEnAttente = validationsList.length;
-  const countAIdentifier = validationsList.filter((v) => v.status === "À identifier").length;
-  const countValidees = validationsList.filter((v) => v.status === "Validé").length;
-  const averageConfidence = Math.round(
-    validationsList.reduce((acc, curr) => acc + curr.confIA, 0) / (validationsList.length || 1)
-  );
-
   // Actions — all routed through the shared pieces cache context.
   const handleValidateItem = async (id: number, code: string) => {
     const item = validationsList.find((v) => v.id === id);
@@ -322,25 +311,6 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 w-full min-w-0">
         <div className="max-w-[1400px] mx-auto space-y-6">
 
-          {/* Stats Cards (minimal) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-            {[
-              { label: "En attente", value: countEnAttente, Icon: Clock, tone: "bg-slate-100 text-[#332151]" },
-              { label: "À identifier", value: countAIdentifier, Icon: AlertCircle, tone: "bg-slate-100 text-[#332151]" },
-              { label: "Validées auj.", value: countValidees, Icon: CheckCircle2, tone: "bg-slate-100 text-[#332151]" },
-              { label: "Conf. IA", value: `${countEnAttente > 0 ? averageConfidence : 100}%`, Icon: Cpu, tone: "bg-slate-100 text-[#332151]" },
-            ].map(({ label, value, Icon, tone }) => (
-              <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white px-5 py-4">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-none text-[#332151]">{value}</p>
-                  <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
 
           {/* Toast Notification */}
           <AnimatePresence>

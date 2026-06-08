@@ -12,6 +12,8 @@ export type CentresAction =
   | { type: "LIST_ERROR"; error: string }
   | { type: "DETAIL_START" }
   | { type: "DETAIL_SUCCESS"; detail: CentreDetail }
+  | { type: "DETAIL_FROM_CACHE"; detail: CentreDetail }
+  | { type: "DETAIL_CACHE_SET"; detail: CentreDetail }
   | { type: "DETAIL_ERROR"; error: string }
   | { type: "CLEAR_DETAIL" }
   | { type: "DELETE_SUCCESS"; id: string }
@@ -21,6 +23,7 @@ export const initialCentresState: CentresState = {
   list: [],
   count: 0,
   detail: null,
+  detailCache: {},
   listStatus: "idle",
   detailStatus: "idle",
   error: null,
@@ -37,18 +40,33 @@ export function centresReducer(state: CentresState, action: CentresAction): Cent
     case "DETAIL_START":
       return { ...state, detailStatus: "loading", error: null };
     case "DETAIL_SUCCESS":
+      return {
+        ...state,
+        detail: action.detail,
+        detailStatus: "loaded",
+        error: null,
+        detailCache: { ...state.detailCache, [action.detail.centre.id]: action.detail },
+      };
+    case "DETAIL_FROM_CACHE":
       return { ...state, detail: action.detail, detailStatus: "loaded", error: null };
+    case "DETAIL_CACHE_SET":
+      // Populate the per-id cache without touching the "current" detail.
+      return { ...state, detailCache: { ...state.detailCache, [action.detail.centre.id]: action.detail } };
     case "DETAIL_ERROR":
       return { ...state, detailStatus: "error", error: action.error };
     case "CLEAR_DETAIL":
       return { ...state, detail: null, detailStatus: "idle" };
-    case "DELETE_SUCCESS":
+    case "DELETE_SUCCESS": {
+      const nextCache = { ...state.detailCache };
+      delete nextCache[action.id];
       return {
         ...state,
         list: state.list.filter((c) => c.id !== action.id),
         count: state.count - 1,
         detail: state.detail?.centre.id === action.id ? null : state.detail,
+        detailCache: nextCache,
       };
+    }
     case "UPDATE_LIST_ITEM":
       return {
         ...state,

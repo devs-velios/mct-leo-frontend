@@ -34,7 +34,7 @@ export default function DossiersTable({
   onOpenDossier,
   selection,
 }: DossiersTableProps) {
-  const colCount = selection ? 5 : 4;
+  const colCount = selection ? 6 : 5;
   return (
     <motion.div
       key="tableau"
@@ -55,7 +55,7 @@ export default function DossiersTable({
       </div>
 
       {/* Table */}
-      <Table className="min-w-[640px]">
+      <Table className="min-w-[760px]">
         <TableHeader className="bg-slate-50/70">
           <TableRow className="hover:bg-transparent">
             {selection && (
@@ -68,7 +68,8 @@ export default function DossiersTable({
                 />
               </TableHead>
             )}
-            <TableHead className="px-6">Dossier</TableHead>
+            <TableHead className="px-6">Centre</TableHead>
+            <TableHead className="px-5">Ville</TableHead>
             <TableHead className="px-5">Phase</TableHead>
             <TableHead className="px-5">Créé le</TableHead>
             <TableHead className="px-6 text-right">Action</TableHead>
@@ -79,7 +80,7 @@ export default function DossiersTable({
             <TableRow
               key={item.id}
               className={`group cursor-pointer ${selection?.isSelected(item.id) ? "bg-[#E34F2D]/[0.04]" : ""}`}
-              onClick={() => onOpenDossier?.(item.id)}
+              onClick={() => onOpenDossier?.(item.dossierId ?? item.id)}
             >
               {selection && (
                 <TableCell className="px-6" onClick={(e) => e.stopPropagation()}>
@@ -90,48 +91,43 @@ export default function DossiersTable({
                   />
                 </TableCell>
               )}
-              {/* 1. Dossier identity */}
+              {/* 1. Centre identity */}
               <TableCell className="px-6">
-                <h5 className="font-extrabold text-[#332151] text-sm group-hover:text-[#E34F2D] transition-colors leading-tight mb-1.5">
+                <p className="text-sm font-semibold leading-tight text-[#332151] transition-colors group-hover:text-[#E34F2D]">
                   {item.centre}
-                </h5>
-                <div className="flex flex-wrap items-center gap-2 text-[10px] text-[#5A5A7A] font-semibold">
-                  <span className="font-mono text-[#332151]">
-                    {item.code ?? item.id}
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="inline-flex items-center gap-0.5">
-                    <MapPin className="h-3 w-3 opacity-60" />
-                    {item.ville || "Non disponible"}
-                  </span>
-                </div>
-              </TableCell>
-
-              {/* 2. Phase status */}
-              <TableCell className="px-5">
-                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-                  item.phase === "Ouvert" || item.phase === "Suivi qualité"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : item.phase === "Dépôt"
-                      ? "bg-amber-50 text-amber-700"
-                      : "bg-slate-100 text-slate-600"
-                }`}>
-                  {item.phase === "Dépôt" ? "Dépôt Agrément" : item.phase}
+                </p>
+                <span className="mt-1 block font-mono text-[10px] font-normal text-[#5A5A7A]">
+                  {item.code ?? item.id}
                 </span>
               </TableCell>
 
-              {/* 3. Created date (real, from created_at) */}
+              {/* 2. Ville */}
               <TableCell className="px-5">
-                <span className="text-xs text-[#332151] font-bold flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 text-xs font-normal text-[#5A5A7A]">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  {item.ville || "Non disponible"}
+                </span>
+              </TableCell>
+
+              {/* 3. Phase status — neutral pill */}
+              <TableCell className="px-5">
+                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#332151]">
+                  {item.phase === "Dépôt" ? "Dépôt agrément" : item.phase}
+                </span>
+              </TableCell>
+
+              {/* 4. Created date (real, from created_at) */}
+              <TableCell className="px-5">
+                <span className="flex items-center gap-1.5 text-xs font-normal text-[#5A5A7A]">
+                  <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                   {item.signatureDate || "Non disponible"}
                 </span>
               </TableCell>
 
-              {/* 4. Action — open the dossier */}
+              {/* 5. Action — open the centre profile */}
               <TableCell className="px-6 text-right">
                 <button
-                  onClick={(e) => { e.stopPropagation(); onOpenDossier?.(item.id); }}
+                  onClick={(e) => { e.stopPropagation(); onOpenDossier?.(item.dossierId ?? item.id); }}
                   className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-[#E34F2D]/10 hover:text-[#E34F2D] group-hover:text-[#E34F2D]"
                   title="Ouvrir le dossier"
                 >

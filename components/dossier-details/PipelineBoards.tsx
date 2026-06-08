@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, GripVertical, AlertTriangle } from "lucide-react";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Check, GripVertical } from "lucide-react";
 
 export interface StageDef { key: string; label: string; }
 
@@ -17,7 +16,6 @@ export const MICRO_STAGES: StageDef[] = [
   { key: "ouverture", label: "Ouvert" },
 ];
 export const MICRO_KEYS = MICRO_STAGES.map((s) => s.key);
-const MICRO_LABEL: Record<string, string> = Object.fromEntries(MICRO_STAGES.map((s) => [s.key, s.label]));
 
 export const microNext = (k: string) => { const i = MICRO_KEYS.indexOf(k); return i >= 0 && i < MICRO_KEYS.length - 1 ? MICRO_KEYS[i + 1] : null; };
 export const microPrev = (k: string) => { const i = MICRO_KEYS.indexOf(k); return i > 0 ? MICRO_KEYS[i - 1] : null; };
@@ -27,14 +25,6 @@ export const microToMacro = (k: string): string => {
   if (k === "ouverture") return "ouvert";
   return "onboarding";
 };
-
-// Macro = a grouping of micro stages (1-3, 4, 5-6, 7) → 4 columns.
-const MACRO_GROUPS: { key: string; label: string; micros: string[] }[] = [
-  { key: "onboarding", label: "Onboarding", micros: ["signature_validee", "plans_valides", "installation_qualite"] },
-  { key: "audit", label: "Audit initial", micros: ["audit"] },
-  { key: "agrement_en_cours", label: "Agrément en cours", micros: ["depot_agrement", "agrement_recu"] },
-  { key: "ouvert", label: "Ouvert", micros: ["ouverture"] },
-];
 
 interface PipelineBoardsProps {
   etape: string | null | undefined;        // current micro stage
@@ -47,72 +37,16 @@ interface PipelineBoardsProps {
 }
 
 /**
- * Unified pipeline view for a dossier — micro (draggable, fine-grained) and macro (read-only,
- * grouped from the micro stages). Kept in one component because the macro is derived from the
- * micro stage, so they share the same source of truth.
+ * Single pipeline visualization for a dossier — the micro (draggable, fine-grained) board.
  */
-export default function PipelineBoards({ etape, statut, nextStage, prevStage, code, centre, onMove }: PipelineBoardsProps) {
+export default function PipelineBoards({ etape, nextStage, prevStage, code, centre, onMove }: PipelineBoardsProps) {
   const movableKeys = new Set([nextStage, prevStage].filter(Boolean) as string[]);
 
-  const currentMicroIdx = etape ? MICRO_KEYS.indexOf(etape) : -1;
-  const isBlocked = statut === "bloque";
-  // bloque overwrites macro → derive the linear macro from the (preserved) micro stage.
-  const currentMacro = isBlocked ? microToMacro(etape ?? "") : statut;
-
   return (
-    <>
-      {/* ── MICRO — draggable, fine-grained ─────────────────────────────────── */}
-      <div className="lg:col-span-3">
-        <MicroBoard currentKey={etape} movableKeys={movableKeys} onMove={onMove} cardCode={code} cardName={centre} />
-      </div>
-
-      {/* ── MACRO — read-only, grouped from the micro stages ────────────────── */}
-      <div className="lg:col-span-3 bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgba(45,42,86,0.02)]">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-3">
-          <div className="min-w-0">
-            <span className="block text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">Statut macro — vue d&apos;ouverture</span>
-            <span className="block text-[9px] font-extrabold uppercase tracking-wider text-slate-400 mt-0.5">Lecture seule — regroupe les étapes micro</span>
-          </div>
-        </div>
-
-        {/* Macro status — static table (grouped from the micro stages) */}
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="h-auto px-0 py-2 text-[9px]">Statut</TableHead>
-                <TableHead className="h-auto px-0 py-2 text-[9px]">Étapes micro</TableHead>
-                <TableHead className="h-auto px-0 py-2 text-right text-[9px]">État</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {MACRO_GROUPS.map((group) => {
-                const isCurrentGroup = !isBlocked && group.key === currentMacro;
-                const groupDone = currentMicroIdx >= 0 && group.micros.every((m) => MICRO_KEYS.indexOf(m) < currentMicroIdx);
-                return (
-                  <TableRow key={group.key} className={`hover:bg-transparent ${isCurrentGroup ? "bg-[#E34F2D]/5" : ""}`}>
-                    <TableCell className="px-0 py-2.5 font-bold text-[#332151]">{group.label}</TableCell>
-                    <TableCell className="px-0 py-2.5 text-[10px] font-semibold text-slate-500">{group.micros.map((m) => MICRO_LABEL[m]).join(" · ")}</TableCell>
-                    <TableCell className="px-0 py-2.5 text-right">
-                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${isCurrentGroup ? "bg-amber-50 text-amber-700" : groupDone ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-                        {isCurrentGroup ? "En cours" : groupDone ? "Terminé" : "À venir"}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              <TableRow className={`hover:bg-transparent ${isBlocked ? "bg-rose-50" : ""}`}>
-                <TableCell className={`px-0 py-2.5 font-bold ${isBlocked ? "text-rose-600" : "text-slate-500"}`}>Bloqué</TableCell>
-                <TableCell className="px-0 py-2.5 text-[10px] font-semibold text-slate-400">—</TableCell>
-                <TableCell className="px-0 py-2.5 text-right">
-                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${isBlocked ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-500"}`}>
-                    {isBlocked ? "Bloqué" : "Non bloqué"}
-                  </span>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-      </div>
-    </>
+    <div className="lg:col-span-3">
+      {/* ── MICRO — draggable, fine-grained (single pipeline visualization) ──── */}
+      <MicroBoard currentKey={etape} movableKeys={movableKeys} onMove={onMove} cardCode={code} cardName={centre} />
+    </div>
   );
 }
 

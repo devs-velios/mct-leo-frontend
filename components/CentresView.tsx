@@ -156,7 +156,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                     <TableHead className="px-5">Centre</TableHead>
                     <TableHead className="w-[180px] px-3">Activités</TableHead>
                     <TableHead className="w-[150px] px-3">Statut</TableHead>
-                    <TableHead className="w-[180px] px-5 text-right">Dossier</TableHead>
+                    <TableHead className="w-[180px] px-5 text-right">Détail</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -187,7 +187,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                               onClick={(e) => { e.stopPropagation(); onOpenDossier?.(c.id); }}
                               className="gap-1.5 text-[11px] font-bold bg-[#E34F2D]/10 text-[#E34F2D] shadow-none hover:bg-[#E34F2D]/20 hover:text-[#E34F2D]"
                             >
-                              Ouvrir le dossier
+                              Voir le détail
                               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </Button>
                           </div>

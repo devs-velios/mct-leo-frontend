@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { type Center, centresToCarte, type CentreApiGeo } from "./carte/carteData";
-import { useCentresContext, fetchCentreDetail, type CentreDetail } from "@/lib/features/centres";
+import { useCentresContext } from "@/lib/features/centres";
 import { geocode } from "@/lib/features/carte/geocode";
 import CarteListingView from "./carte/CarteListingView";
 
@@ -12,7 +12,7 @@ interface CarteViewProps {
 }
 
 export default function CarteView({ onOpenDossier, setMobileMenuOpen }: CarteViewProps) {
-  const { centres, ensureList } = useCentresContext();
+  const { centres, ensureList, ensureDetail, detailCache } = useCentresContext();
   // Local copy so the map can apply optimistic per-center tweaks (docs, messages).
   const [centers, setCenters] = useState<Center[]>([]);
 
@@ -63,19 +63,12 @@ export default function CarteView({ onOpenDossier, setMobileMenuOpen }: CarteVie
   const [hoveredCenter, setHoveredCenter] = useState<Center | null>(null);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
 
-  // Fetch the FULL centre detail for the hovered pin (cached per centre) so the side
-  // panel can show the important real info, not just code/ville.
-  const [detailsCache, setDetailsCache] = useState<Record<string, CentreDetail>>({});
+  // Fetch the FULL centre detail for the hovered pin via the shared context cache
+  // (cached per centre, deduped, and reused by the centre detail page).
   useEffect(() => {
-    const id = hoveredCenter?.id;
-    if (!id || detailsCache[id]) return;
-    let alive = true;
-    fetchCentreDetail(id)
-      .then((d) => { if (alive) setDetailsCache((prev) => ({ ...prev, [id]: d })); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, [hoveredCenter?.id, detailsCache]);
-  const hoveredDetail = hoveredCenter ? detailsCache[hoveredCenter.id] : undefined;
+    if (hoveredCenter?.id) ensureDetail(hoveredCenter.id);
+  }, [hoveredCenter?.id, ensureDetail]);
+  const hoveredDetail = hoveredCenter ? detailCache[hoveredCenter.id] : undefined;
 
   // Filter centers based on tab selection
   const filteredCenters = centers.filter((center) => {

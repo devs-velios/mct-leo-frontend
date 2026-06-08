@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, X, User, Phone, Mail, MapPin, Loader2 } from "lucide-react";
+import Select from "@/components/ui/Select";
 
 export interface CentreFormValues {
   code_centre: string;
@@ -10,6 +11,7 @@ export interface CentreFormValues {
   ville: string;
   type_contrat: "R" | "P";
   activites: string[];
+  statut_ouverture: string;
   responsable: string;
   phone: string;
   email: string;
@@ -20,12 +22,22 @@ export interface CentreFormValues {
   country: string;
 }
 
+// Valid statut_ouverture values accepted by the backend.
+export const STATUT_OPTIONS = [
+  { value: "onboarding", label: "Onboarding" },
+  { value: "agrement_en_cours", label: "Agrément en cours" },
+  { value: "audit", label: "Audit" },
+  { value: "ouvert", label: "Ouvert" },
+  { value: "bloque", label: "Bloqué" },
+];
+
 const EMPTY: CentreFormValues = {
   code_centre: "",
   enseigne: "",
   ville: "",
   type_contrat: "R",
   activites: ["VL"],
+  statut_ouverture: "onboarding",
   responsable: "",
   phone: "",
   email: "",
@@ -154,6 +166,16 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
                     </div>
                   </div>
                 </div>
+                {mode === "edit" && (
+                  <div className="sm:max-w-xs">
+                    <label className={labelCls}>Statut d&apos;ouverture</label>
+                    <Select
+                      value={v.statut_ouverture}
+                      options={STATUT_OPTIONS}
+                      onChange={(val) => set("statut_ouverture", val)}
+                    />
+                  </div>
+                )}
               </section>
 
               {/* 2. Responsables & WhatsApp */}

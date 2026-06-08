@@ -20,6 +20,8 @@ export function useReminders() {
   statusRef.current = state.status;
   const loadedKeyRef = useRef<string | null>(null);
   const lastParamsRef = useRef<{ dossier_id?: string; status?: string } | undefined>(undefined);
+  // Dedup concurrent first-callers (e.g. RemindersView + dashboard RemindersByDueDate).
+  const inFlightRef = useRef<Map<string, Promise<void>>>(new Map());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -44,11 +46,15 @@ export function useReminders() {
 
   const ensureLoaded = useCallback(async (params?: { dossier_id?: string; status?: string }, force = false) => {
     const key = JSON.stringify(params ?? {});
-    if (!force && loadedKeyRef.current === key && (statusRef.current === "loaded" || statusRef.current === "loading")) {
-      return;
+    if (!force) {
+      if (loadedKeyRef.current === key && statusRef.current === "loaded") return;
+      const pending = inFlightRef.current.get(key);
+      if (pending) return pending;
     }
     loadedKeyRef.current = key;
-    await refresh(params);
+    const p = refresh(params).finally(() => { inFlightRef.current.delete(key); });
+    inFlightRef.current.set(key, p);
+    return p;
   }, [refresh]);
 
   const create = useCallback(async (payload: CreateReminderPayload) => {

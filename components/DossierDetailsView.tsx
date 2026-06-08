@@ -4,19 +4,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
-  User,
-  Phone,
-  Mail,
-  Calendar,
-  MapPin,
   Send,
   Zap,
   ChevronRight,
   ChevronDown,
   Check,
   Upload,
-  Trash2,
-  Pencil,
   AlertTriangle,
   Building2,
   Paperclip,
@@ -30,10 +23,8 @@ import { api } from "@/lib/api";
 import { useCentresContext, type CentreDetail as CentreFullDetail } from "@/lib/features/centres";
 import { useConversationsContext } from "@/lib/features/conversations";
 import { advanceDossierStage } from "@/lib/features/dossiers";
-import { useDialog } from "@/components/ui/DialogProvider";
 import Markdown from "@/components/ui/Markdown";
 import { Button } from "@/components/ui/button";
-import { na } from "@/lib/utils";
 
 interface DossierDetailsViewProps {
   /** Centre id — the detail payload (GET /api/centres/:id) is centre-scoped. */
@@ -45,22 +36,11 @@ interface DossierDetailsViewProps {
   onSwitch?: (centreId: string) => void;
 }
 
-// A labelled field used in the (full-width) centre information card.
-function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={className}>
-      <span className="mb-1 block text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{label}</span>
-      <div className="text-sm font-semibold text-[#332151]">{children}</div>
-    </div>
-  );
-}
-
 export default function DossierDetailsView({ dossierId, focusDossierId, onClose, onNavigateToTab, onSwitch }: DossierDetailsViewProps) {
-  // Keep the shared centres cache in sync on edit/delete/upload (re-pulls from backend).
-  const { remove: removeCentre, update: updateCentre, upload: uploadDoc, centres, ensureList, revalidateList } = useCentresContext();
+  // Centre cache: upload re-pulls detail; getDetail serves the cached centre payload.
+  const { upload: uploadDoc, getDetail, centres, ensureList, revalidateList } = useCentresContext();
   // WhatsApp chat: send a message / document through the real pipeline (Léo replies).
   const { upload: uploadWhatsappDoc, send: sendWhatsappMessage } = useConversationsContext();
-  const { prompt, confirm } = useDialog();
   // Local active dossier state
   const [dossier, setDossier] = useState<DossierDetail | null>(null);
   // Full backend payload (GET /api/centres/:id) — holds dossiers (micro+macro+nav) and alerts.
@@ -79,16 +59,16 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   // Centre-switcher needs the full list (the dashboard layout loads it, but be defensive).
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
 
-  // Load the real centre detail (id = centre id) — keep BOTH the mapped view and the raw payload.
-  const load = useCallback(() => {
-    return api
-      .get(`centres/${dossierId}`)
+  // Load the real centre detail (id = centre id) via the shared cache — instant on
+  // revisit, deduped. Pass force=true to bypass the cache (post-mutation reconcile).
+  const load = useCallback((force = false) => {
+    return getDetail(dossierId, force)
       .then((d) => {
         setRaw(d as CentreFullDetail);
         setDossier(centreDetailToDossier(d as Parameters<typeof centreDetailToDossier>[0]));
       })
       .catch(() => { setRaw(null); setDossier(null); });
-  }, [dossierId]);
+  }, [dossierId, getDetail]);
   useEffect(() => {
     load();
   }, [load]);
@@ -137,7 +117,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     );
     try {
       await advanceDossierStage(dossierUuid, { target });
-      void load(); // reconcile in the background (same values → no visible change)
+      void load(true); // reconcile in the background (same values → no visible change)
       void revalidateList(); // macro status on the centres list changes too
       triggerToast("Étape du dossier mise à jour.");
     } catch {
@@ -150,7 +130,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const handleResolveAlert = async (id: string) => {
     try {
       await api.post(`alerts/${id}/resolve`);
-      await load();
+      await load(true);
       triggerToast("Alerte résolue.");
     } catch {
       triggerToast("Échec de la résolution de l'alerte.");
@@ -164,7 +144,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     triggerToast(`Envoi de « ${file.name} »…`);
     try {
       await uploadWhatsappDoc(dossierId, file);
-      await load();
+      await load(true);
       triggerToast("Document envoyé et analysé.");
     } catch {
       triggerToast("Échec de l'envoi du document.");
@@ -186,7 +166,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     try {
       await uploadDoc(dossierId, file, type); // context re-pulls detail + list slice
       setToastMessage(`Document « ${type} » téléversé.`);
-      load();
+      load(true);
     } catch {
       setToastMessage("Échec du téléversement.");
     }
@@ -196,43 +176,6 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  // Edit the centre (enseigne / ville).
-  const handleEditCentre = async () => {
-    const res = await prompt({
-      title: "Modifier le centre",
-      submitLabel: "Enregistrer",
-      fields: [
-        { name: "enseigne", label: "Enseigne", defaultValue: dossier?.centre ?? "", placeholder: "Enseigne du centre" },
-        { name: "ville", label: "Ville", defaultValue: dossier?.ville ?? "", placeholder: "Ville" },
-      ],
-    });
-    if (!res) return;
-    try {
-      await updateCentre(dossierId, { enseigne: res.enseigne, ville: res.ville }); // re-pulls list + detail from backend
-      triggerToast("Centre mis à jour.");
-      load();
-    } catch {
-      triggerToast("Échec de la mise à jour.");
-    }
-  };
-
-  // Delete the centre (and all its data) — context drops it from the cached list.
-  const handleDeleteCentre = async () => {
-    const ok = await confirm({
-      title: "Supprimer ce centre ?",
-      message: "Le centre et toutes ses données (dossiers, pièces, messages…) seront définitivement supprimés. Cette action est irréversible.",
-      confirmLabel: "Supprimer",
-      danger: true,
-    });
-    if (!ok) return;
-    try {
-      await removeCentre(dossierId);
-      onClose();
-    } catch {
-      triggerToast("Échec de la suppression.");
-    }
   };
 
   // WhatsApp send simulator
@@ -251,30 +194,32 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     try {
       await sendWhatsappMessage(dossierId, text); // → /api/simulate/whatsapp/message (Léo replies async)
 
-      // Léo answers via the inbound worker (intent + RAG can take a few seconds). Poll the
-      // detail until the client message + Léo's reply are persisted, then sync the feed.
+      // Léo answers via the inbound worker (async). Check after 10s; if the reply hasn't
+      // landed yet, check again every 10s (until it arrives or the safety cap is hit).
+      const POLL_MS = 10_000;
+      const MAX_ATTEMPTS = 30; // ~5 min safety cap so we never poll forever
       let attempt = 0;
       const poll = async () => {
         attempt += 1;
         try {
-          const d = (await api.get(`centres/${dossierId}`)) as CentreFullDetail;
+          const d = await getDetail(dossierId, true); // fresh pull (also refreshes the cache)
           const msgs = (d.messages ?? []) as { sender: string }[];
           if (msgs.length > baseCount) {
-            // Backend caught up (client persisted, maybe + reply) → sync, keep nothing stale.
-            setRaw(d);
+            // Backend caught up (client persisted, maybe + reply) → sync the feed.
+            setRaw(d as CentreFullDetail);
             setDossier(centreDetailToDossier(d as Parameters<typeof centreDetailToDossier>[0]));
           }
-          // Stop once Léo's reply landed (client + reply = +2) or after enough tries.
-          if (msgs.length >= baseCount + 2 || attempt >= 8) {
+          // Stop once Léo's reply landed (client + reply = +2) or after the cap.
+          if (msgs.length >= baseCount + 2 || attempt >= MAX_ATTEMPTS) {
             setChatTyping(false);
             return;
           }
         } catch {
-          if (attempt >= 8) { setChatTyping(false); return; }
+          if (attempt >= MAX_ATTEMPTS) { setChatTyping(false); return; }
         }
-        setTimeout(poll, 2000);
+        setTimeout(poll, POLL_MS);
       };
-      setTimeout(poll, 1500);
+      setTimeout(poll, POLL_MS);
     } catch (err) {
       setChatTyping(false);
       // Roll back the optimistic message and surface the real reason.
@@ -282,35 +227,6 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
       const msg = err instanceof Error ? err.message : "";
       triggerToast(/contact phone|téléphone/i.test(msg) ? "Ce centre n'a pas de numéro de contact." : "Échec de l'envoi du message.");
     }
-  };
-
-  // Toggle document validation status interactively
-  const toggleDocStatus = (docType: "kbis" | "assurance" | "identite") => {
-    if (!dossier) return;
-
-    const currentStatus = dossier.documents[docType];
-    let nextStatus: "validé" | "manquant" | "en_cours" = "validé";
-    if (currentStatus === "validé") nextStatus = "manquant";
-    else if (currentStatus === "manquant") nextStatus = "en_cours";
-
-    const updatedDocs = {
-      ...dossier.documents,
-      [docType]: nextStatus
-    };
-
-    // Calculate completeness
-    const docValues = Object.values(updatedDocs);
-    const validatedCount = docValues.filter(v => v === "validé").length;
-    const completeness = Math.round((validatedCount / 3) * 100);
-
-    const updatedDossier: DossierDetail = {
-      ...dossier,
-      documents: updatedDocs,
-      completude: completeness
-    };
-
-    setDossier(updatedDossier);
-    triggerToast(`Statut du document '${docType.toUpperCase()}' mis à jour.`);
   };
 
   if (!dossier) {
@@ -440,51 +356,6 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
         )}
 
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-8">
-
-          {/* FICHE DU CENTRE — full-width info card with inline edit/delete */}
-          <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Building2 className="h-4 w-4 shrink-0 text-[#E34F2D]" />
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">Fiche du centre</span>
-                <span className="rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#E34F2D]">Partenaire MCT</span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button onClick={handleEditCentre} title="Modifier le centre" className="rounded-lg border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#332151]">
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button onClick={handleDeleteCentre} title="Supprimer le centre" className="rounded-lg border border-slate-200 p-2 text-slate-500 transition-colors hover:border-rose-500 hover:bg-rose-500 hover:text-white">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5 p-6 md:grid-cols-3 xl:grid-cols-4">
-              <Field label="Code centre"><span className="font-mono">{dossier.code ?? dossier.id}</span></Field>
-              <Field label="Enseigne">{na(dossier.centre)}</Field>
-              <Field label="Ville">{na(dossier.ville)}</Field>
-              <Field label="Dénomination">{na(dossier.denomination)}</Field>
-              <Field label="Gérant"><span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-slate-400" />{na(dossier.gerant)}</span></Field>
-              <Field label="Téléphone"><span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-slate-400" />{na(dossier.contact)}</span></Field>
-              <Field label="Email"><span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span className="truncate">{na(dossier.email)}</span></span></Field>
-              <Field label="SIRET"><span className="font-mono">{na(dossier.siret)}</span></Field>
-              <Field label="Date signature"><span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" />{na(dossier.signatureDate)}</span></Field>
-              <Field label="Ouverture prévue">{na(dossier.ouvertureDate)}</Field>
-              <Field label="Adresse" className="col-span-2">
-                <span className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" /><span>{na(dossier.adresse)}</span></span>
-              </Field>
-            </div>
-
-            {/* Footer CTA */}
-            <div className="flex justify-end border-t border-slate-100 px-6 py-3">
-              <button
-                onClick={() => onNavigateToTab?.("Carte")}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#E34F2D]/10 px-3.5 py-2 text-xs font-bold text-[#E34F2D] transition-colors hover:bg-[#E34F2D] hover:text-white cursor-pointer"
-              >
-                <MapPin className="h-3.5 w-3.5" /> Voir sur la carte MCT <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
 
           {/* LEFT COLUMN: Parcours timeline (aligns with the WhatsApp feed) */}
           <div className="lg:col-span-1 space-y-8">

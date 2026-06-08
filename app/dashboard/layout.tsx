@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/features/auth/useAuth";
 import { AppProviders } from "@/lib/features/AppProviders";
-import { useCentresContext, fetchCentreDetail } from "@/lib/features/centres";
+import { useCentresContext } from "@/lib/features/centres";
 import AppSidebar from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { type DashboardDossier, centreToDossier } from "@/components/dashboard/dashboardData";
@@ -49,22 +49,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const [isNewDossierModalOpen, setIsNewDossierModalOpen] = useState(false);
 
-  // "Open the dossier" of a centre → navigate to its real detail page, keyed by the
-  // dossier id (/dashboard/dossiers/:id). Resolve the dossier id from the cached centres
-  // list; fall back to a detail fetch if the list slice doesn't carry it yet.
-  const setSelectedDossierId = useCallback(async (centreId: string | null) => {
+  // Clicking a centre opens its CENTER PROFILE (centre-scoped detail), not a file.
+  // The profile route is keyed directly by the centre id.
+  const setSelectedDossierId = useCallback((centreId: string | null) => {
     if (!centreId) return;
-    let dossierId = centres.find((c) => c.id === centreId)?.dossier_id ?? null;
-    if (!dossierId) {
-      try {
-        const detail = await fetchCentreDetail(centreId);
-        dossierId = detail.dossiers?.[detail.dossiers.length - 1]?.id ?? null;
-      } catch {
-        /* ignore — fall through to the directory */
-      }
-    }
-    router.push(dossierId ? `/dashboard/dossiers/${dossierId}` : "/dashboard/centres");
-  }, [centres, router]);
+    router.push(`/dashboard/centres/${centreId}`);
+  }, [router]);
 
   // Route protection is handled by the middleware (proxy.ts), which redirects
   // unauthenticated /dashboard requests to "/". We intentionally do NOT redirect on the

@@ -160,6 +160,8 @@ export interface CentresState {
   list: CentreListItem[];
   count: number;
   detail: CentreDetail | null;
+  /** Per-id detail cache so revisiting a centre doesn't refetch. */
+  detailCache: Record<string, CentreDetail>;
   listStatus: CentresStatus;
   detailStatus: CentresStatus;
   error: string | null;

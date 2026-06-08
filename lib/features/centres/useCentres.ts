@@ -17,6 +17,7 @@ import {
   type CreateCentrePayload,
   type UpdateCentrePayload,
   type CentreListItem,
+  type CentreDetail,
 } from "./types";
 
 export function useCentres() {
@@ -29,6 +30,9 @@ export function useCentres() {
   // Remember the last list params (e.g. limit: 200) so post-mutation revalidation
   // re-pulls the SAME slice instead of collapsing to the backend default.
   const lastListParamsRef = useRef<{ status?: string; q?: string; limit?: number; offset?: number } | undefined>(undefined);
+  // Dedup concurrent first-callers (multiple components mounting in the same commit)
+  // so the same list slice is only fetched once.
+  const listInFlightRef = useRef<Map<string, Promise<void>>>(new Map());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -60,8 +64,15 @@ export function useCentres() {
     params?: { status?: string; q?: string; limit?: number; offset?: number },
     force = false,
   ) => {
-    if (!force && (statusRef.current === "loaded" || statusRef.current === "loading")) return;
-    await loadList(params);
+    const key = JSON.stringify(params ?? {});
+    if (!force) {
+      if (statusRef.current === "loaded") return;
+      const pending = listInFlightRef.current.get(key);
+      if (pending) return pending; // a concurrent caller already started this fetch
+    }
+    const p = loadList(params).finally(() => { listInFlightRef.current.delete(key); });
+    listInFlightRef.current.set(key, p);
+    return p;
   }, [loadList]);
 
   const loadDetail = useCallback(async (id: string) => {
@@ -76,6 +87,46 @@ export function useCentres() {
         dispatch({ type: "DETAIL_ERROR", error: err instanceof Error ? err.message : "Failed to load centre" });
       }
     }
+  }, []);
+
+  // Mirror the per-id detail cache in a ref so the guard reads the latest value
+  // without re-creating the callback, and dedup concurrent detail fetches.
+  const detailCacheRef = useRef(state.detailCache);
+  detailCacheRef.current = state.detailCache;
+  const detailInFlightRef = useRef<Map<string, Promise<void>>>(new Map());
+  // In-flight dedup for getDetail (returns the data; cache-only write).
+  const getInFlightRef = useRef<Map<string, Promise<CentreDetail>>>(new Map());
+
+  // Cache-guarded detail loader: serves a cached centre instantly and only hits
+  // the backend the first time (or with force=true). Use this from pages instead
+  // of calling fetchCentreDetail directly.
+  const ensureDetail = useCallback(async (id: string, force = false) => {
+    if (!force) {
+      const cached = detailCacheRef.current[id];
+      if (cached) { dispatch({ type: "DETAIL_FROM_CACHE", detail: cached }); return; }
+      const pending = detailInFlightRef.current.get(id);
+      if (pending) return pending;
+    }
+    const p = loadDetail(id).finally(() => { detailInFlightRef.current.delete(id); });
+    detailInFlightRef.current.set(id, p);
+    return p;
+  }, [loadDetail]);
+
+  // Returns the centre detail (cached if available, deduped, refreshed with force=true)
+  // and caches it WITHOUT touching the "current" detail. Use this from views that keep
+  // their own local state (dossier hub, map) but still want the shared cache.
+  const getDetail = useCallback(async (id: string, force = false): Promise<CentreDetail> => {
+    if (!force) {
+      const cached = detailCacheRef.current[id];
+      if (cached) return cached;
+      const pending = getInFlightRef.current.get(id);
+      if (pending) return pending;
+    }
+    const p = fetchCentreDetail(id)
+      .then((d) => { if (mountedRef.current) dispatch({ type: "DETAIL_CACHE_SET", detail: d }); return d; })
+      .finally(() => { getInFlightRef.current.delete(id); });
+    getInFlightRef.current.set(id, p);
+    return p;
   }, []);
 
   const create = useCallback(async (payload: CreateCentrePayload) => {
@@ -136,6 +187,7 @@ export function useCentres() {
     centres: state.list,
     count: state.count,
     detail: state.detail,
+    detailCache: state.detailCache,
     listStatus: state.listStatus,
     detailStatus: state.detailStatus,
     isListLoading: state.listStatus === "loading" || state.listStatus === "idle",
@@ -145,6 +197,8 @@ export function useCentres() {
     ensureList,
     revalidateList,
     loadDetail,
+    ensureDetail,
+    getDetail,
     create,
     update,
     remove,

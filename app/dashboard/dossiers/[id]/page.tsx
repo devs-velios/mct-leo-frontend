@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DossierDetailsView from "@/components/DossierDetailsView";
-import { fetchDossier } from "@/lib/features/dossiers";
-import { useDashboard } from "../../layout";
+import { useDossiersContext } from "@/lib/features/dossiers";
+import { useCentresContext } from "@/lib/features/centres";
 
 // Map the in-page "see in X" links to their routes.
 const TAB_PATHS: Record<string, string> = {
@@ -15,14 +15,14 @@ const TAB_PATHS: Record<string, string> = {
 };
 
 /**
- * Dossier detail page, keyed by the dossier id (for tracking). The detail payload is
- * centre-scoped, so we resolve the dossier → its centre, then render the dossier hub
- * focused on this specific dossier.
+ * Dossier detail page, keyed by the dossier id. The detail payload is centre-scoped,
+ * so we resolve the dossier → its centre, then render the dossier hub focused on it.
  */
 export default function DossierDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { setSelectedDossierId } = useDashboard();
+  const { getDossier } = useDossiersContext();
+  const { centres, getDetail } = useCentresContext();
   const dossierId = String(params.id);
 
   const [centreId, setCentreId] = useState<string | null>(null);
@@ -32,11 +32,26 @@ export default function DossierDetailPage() {
     let alive = true;
     setCentreId(null);
     setError(false);
-    fetchDossier(dossierId)
+    getDossier(dossierId) // cached + deduped (no double fetch)
       .then((d) => { if (alive) setCentreId(d.centre_id); })
       .catch(() => { if (alive) setError(true); });
     return () => { alive = false; };
-  }, [dossierId]);
+  }, [dossierId, getDossier]);
+
+  // Centre switcher → open the DOSSIER of the selected centre (stay in the hub).
+  // Resolve the centre's dossier id from the cached list, falling back to its detail.
+  const handleSwitchCentre = async (selectedCentreId: string) => {
+    let targetDossierId = centres.find((c) => c.id === selectedCentreId)?.dossier_id ?? null;
+    if (!targetDossierId) {
+      try {
+        const detail = await getDetail(selectedCentreId); // cached
+        targetDossierId = detail.dossiers?.[detail.dossiers.length - 1]?.id ?? null;
+      } catch {
+        /* fall through to the centre page if it has no dossier */
+      }
+    }
+    router.push(targetDossierId ? `/dashboard/dossiers/${targetDossierId}` : `/dashboard/centres/${selectedCentreId}`);
+  };
 
   if (error) {
     return (
@@ -68,7 +83,7 @@ export default function DossierDetailPage() {
       focusDossierId={dossierId}
       onClose={() => router.push("/dashboard/dossiers")}
       onNavigateToTab={(tab) => { const p = TAB_PATHS[tab]; if (p) router.push(p); }}
-      onSwitch={setSelectedDossierId}
+      onSwitch={handleSwitchCentre}
     />
   );
 }

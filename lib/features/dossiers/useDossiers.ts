@@ -4,8 +4,8 @@
 
 import { useReducer, useCallback, useRef, useEffect } from "react";
 import { dossiersReducer, initialDossiersState } from "./dossiersReducer";
-import { fetchDossiers, advanceDossierStage } from "./api";
-import { type AdvancePayload } from "./types";
+import { fetchDossiers, fetchDossier, advanceDossierStage } from "./api";
+import { type AdvancePayload, type DossierDetail } from "./types";
 
 export function useDossiers() {
   const [state, dispatch] = useReducer(dossiersReducer, initialDossiersState);
@@ -14,6 +14,11 @@ export function useDossiers() {
   statusRef.current = state.status;
   const loadedKeyRef = useRef<string | null>(null);
   const lastParamsRef = useRef<{ stage?: string; centre_id?: string } | undefined>(undefined);
+  // Dedup concurrent first-callers (components mounting in the same commit).
+  const inFlightRef = useRef<Map<string, Promise<void>>>(new Map());
+  // Single-dossier cache + dedup (used to resolve a dossier → its centre on the detail page).
+  const dossierCacheRef = useRef<Map<string, DossierDetail>>(new Map());
+  const dossierInFlightRef = useRef<Map<string, Promise<DossierDetail>>>(new Map());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -38,12 +43,32 @@ export function useDossiers() {
 
   const ensureLoaded = useCallback(async (params?: { stage?: string; centre_id?: string }, force = false) => {
     const key = JSON.stringify(params ?? {});
-    if (!force && loadedKeyRef.current === key && (statusRef.current === "loaded" || statusRef.current === "loading")) {
-      return;
+    if (!force) {
+      if (loadedKeyRef.current === key && statusRef.current === "loaded") return;
+      const pending = inFlightRef.current.get(key);
+      if (pending) return pending; // a concurrent caller already started this fetch
     }
     loadedKeyRef.current = key;
-    await refresh(params);
+    const p = refresh(params).finally(() => { inFlightRef.current.delete(key); });
+    inFlightRef.current.set(key, p);
+    return p;
   }, [refresh]);
+
+  // Cached single-dossier getter (cache-first, deduped). Resolves a dossier to its
+  // centre on the detail page without refetching or double-firing.
+  const getDossier = useCallback(async (id: string, force = false): Promise<DossierDetail> => {
+    if (!force) {
+      const cached = dossierCacheRef.current.get(id);
+      if (cached) return cached;
+      const pending = dossierInFlightRef.current.get(id);
+      if (pending) return pending;
+    }
+    const p = fetchDossier(id)
+      .then((d) => { dossierCacheRef.current.set(id, d); return d; })
+      .finally(() => { dossierInFlightRef.current.delete(id); });
+    dossierInFlightRef.current.set(id, p);
+    return p;
+  }, []);
 
   // Move a dossier one stage; backend recomputes macro status. Re-pull to reflect it.
   const advance = useCallback(async (dossierId: string, payload: AdvancePayload) => {
@@ -61,6 +86,7 @@ export function useDossiers() {
     refresh,
     revalidate,
     ensureLoaded,
+    getDossier,
     advance,
   };
 }

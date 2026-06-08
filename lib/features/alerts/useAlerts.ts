@@ -17,6 +17,8 @@ export function useAlerts() {
   const loadedKeyRef = useRef<string | null>(null);
   // Remember the last params used, so a mutation can re-pull authoritative data.
   const lastParamsRef = useRef<{ status?: AlertStatusFilter; centre_id?: string } | undefined>(undefined);
+  // Dedup concurrent first-callers (e.g. Navbar + AlertsBell mounting together).
+  const inFlightRef = useRef<Map<string, Promise<void>>>(new Map());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -45,11 +47,15 @@ export function useAlerts() {
     force = false,
   ) => {
     const key = JSON.stringify(params ?? {});
-    if (!force && loadedKeyRef.current === key && (statusRef.current === "loaded" || statusRef.current === "loading")) {
-      return;
+    if (!force) {
+      if (loadedKeyRef.current === key && statusRef.current === "loaded") return;
+      const pending = inFlightRef.current.get(key);
+      if (pending) return pending;
     }
     loadedKeyRef.current = key;
-    await refresh(params);
+    const p = refresh(params).finally(() => { inFlightRef.current.delete(key); });
+    inFlightRef.current.set(key, p);
+    return p;
   }, [refresh]);
 
   const resolve = useCallback(async (id: string) => {
