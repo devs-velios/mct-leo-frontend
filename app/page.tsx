@@ -82,11 +82,11 @@ export default function Login() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute -bottom-16 -right-16 h-96 w-96 rounded-full bg-[#EA5B2D]/10 blur-[80px]"
+          className="absolute -bottom-16 -right-16 h-96 w-96 rounded-full bg-[#E34F2D]/10 blur-[80px]"
         />
         {/* Decorative thin accent ring */}
         <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] rounded-full border border-white/5 rotate-45 pointer-events-none hidden md:block"></div>
-        <div className="absolute bottom-1/4 right-1/3 w-[200px] h-[200px] rounded-full border border-[#EA5B2D]/5 -rotate-12 pointer-events-none hidden md:block"></div>
+        <div className="absolute bottom-1/4 right-1/3 w-[200px] h-[200px] rounded-full border border-[#E34F2D]/5 -rotate-12 pointer-events-none hidden md:block"></div>
       </div>
 
       {/* Main card */}
@@ -116,10 +116,10 @@ export default function Login() {
             <img src="/foxy.svg" alt="Léo" className="w-full h-full object-contain" />
           </motion.div>
 
-          <h1 className="mt-5 text-3xl font-bold font-serif-mct text-[#2D2A56] tracking-tight relative pb-2">
+          <h1 className="mt-5 text-3xl font-bold font-serif-mct text-[#332151] tracking-tight relative pb-2">
             Bienvenue
             {/* Custom stylized orange underline */}
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-[#EA5B2D]" />
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-[#E34F2D]" />
           </h1>
           <p className="mt-3 text-sm text-[#5A5A7A] text-center font-medium font-sans">
             Espace d'onboarding MonControleTechnique
@@ -157,7 +157,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nom@exemple.com"
                 disabled={isLoading || isSuccess}
-                className="w-full rounded-3xl border border-[#5A5A7A]/15 bg-white pl-10 pr-4 py-3 text-sm text-[#2D2A56] placeholder-[#5A5A7A]/40 outline-none transition-all duration-200 focus:border-[#2D2A56] focus:ring-2 focus:ring-[#2D2A56]/10 disabled:opacity-50"
+                className="w-full rounded-3xl border border-[#5A5A7A]/15 bg-white pl-10 pr-4 py-3 text-sm text-[#332151] placeholder-[#5A5A7A]/40 outline-none transition-all duration-200 focus:border-[#332151] focus:ring-2 focus:ring-[#332151]/10 disabled:opacity-50"
               />
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function Login() {
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A7A]">
                 Mot de passe
               </label>
-              <a href="#" className="text-xs font-bold text-[#2D2A56] hover:text-[#EA5B2D] transition-colors duration-150">
+              <a href="#" className="text-xs font-bold text-[#332151] hover:text-[#E34F2D] transition-colors duration-150">
                 Oublié ?
               </a>
             </div>
@@ -181,13 +181,13 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isLoading || isSuccess}
-                className="w-full rounded-3xl border border-[#5A5A7A]/15 bg-white pl-10 pr-10 py-3 text-sm text-[#2D2A56] placeholder-[#5A5A7A]/40 outline-none transition-all duration-200 focus:border-[#2D2A56] focus:ring-2 focus:ring-[#2D2A56]/10 disabled:opacity-50"
+                className="w-full rounded-3xl border border-[#5A5A7A]/15 bg-white pl-10 pr-10 py-3 text-sm text-[#332151] placeholder-[#5A5A7A]/40 outline-none transition-all duration-200 focus:border-[#332151] focus:ring-2 focus:ring-[#332151]/10 disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading || isSuccess}
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#5A5A7A]/50 hover:text-[#2D2A56] transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#5A5A7A]/50 hover:text-[#332151] transition-colors"
               >
                 {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
               </button>
@@ -200,7 +200,7 @@ export default function Login() {
               whileTap={{ scale: 0.99 }}
               type="submit"
               disabled={isLoading || isSuccess}
-              className="relative overflow-hidden flex w-full items-center justify-center rounded-3xl bg-[#EA5B2D] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#EA5B2D]/20 transition-all duration-200 hover:bg-[#d84e20] hover:shadow-[#EA5B2D]/30 disabled:opacity-85 cursor-pointer glow-effect"
+              className="relative overflow-hidden flex w-full items-center justify-center rounded-3xl bg-[#E34F2D] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#E34F2D]/20 transition-all duration-200 hover:bg-[#DF3714] hover:shadow-[#E34F2D]/30 disabled:opacity-85 cursor-pointer glow-effect"
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin text-white" />
@@ -223,7 +223,7 @@ export default function Login() {
         <div className="mt-8 text-center space-y-3">
           <p className="text-xs font-semibold text-[#5A5A7A]">
             Pas de compte ?{" "}
-            <a href="#" className="text-[#2D2A56] hover:text-[#EA5B2D] transition-colors">
+            <a href="#" className="text-[#332151] hover:text-[#E34F2D] transition-colors">
               Accès sur invitation.
             </a>
           </p>

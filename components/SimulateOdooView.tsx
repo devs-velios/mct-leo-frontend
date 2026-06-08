@@ -45,11 +45,11 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
         <div className="mb-2 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100"><Menu className="h-5 w-5" /></button>
+          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100"><Menu className="h-5 w-5" /></button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Simulateur Odoo</h1>
+          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Simulateur Odoo</h1>
           <p className="text-xs text-[#5A5A7A]">Simuler une affaire gagnée → crée le centre + groupe WhatsApp + rappel</p>
         </div>
       </header>
@@ -64,9 +64,9 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
                 <button
                   key={p.label}
                   onClick={() => { setForm(p.payload); reset(); }}
-                  className="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 text-left transition-all duration-300 hover:border-[#EA5B2D]/20 hover:shadow-[0_12px_35px_rgba(234,91,45,0.06)] shadow-[0_2px_8px_rgba(0,0,0,0.005)] cursor-pointer"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 text-left transition-all duration-200 hover:border-[#E34F2D]/20 hover:shadow-[0_12px_35px_rgba(234,91,45,0.06)] shadow-[0_2px_8px_rgba(0,0,0,0.005)] cursor-pointer"
                 >
-                  <span className="block text-sm font-bold text-[#2D2A56] group-hover:text-[#EA5B2D] transition-colors">{p.label}</span>
+                  <span className="block text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{p.label}</span>
                   <span className="text-[11px] text-[#5A5A7A] mt-1.5 block">Groupe : {p.hint}</span>
                 </button>
               ))}
@@ -76,7 +76,7 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
           {/* Form (editable / custom) */}
           <form
             onSubmit={submit}
-            className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-300 lg:p-8"
+            className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-200 lg:p-8"
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="N° contrat *" value={form.contract_id} onChange={(v) => set("contract_id", v)} placeholder="SO-1001" />
@@ -96,7 +96,7 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
                       onClick={() => set("type", t)}
                       className={`flex-1 rounded-xl border py-3 text-xs font-extrabold transition-all cursor-pointer ${
                         form.type === t
-                          ? "border-[#EA5B2D] bg-[#EA5B2D]/5 text-[#EA5B2D] ring-2 ring-[#EA5B2D]/25 shadow-sm"
+                          ? "border-[#E34F2D] bg-[#E34F2D]/5 text-[#E34F2D] ring-2 ring-[#E34F2D]/25 shadow-sm"
                           : "border-slate-200 text-[#5A5A7A] hover:bg-slate-50/50 hover:border-slate-300"
                       }`}
                     >
@@ -117,7 +117,7 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
                     onClick={() => toggleAct(a)}
                     className={`rounded-xl border px-5 py-3 text-xs font-extrabold transition-all cursor-pointer ${
                       form.activities.includes(a)
-                        ? "border-[#EA5B2D] bg-[#EA5B2D]/5 text-[#EA5B2D] ring-2 ring-[#EA5B2D]/25 shadow-sm"
+                        ? "border-[#E34F2D] bg-[#E34F2D]/5 text-[#E34F2D] ring-2 ring-[#E34F2D]/25 shadow-sm"
                         : "border-slate-200 text-[#5A5A7A] hover:bg-slate-50/50 hover:border-slate-300"
                     }`}
                   >
@@ -142,7 +142,7 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
             <button
               type="submit"
               disabled={status === "loading"}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#EA5B2D] hover:bg-[#d24e24] px-4 py-3.5 text-sm font-bold text-white transition-all cursor-pointer shadow-[0_4px_12px_rgba(234,91,45,0.15)] active:scale-95 disabled:opacity-60"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] px-4 py-3.5 text-sm font-bold text-white transition-all cursor-pointer shadow-[0_4px_12px_rgba(234,91,45,0.15)] active:scale-95 disabled:opacity-60"
             >
               {status === "loading" ? (
                 <>
@@ -169,7 +169,7 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-slate-200/70 bg-slate-50 focus:bg-white px-4 py-3 text-sm text-[#1A1A1A] outline-none transition-all shadow-sm focus:border-[#EA5B2D] focus:ring-2 focus:ring-[#EA5B2D]/20"
+        className="w-full rounded-xl border border-slate-200/70 bg-slate-50 focus:bg-white px-4 py-3 text-sm text-[#1A1A1A] outline-none transition-all shadow-sm focus:border-[#E34F2D] focus:ring-2 focus:ring-[#E34F2D]/20"
       />
     </div>
   );

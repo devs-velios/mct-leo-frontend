@@ -84,54 +84,54 @@ const FILTER_TABS = [
     label: "Toutes phases",
     countKey: "total" as const,
     icon: Layers,
-    activeColor: "bg-gradient-to-r from-[#2D2A56] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#2D2A56]",
-    dotColor: "bg-[#EA5B2D]"
+    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
+    textColor: "text-[#332151]",
+    dotColor: "bg-[#E34F2D]"
   },
   {
     key: "Signature",
     label: "Signature",
     countKey: "signature" as const,
     icon: PenTool,
-    activeColor: "bg-gradient-to-r from-[#2D2A56] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#2D2A56]",
-    dotColor: "bg-[#EA5B2D]"
+    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
+    textColor: "text-[#332151]",
+    dotColor: "bg-[#E34F2D]"
   },
   {
     key: "Onboarding",
     label: "Onboarding",
     countKey: "onboarding" as const,
     icon: UserCheck,
-    activeColor: "bg-gradient-to-r from-[#EA5B2D] to-[#FF7A52] text-white shadow-[0_8px_20px_-4px_rgba(234,91,45,0.3)]",
-    textColor: "text-[#EA5B2D]",
-    dotColor: "bg-[#EA5B2D]"
+    activeColor: "bg-gradient-to-r from-[#E34F2D] to-[#EA5835] text-white shadow-[0_8px_20px_-4px_rgba(234,91,45,0.3)]",
+    textColor: "text-[#E34F2D]",
+    dotColor: "bg-[#E34F2D]"
   },
   {
     key: "Dépôt agrément",
     label: "Dépôt agrément",
     countKey: "depot" as const,
     icon: FolderPlus,
-    activeColor: "bg-gradient-to-r from-[#2D2A56] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#2D2A56]",
-    dotColor: "bg-[#EA5B2D]"
+    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
+    textColor: "text-[#332151]",
+    dotColor: "bg-[#E34F2D]"
   },
   {
     key: "Ouvert",
     label: "Ouvert",
     countKey: "ouvert" as const,
     icon: CheckCircle,
-    activeColor: "bg-gradient-to-r from-[#2D2A56] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#2D2A56]",
-    dotColor: "bg-[#EA5B2D]"
+    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
+    textColor: "text-[#332151]",
+    dotColor: "bg-[#E34F2D]"
   },
   {
     key: "Suivi",
     label: "Suivi",
     countKey: "suivi" as const,
     icon: Activity,
-    activeColor: "bg-gradient-to-r from-[#2D2A56] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#2D2A56]",
-    dotColor: "bg-[#EA5B2D]"
+    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
+    textColor: "text-[#332151]",
+    dotColor: "bg-[#E34F2D]"
   }
 ];
 
@@ -285,7 +285,7 @@ export default function CarteListingView({
       <header className="px-4 sm:px-6 py-4 bg-white border-b border-slate-100 shrink-0 relative z-10 w-full min-w-0">
         {setMobileMenuOpen && (
           <div className="flex items-center justify-between md:hidden mb-2 w-full">
-            <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
+            <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
@@ -296,7 +296,7 @@ export default function CarteListingView({
         )}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div>
-            <h2 className="text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight">
+            <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
               Carte interactive du réseau
             </h2>
             <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -318,10 +318,10 @@ export default function CarteListingView({
             <div key={title} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{title}</p>
-                <h3 className="mt-1 text-2xl font-bold text-[#2D2A56]">{value}</h3>
+                <h3 className="mt-1 text-2xl font-bold text-[#332151]">{value}</h3>
                 {hint && <p className="mt-0.5 text-[10px] text-slate-400">{hint}</p>}
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#2D2A56]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#332151]">
                 <Icon className="h-5 w-5" />
               </div>
             </div>
@@ -340,7 +340,7 @@ export default function CarteListingView({
                   <TabsTrigger key={tab.key} value={tab.key}>
                     <Icon className="h-3.5 w-3.5" />
                     {tab.label}
-                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#2D2A56]">{counts[tab.countKey]}</span>
+                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{counts[tab.countKey]}</span>
                   </TabsTrigger>
                 );
               })}
@@ -371,19 +371,19 @@ export default function CarteListingView({
             {/* Legend / Info layer overlay */}
             <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-100 text-[10px] space-y-1.5 text-slate-600 font-semibold shadow-md">
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#EA5B2D] shadow-sm"></span>
+                <span className="h-2.5 w-2.5 rounded-full bg-[#E34F2D] shadow-sm"></span>
                 <span>Active Onboarding ({counts.onboarding})</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#2D2A56] shadow-sm"></span>
+                <span className="h-2.5 w-2.5 rounded-full bg-[#332151] shadow-sm"></span>
                 <span>Autres phases ({counts.total - counts.onboarding})</span>
               </div>
             </div>
 
             {/* Region HUD Overlay */}
             {hoveredRegion && (
-              <div className="absolute bottom-4 left-4 z-10 bg-[#2D2A56] text-white px-3 py-2 rounded-2xl shadow-lg border border-white/10 flex flex-col gap-0.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                <span className="text-[10px] font-extrabold tracking-wider uppercase text-[#EA5B2D]">
+              <div className="absolute bottom-4 left-4 z-10 bg-[#332151] text-white px-3 py-2 rounded-2xl shadow-lg border border-white/10 flex flex-col gap-0.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <span className="text-[10px] font-extrabold tracking-wider uppercase text-[#E34F2D]">
                   {REGIONS.find(r => r.id === hoveredRegion)?.name}
                 </span>
                 <span className="text-[9px] font-bold text-white/80">
@@ -403,7 +403,7 @@ export default function CarteListingView({
                   key={i}
                   onClick={ctrl.onClick}
                   title={ctrl.label}
-                  className="map-control-btn w-9 h-9 rounded-xl bg-white hover:bg-slate-50 border border-slate-100 text-[#2D2A56] flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
+                  className="map-control-btn w-9 h-9 rounded-xl bg-white hover:bg-slate-50 border border-slate-100 text-[#332151] flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
                 >
                   <ctrl.icon className="h-4 w-4" />
                 </button>
@@ -430,10 +430,10 @@ export default function CarteListingView({
                       <path
                         key={region.id}
                         d={region.path}
-                        className="transition-all duration-300 cursor-pointer"
+                        className="transition-all duration-200 cursor-pointer"
                         style={{
                           fill: isRegionHovered ? "rgba(234, 91, 45, 0.08)" : "rgba(45, 42, 86, 0.03)",
-                          stroke: isRegionHovered ? "#EA5B2D" : "#E2E8F0",
+                          stroke: isRegionHovered ? "#E34F2D" : "#E2E8F0",
                           strokeWidth: isRegionHovered ? 1.5 : 1
                         }}
                         onMouseEnter={() => setHoveredRegion(region.id)}
@@ -461,14 +461,14 @@ export default function CarteListingView({
                             cx={cluster.centroid.x}
                             cy={cluster.centroid.y}
                             r={14}
-                            className="fill-[#EA5B2D] opacity-20 animate-ping"
+                            className="fill-[#E34F2D] opacity-20 animate-ping"
                             style={{ transformOrigin: `${cluster.centroid.x}px ${cluster.centroid.y}px` }}
                           />
                           <circle
                             cx={cluster.centroid.x}
                             cy={cluster.centroid.y}
                             r={12}
-                            className="fill-[#EA5B2D] stroke-white stroke-2 shadow-md hover:scale-110 transition-transform duration-200"
+                            className="fill-[#E34F2D] stroke-white stroke-2 shadow-md hover:scale-110 transition-transform duration-200"
                           />
                           <text
                             x={cluster.centroid.x}
@@ -488,7 +488,7 @@ export default function CarteListingView({
                     const isHovered = hoveredCenter?.id === center.id;
                     const isSelected = selectedCenterId === center.id;
                     const isActive = center.phase === "Onboarding" || center.phase === "Ouvert";
-                    const markerColor = center.phase === "Onboarding" ? "#EA5B2D" : "#2D2A56";
+                    const markerColor = center.phase === "Onboarding" ? "#E34F2D" : "#332151";
                     
                     // Determine radius based on importance/activity level
                     const radius = isHovered || isSelected ? 7 : (center.joursInactif === 0 ? 5.5 : 4.5);
@@ -525,7 +525,7 @@ export default function CarteListingView({
                           fill={markerColor}
                           stroke="#FFFFFF"
                           strokeWidth={1.5}
-                          className="transition-all duration-200 hover:scale-125 hover:stroke-[#EA5B2D] shadow-md"
+                          className="transition-all duration-200 hover:scale-125 hover:stroke-[#E34F2D] shadow-md"
                           onMouseEnter={() => setHoveredCenter(center)}
                           onClick={() => onOpenDossier?.(center.id)}
                         />
@@ -546,34 +546,34 @@ export default function CarteListingView({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="flex-1 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-5 flex flex-col justify-between transition-all duration-300"
+                  className="flex-1 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-5 flex flex-col justify-between transition-all duration-200"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <span className="font-mono text-[9px] font-bold text-[#5A5A7A] uppercase">
                         {hoveredCenter.code ?? hoveredCenter.id}
                       </span>
-                      <span className="text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#EA5B2D]/10 text-[#EA5B2D] border border-[#EA5B2D]/20 leading-none">
+                      <span className="text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#E34F2D]/10 text-[#E34F2D] border border-[#E34F2D]/20 leading-none">
                         {hoveredCenter.phase}
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-extrabold text-[#2D2A56] leading-snug mb-1">
+                    <h3 className="text-sm font-extrabold text-[#332151] leading-snug mb-1">
                       {na(hoveredCenter.enseigne)}
                     </h3>
                     <p className="text-[10px] font-bold text-slate-400 mb-5 flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-[#EA5B2D]" />
+                      <MapPin className="h-3 w-3 text-[#E34F2D]" />
                       {na(hoveredCenter.ville)}
                     </p>
 
                     <div className="space-y-3 border-t border-slate-50 pt-4 text-[10px] font-semibold text-slate-500">
                       {/* Contrat + activités */}
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="px-2 py-0.5 rounded-md bg-[#2D2A56]/5 text-[#2D2A56] font-extrabold text-[9px] uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-md bg-[#332151]/5 text-[#332151] font-extrabold text-[9px] uppercase tracking-wider">
                           {hoveredInfo?.type ?? "—"}
                         </span>
                         {(hoveredInfo?.activites ?? []).map((a) => (
-                          <span key={a} className="px-2 py-0.5 rounded-md bg-[#EA5B2D]/10 text-[#EA5B2D] font-extrabold text-[9px]">{a}</span>
+                          <span key={a} className="px-2 py-0.5 rounded-md bg-[#E34F2D]/10 text-[#E34F2D] font-extrabold text-[9px]">{a}</span>
                         ))}
                       </div>
 
@@ -631,7 +631,7 @@ export default function CarteListingView({
 
                   <button
                     onClick={() => onOpenDossier?.(hoveredCenter.id)}
-                    className="w-full mt-6 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:bg-[#EA5B2D] hover:text-white transition-all text-[10px] font-extrabold text-[#EA5B2D] uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                    className="w-full mt-6 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:bg-[#E34F2D] hover:text-white transition-all text-[10px] font-extrabold text-[#E34F2D] uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
                   >
                     <span>Ouvrir le dossier complet</span>
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -645,9 +645,9 @@ export default function CarteListingView({
                   className="flex-1 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-6 flex flex-col items-center justify-center text-center"
                 >
                   <div className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mb-4 border border-slate-100/50 shadow-inner">
-                    <MapPin className="h-6 w-6 text-[#2D2A56] opacity-75" />
+                    <MapPin className="h-6 w-6 text-[#332151] opacity-75" />
                   </div>
-                  <h4 className="text-xs font-bold text-[#2D2A56] mb-1">
+                  <h4 className="text-xs font-bold text-[#332151] mb-1">
                     Survolez un centre
                   </h4>
                   <p className="text-[10px] font-semibold text-slate-400 max-w-[150px] leading-relaxed">

@@ -101,7 +101,7 @@ export default function AppSidebar({ activeTab, onNavigate, userEmail, onLogout 
           {/* Brand text — hidden when collapsed */}
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
             <h1 className="truncate font-serif-mct text-lg font-bold tracking-tight text-sidebar-foreground">MCT Léo</h1>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-[#EA5B2D]">AI Onboarding</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#E34F2D]">AI Onboarding</p>
           </div>
           {/* Collapse / expand toggle */}
           <button
@@ -132,9 +132,9 @@ export default function AppSidebar({ activeTab, onNavigate, userEmail, onLogout 
                         isActive={active}
                         tooltip={item.name}
                         onClick={() => handleNav(item.name)}
-                        className={`h-9 font-semibold ${active ? "!text-[#EA5B2D] !bg-white/[0.06]" : "text-sidebar-foreground/75"}`}
+                        className={`h-9 font-semibold ${active ? "!text-[#E34F2D] !bg-white/[0.06]" : "text-sidebar-foreground/75"}`}
                       >
-                        <Icon className={active ? "text-[#EA5B2D]" : "text-sidebar-foreground/55"} />
+                        <Icon className={active ? "text-[#E34F2D]" : "text-sidebar-foreground/55"} />
                         <span>{item.name}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -155,7 +155,7 @@ export default function AppSidebar({ activeTab, onNavigate, userEmail, onLogout 
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sidebar-foreground">
                   <User className="h-4 w-4" />
                 </div>
-                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#2D2A56]" />
+                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#332151]" />
               </div>
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-[11px] font-bold text-sidebar-foreground">{userEmail}</p>
@@ -165,7 +165,7 @@ export default function AppSidebar({ activeTab, onNavigate, userEmail, onLogout 
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56">
-            <DropdownMenuLabel className="truncate text-xs font-bold normal-case tracking-normal text-[#2D2A56]">
+            <DropdownMenuLabel className="truncate text-xs font-bold normal-case tracking-normal text-[#332151]">
               {userEmail}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

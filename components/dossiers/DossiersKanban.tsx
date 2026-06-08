@@ -20,8 +20,8 @@ interface DossiersKanbanProps {
 
 const COLUMNS: { key: Phase; label: string; badge: string }[] = [
   { key: "Signature", label: "Signature", badge: "bg-slate-100 text-slate-600 border-slate-200" },
-  { key: "Onboarding", label: "Onboarding", badge: "bg-[#EA5B2D]/10 text-[#EA5B2D] border-[#EA5B2D]/20" },
-  { key: "Dépôt", label: "Dépôt", badge: "bg-indigo-50 text-[#2D2A56] border-indigo-100" },
+  { key: "Onboarding", label: "Onboarding", badge: "bg-[#E34F2D]/10 text-[#E34F2D] border-[#E34F2D]/20" },
+  { key: "Dépôt", label: "Dépôt", badge: "bg-indigo-50 text-[#332151] border-indigo-100" },
   { key: "Ouvert", label: "Ouvert", badge: "bg-emerald-50 text-emerald-600 border-emerald-100" },
   { key: "Suivi qualité", label: "Suivi qualité", badge: "bg-teal-50 text-teal-600 border-teal-100" }
 ];
@@ -59,7 +59,7 @@ export default function DossiersKanban({
             onDrop={(e) => onDrop(e, column.key)}
             className={`w-72 shrink-0 flex flex-col rounded-2xl p-4 transition-all duration-200 ${
               isHovered
-                ? "bg-[#EA5B2D]/5 border-2 border-dashed border-[#EA5B2D]/40 scale-[1.01]"
+                ? "bg-[#E34F2D]/5 border-2 border-dashed border-[#E34F2D]/40 scale-[1.01]"
                 : "bg-slate-100/60 border border-slate-200/40"
             }`}
           >
@@ -84,7 +84,7 @@ export default function DossiersKanban({
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="font-mono font-extrabold text-[10px] text-[#2D2A56] leading-none">
+                    <span className="font-mono font-extrabold text-[10px] text-[#332151] leading-none">
                       {dossier.code ?? dossier.id}
                     </span>
                   </div>

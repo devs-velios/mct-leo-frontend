@@ -50,7 +50,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
         "Lien d'accès unique généré pour l'espace d'onboarding gérant."
       ],
       icon: MessageSquare,
-      themeColor: "from-[#2D2A56] to-[#1E1D3B]"
+      themeColor: "from-[#332151] to-[#1E1D3B]"
     },
     {
       number: 2,
@@ -63,7 +63,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
         "Instructions simples pour la numérisation des justificatifs."
       ],
       icon: Clock,
-      themeColor: "from-amber-500 to-[#EA5B2D]"
+      themeColor: "from-amber-500 to-[#E34F2D]"
     },
     {
       number: 3,
@@ -76,7 +76,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
         "Alerte immédiate en cas de document flou, incomplet ou expiré."
       ],
       icon: FileText,
-      themeColor: "from-[#EA5B2D] to-rose-600"
+      themeColor: "from-[#E34F2D] to-rose-600"
     },
     {
       number: 4,
@@ -102,7 +102,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
         "Canal d'assistance permanent disponible pour le gérant."
       ],
       icon: Award,
-      themeColor: "from-indigo-500 to-[#2D2A56]"
+      themeColor: "from-indigo-500 to-[#332151]"
     }
   ];
 
@@ -111,19 +111,19 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
       title: "Pas de groupes WhatsApp perdus",
       description: "Chaque centre dispose de son canal de discussion WhatsApp structuré et relié directement à la plateforme centrale Léo. Rien ne se perd dans les conversations personnelles.",
       icon: Users,
-      glow: "hover:shadow-[0_20px_40px_rgba(45,42,86,0.1),0_0_20px_rgba(45,42,86,0.05)] hover:border-[#2D2A56]/20"
+      glow: "hover:shadow-[0_20px_40px_rgba(45,42,86,0.1),0_0_20px_rgba(45,42,86,0.05)] hover:border-[#332151]/20"
     },
     {
       title: "Zéro double saisie",
       description: "Les documents envoyés par le gérant sont automatiquement parsés par l'IA et insérés dans Odoo. Plus aucun copier-coller manuel n'est requis de la part de vos équipes.",
       icon: Zap,
-      glow: "hover:shadow-[0_20px_40px_rgba(234,91,45,0.1),0_0_20px_rgba(234,91,45,0.05)] hover:border-[#EA5B2D]/20"
+      glow: "hover:shadow-[0_20px_40px_rgba(234,91,45,0.1),0_0_20px_rgba(234,91,45,0.05)] hover:border-[#E34F2D]/20"
     },
     {
       title: "Relance douce (WhatsApp)",
       description: "L'IA relance le gérant directement sur son téléphone via WhatsApp avec des messages naturels et polis, garantissant des taux de réponse 3x supérieurs à l'e-mail.",
       icon: Sparkles,
-      glow: "hover:shadow-[0_20px_40px_rgba(234,91,45,0.1),0_0_20px_rgba(234,91,45,0.05)] hover:border-[#EA5B2D]/20"
+      glow: "hover:shadow-[0_20px_40px_rgba(234,91,45,0.1),0_0_20px_rgba(234,91,45,0.05)] hover:border-[#E34F2D]/20"
     },
     {
       title: "Formulaires pré-remplis",
@@ -166,7 +166,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
       <header className="px-4 sm:px-6 py-4 bg-white border-b border-slate-100 shrink-0 relative z-10 w-full min-w-0">
         {setMobileMenuOpen && (
           <div className="flex items-center justify-between md:hidden mb-2 w-full">
-            <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
+            <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
@@ -175,7 +175,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
             </button>
           </div>
         )}
-        <h2 className="text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight">
+        <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
           Comment fonctionne Léo ?
         </h2>
         <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -188,14 +188,14 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
         <div className="max-w-[1400px] mx-auto space-y-12">
 
           {/* 1. Hero Block: Glowing interactive design */}
-          <div className="rounded-3xl bg-gradient-to-br from-[#2D2A56] to-[#1E1D3B] text-white p-6 md:p-10 relative overflow-hidden shadow-[0_10px_30px_rgba(45,42,86,0.1)] border border-[#2D2A56]/30">
+          <div className="rounded-3xl bg-gradient-to-br from-[#332151] to-[#1E1D3B] text-white p-6 md:p-10 relative overflow-hidden shadow-[0_10px_30px_rgba(45,42,86,0.1)] border border-[#332151]/30">
             {/* Ambient gradients */}
             <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#EA5B2D]/20 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#E34F2D]/20 blur-3xl pointer-events-none" />
             
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="space-y-4 lg:col-span-7">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#EA5B2D] text-[10px] font-extrabold tracking-widest uppercase">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#E34F2D] text-[10px] font-extrabold tracking-widest uppercase">
                   <Sparkles className="h-3 w-3 animate-spin" style={{ animationDuration: '3s' }} />
                   Plateforme Unifiée Onboarding
                 </div>
@@ -209,7 +209,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               <div className="lg:col-span-5 flex justify-center lg:justify-end relative">
                 {/* Floating graphic mock */}
                 <div className="relative w-64 h-64 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#EA5B2D]/10 to-indigo-500/10 rounded-full blur-xl animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#E34F2D]/10 to-indigo-500/10 rounded-full blur-xl animate-pulse" />
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
@@ -218,11 +218,11 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                   <motion.div
                     animate={{ rotate: -360 }}
                     transition={{ repeat: Infinity, duration: 15, ease: "linear" }}
-                    className="absolute w-44 h-44 rounded-full border border-[#EA5B2D]/20 border-dashed flex items-center justify-center"
+                    className="absolute w-44 h-44 rounded-full border border-[#E34F2D]/20 border-dashed flex items-center justify-center"
                   />
                   {/* Central Glow Core */}
                   <div className="relative h-28 w-28 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 flex flex-col items-center justify-center shadow-inner z-10">
-                    <Cpu className="h-8 w-8 text-[#EA5B2D] mb-1.5" />
+                    <Cpu className="h-8 w-8 text-[#E34F2D] mb-1.5" />
                     <span className="text-[10px] font-extrabold tracking-widest uppercase text-white/95">MCT IA CORE</span>
                   </div>
                 </div>
@@ -236,7 +236,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase block">
                 SIMULATEUR INTERACTIF
               </span>
-              <h2 className="text-2xl md:text-3xl font-bold font-serif-mct text-[#2D2A56]">
+              <h2 className="text-2xl md:text-3xl font-bold font-serif-mct text-[#332151]">
                 5 étapes, une seule narration
               </h2>
               <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-semibold">
@@ -253,13 +253,13 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                   <button
                     key={idx}
                     onClick={() => selectStep(idx)}
-                    className={`flex items-center gap-2 px-3 py-2 text-[10px] md:text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer ${
+                    className={`flex items-center gap-2 px-3 py-2 text-[10px] md:text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                       isActive
-                        ? "bg-[#2D2A56] text-white shadow-md"
-                        : "text-[#5A5A7A] hover:bg-white hover:text-[#2D2A56]"
+                        ? "bg-[#332151] text-white shadow-md"
+                        : "text-[#5A5A7A] hover:bg-white hover:text-[#332151]"
                     }`}
                   >
-                    <Icon className={`h-3.5 w-3.5 ${isActive ? "text-[#EA5B2D]" : ""}`} />
+                    <Icon className={`h-3.5 w-3.5 ${isActive ? "text-[#E34F2D]" : ""}`} />
                     <span className="hidden sm:inline">{step.shortTitle}</span>
                     <span className="sm:hidden">{step.number}</span>
                   </button>
@@ -273,11 +273,11 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               {/* Left Column: Description card of the active step */}
               <div className="lg:col-span-5 flex flex-col justify-between bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-6 md:p-8 relative overflow-hidden group">
                 {/* Shine Sweep */}
-                <div className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-slate-100/40 to-transparent -skew-x-20 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+                <div className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-slate-100/40 to-transparent -skew-x-20 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-200 ease-in-out pointer-events-none" />
                 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#EA5B2D] bg-[#EA5B2D]/10 px-3 py-1 rounded-full border border-[#EA5B2D]/20">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#E34F2D] bg-[#E34F2D]/10 px-3 py-1 rounded-full border border-[#E34F2D]/20">
                       Étape {steps[activeStep].number} sur 5
                     </span>
                     {isAutoPlaying && (
@@ -288,7 +288,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     )}
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-[#2D2A56] font-serif-mct tracking-tight">
+                  <h3 className="text-xl font-extrabold text-[#332151] font-serif-mct tracking-tight">
                     {steps[activeStep].title}
                   </h3>
 
@@ -302,7 +302,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     </span>
                     {steps[activeStep].bullets.map((bullet, bIdx) => (
                       <div key={bIdx} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-[#EA5B2D] shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-4 w-4 text-[#E34F2D] shrink-0 mt-0.5" />
                         <span className="text-[11px] text-slate-700 font-bold leading-tight">
                           {bullet}
                         </span>
@@ -320,7 +320,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                   </button>
                   <button
                     onClick={() => selectStep((activeStep + 1) % steps.length)}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#2D2A56] text-[10px] font-bold text-white hover:bg-[#1E1D3B] cursor-pointer flex items-center gap-1"
+                    className="px-3.5 py-1.5 rounded-xl bg-[#332151] text-[10px] font-bold text-white hover:bg-[#1E1D3B] cursor-pointer flex items-center gap-1"
                   >
                     Suivant
                     <ArrowRight className="h-3 w-3" />
@@ -329,9 +329,9 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               </div>
 
               {/* Right Column: Interactive device preview simulation */}
-              <div className="lg:col-span-7 bg-[#2D2A56] rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-lg border border-white/5 min-h-[350px] sm:min-h-[420px]">
+              <div className="lg:col-span-7 bg-[#332151] rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-lg border border-white/5 min-h-[350px] sm:min-h-[420px]">
                 {/* Glowing spots */}
-                <div className="absolute top-10 right-10 h-40 w-40 rounded-full bg-[#EA5B2D]/10 blur-2xl pointer-events-none" />
+                <div className="absolute top-10 right-10 h-40 w-40 rounded-full bg-[#E34F2D]/10 blur-2xl pointer-events-none" />
                 <div className="absolute bottom-10 left-10 h-40 w-40 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
 
                 <AnimatePresence mode="wait">
@@ -346,7 +346,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     >
                       {/* WhatsApp Mock Header */}
                       <div className="bg-slate-800 px-4 py-3 border-b border-white/5 flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-[#EA5B2D]/10 border border-[#EA5B2D]/20 flex items-center justify-center text-[#EA5B2D] font-extrabold text-[10px]">
+                        <div className="h-8 w-8 rounded-full bg-[#E34F2D]/10 border border-[#E34F2D]/20 flex items-center justify-center text-[#E34F2D] font-extrabold text-[10px]">
                           L
                         </div>
                         <div>
@@ -376,7 +376,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                           transition={{ delay: 1.2 }}
                           className="bg-slate-800 text-white p-3 rounded-2xl rounded-tl-none text-[10px] max-w-[85%] leading-relaxed border border-white/5 shadow-sm font-semibold"
                         >
-                          Je vais vous accompagner dans toutes les démarches d'onboarding. Voici votre lien d'accès unique : <span className="text-[#EA5B2D] underline">app.mct.fr/onboarding</span>
+                          Je vais vous accompagner dans toutes les démarches d'onboarding. Voici votre lien d'accès unique : <span className="text-[#E34F2D] underline">app.mct.fr/onboarding</span>
                         </motion.div>
                       </div>
                     </motion.div>
@@ -393,7 +393,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     >
                       {/* WhatsApp Mock Header */}
                       <div className="bg-slate-800 px-4 py-3 border-b border-white/5 flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-[#EA5B2D]/10 border border-[#EA5B2D]/20 flex items-center justify-center text-[#EA5B2D] font-extrabold text-[10px]">
+                        <div className="h-8 w-8 rounded-full bg-[#E34F2D]/10 border border-[#E34F2D]/20 flex items-center justify-center text-[#E34F2D] font-extrabold text-[10px]">
                           L
                         </div>
                         <div>
@@ -436,7 +436,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     >
                       <div className="flex items-center justify-between pb-3 border-b border-white/5">
                         <div className="flex items-center gap-2">
-                          <Cpu className="h-4.5 w-4.5 text-[#EA5B2D] animate-pulse" />
+                          <Cpu className="h-4.5 w-4.5 text-[#E34F2D] animate-pulse" />
                           <span className="text-[11px] font-extrabold tracking-wider text-white uppercase">ANALYSE OCR EN DIRECT</span>
                         </div>
                         <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Active</span>
@@ -448,7 +448,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                         <motion.div
                           animate={{ top: ["0%", "95%", "0%"] }}
                           transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                          className="absolute left-0 right-0 h-0.5 bg-[#EA5B2D] shadow-[0_0_10px_#EA5B2D] z-10 pointer-events-none"
+                          className="absolute left-0 right-0 h-0.5 bg-[#E34F2D] shadow-[0_0_10px_#E34F2D] z-10 pointer-events-none"
                         />
                         
                         <div className="space-y-2 relative z-0">
@@ -482,7 +482,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
 
                       <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold px-1">
                         <span>Extractions validées : 3/3</span>
-                        <span className="text-[#EA5B2D]">Précision global : 99.4%</span>
+                        <span className="text-[#E34F2D]">Précision global : 99.4%</span>
                       </div>
                     </motion.div>
                   )}
@@ -574,7 +574,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                             />
                             <span>Assistance Ticket Direct (WhatsApp)</span>
                           </div>
-                          <span className="text-[8px] text-[#EA5B2D] font-extrabold">24/7 ACTIF</span>
+                          <span className="text-[8px] text-[#E34F2D] font-extrabold">24/7 ACTIF</span>
                         </div>
                       </div>
                     </motion.div>
@@ -588,8 +588,8 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
           {/* 3. Interactive ROI & Savings Simulator (WOW Factor, Not AI template) */}
           <section className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-[#EA5B2D]" />
-              <h3 className="text-xl font-bold font-serif-mct text-[#2D2A56]">
+              <Calculator className="h-5 w-5 text-[#E34F2D]" />
+              <h3 className="text-xl font-bold font-serif-mct text-[#332151]">
                 Simulateur de rentabilité administrative
               </h3>
             </div>
@@ -603,7 +603,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               <div className="lg:col-span-6 space-y-4">
                 <div className="flex justify-between items-center font-bold text-xs">
                   <span className="text-slate-600">Centres dans votre pipeline</span>
-                  <span className="text-lg text-[#EA5B2D] font-serif-mct">{centresCount} centres</span>
+                  <span className="text-lg text-[#E34F2D] font-serif-mct">{centresCount} centres</span>
                 </div>
                 <input
                   type="range"
@@ -611,7 +611,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                   max="50"
                   value={centresCount}
                   onChange={(e) => setCentresCount(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#EA5B2D]"
+                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#E34F2D]"
                 />
                 <div className="flex justify-between text-[9px] text-slate-400 font-extrabold">
                   <span>1 CENTRE</span>
@@ -622,13 +622,13 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
 
               {/* Dynamic Simulated Calculations (Right) */}
               <div className="lg:col-span-6 grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2D2A56] to-[#1E1D3B] text-white space-y-1">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#332151] to-[#1E1D3B] text-white space-y-1">
                   <span className="block text-[8px] font-extrabold uppercase tracking-widest text-slate-300">ÉCONOMIE FINANCIÈRE</span>
                   <motion.span
                     key={centresCount}
                     initial={{ scale: 0.95, opacity: 0.8 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="block text-xl md:text-2xl font-bold font-serif-mct text-[#EA5B2D]"
+                    className="block text-xl md:text-2xl font-bold font-serif-mct text-[#E34F2D]"
                   >
                     {new Intl.NumberFormat('fr-FR').format(centresCount * 12000)} € / an
                   </motion.span>
@@ -640,7 +640,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     key={centresCount}
                     initial={{ scale: 0.95, opacity: 0.8 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="block text-xl md:text-2xl font-bold font-serif-mct text-[#2D2A56]"
+                    className="block text-xl md:text-2xl font-bold font-serif-mct text-[#332151]"
                   >
                     {centresCount * 10} heures / sem
                   </motion.span>
@@ -655,7 +655,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase block">
                 AVANTAGES
               </span>
-              <h2 className="text-2xl md:text-3xl font-bold font-serif-mct text-[#2D2A56]">
+              <h2 className="text-2xl md:text-3xl font-bold font-serif-mct text-[#332151]">
                 6 avantages concrets
               </h2>
               <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-semibold">
@@ -673,16 +673,16 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     key={idx}
                     whileHover={{ y: -5, scale: 1.015 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className={`group relative overflow-hidden bg-white p-6 rounded-3xl border border-slate-100/60 transition-all duration-300 ${adv.glow}`}
+                    className={`group relative overflow-hidden bg-white p-6 rounded-3xl border border-slate-100/60 transition-all duration-200 ${adv.glow}`}
                   >
                     {/* Shiny sweep overlay */}
-                    <div className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-slate-100/30 to-transparent -skew-x-20 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+                    <div className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-slate-100/30 to-transparent -skew-x-20 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-200 ease-in-out pointer-events-none" />
 
                     <div>
-                      <div className="h-9 w-9 rounded-xl bg-orange-50 text-[#EA5B2D] flex items-center justify-center mb-4 border border-[#EA5B2D]/10 group-hover:scale-110 transition-transform duration-300">
+                      <div className="h-9 w-9 rounded-xl bg-orange-50 text-[#E34F2D] flex items-center justify-center mb-4 border border-[#E34F2D]/10 group-hover:scale-110 transition-transform duration-200">
                         <AdvIcon className="h-4.5 w-4.5" />
                       </div>
-                      <h4 className="text-xs md:text-sm font-extrabold text-[#2D2A56] uppercase tracking-wide mb-2 leading-snug">
+                      <h4 className="text-xs md:text-sm font-extrabold text-[#332151] uppercase tracking-wide mb-2 leading-snug">
                         {adv.title}
                       </h4>
                       <p className="text-[11px] md:text-xs text-slate-500 leading-relaxed font-semibold">
@@ -698,10 +698,10 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
           {/* 5. Live Simulation / WhatsApp Sandbox Test */}
           <section className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.015)] text-center space-y-6">
             <div className="space-y-2">
-              <span className="text-[#EA5B2D] text-[10px] font-extrabold tracking-widest uppercase block">
+              <span className="text-[#E34F2D] text-[10px] font-extrabold tracking-widest uppercase block">
                 TESTER LA DÉMO EN DIRECT
               </span>
-              <h3 className="text-xl md:text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight">
+              <h3 className="text-xl md:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
                 Un message, une démo instantanée
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed font-semibold max-w-md mx-auto">
@@ -711,20 +711,20 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
 
             {/* Simulated telephone number widget */}
             <div className="inline-flex items-center gap-3 bg-slate-50 border border-slate-200/50 py-3.5 px-6 rounded-2xl shadow-inner select-all relative overflow-hidden group">
-              <Smartphone className="h-5 w-5 text-[#EA5B2D]" />
-              <span className="text-lg md:text-xl font-extrabold font-serif-mct text-[#2D2A56] tracking-wider">+33 7 59 95 95 21</span>
+              <Smartphone className="h-5 w-5 text-[#E34F2D]" />
+              <span className="text-lg md:text-xl font-extrabold font-serif-mct text-[#332151] tracking-wider">+33 7 59 95 95 21</span>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <button
                 type="button"
-                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-[#EA5B2D] hover:bg-[#d84e20] text-white transition-colors cursor-pointer shadow-md shadow-[#EA5B2D]/20 active:scale-95"
+                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] text-white transition-colors cursor-pointer shadow-md shadow-[#E34F2D]/20 active:scale-95"
               >
                 Lancer une simulation
               </button>
               <button
                 type="button"
-                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-white border border-[#2D2A56] text-[#2D2A56] hover:bg-slate-50 transition-colors cursor-pointer active:scale-95"
+                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-white border border-[#332151] text-[#332151] hover:bg-slate-50 transition-colors cursor-pointer active:scale-95"
               >
                 Contacter un conseiller
               </button>

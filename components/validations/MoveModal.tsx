@@ -38,8 +38,8 @@ export default function MoveModal({ item, options, onClose, onConfirm }: MoveMod
             className="relative w-full max-w-md rounded-2xl bg-white p-6 text-[#1A1A1A] shadow-2xl border border-slate-200"
           >
             <div className="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
-              <h3 className="flex items-center gap-2 text-lg font-bold font-serif-mct text-[#2D2A56]">
-                <FolderInput className="h-5 w-5 text-[#EA5B2D]" />
+              <h3 className="flex items-center gap-2 text-lg font-bold font-serif-mct text-[#332151]">
+                <FolderInput className="h-5 w-5 text-[#E34F2D]" />
                 Déplacer la pièce
               </h3>
               <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 text-slate-500 cursor-pointer">
@@ -49,7 +49,7 @@ export default function MoveModal({ item, options, onClose, onConfirm }: MoveMod
 
             <div className="space-y-4">
               <p className="text-xs text-slate-500 font-semibold">
-                Choisissez le dossier de destination pour <span className="font-extrabold text-[#2D2A56]">{item.docType}</span> ({item.code}).
+                Choisissez le dossier de destination pour <span className="font-extrabold text-[#332151]">{item.docType}</span> ({item.code}).
               </p>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A] mb-1.5">
@@ -68,7 +68,7 @@ export default function MoveModal({ item, options, onClose, onConfirm }: MoveMod
                 <button
                   onClick={() => folder && onConfirm(folder)}
                   disabled={!folder}
-                  className="flex-1 py-2.5 text-xs font-bold rounded-lg bg-[#EA5B2D] hover:bg-[#d24e24] text-white transition-colors cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2.5 text-xs font-bold rounded-lg bg-[#E34F2D] hover:bg-[#DF3714] text-white transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Déplacer
                 </button>

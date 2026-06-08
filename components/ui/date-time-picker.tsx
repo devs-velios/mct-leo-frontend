@@ -62,12 +62,12 @@ export function DateTimePicker({
           type="button"
           disabled={disabled}
           className={cn(
-            "flex h-10 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm transition-colors hover:border-[#2D2A56]/30 focus:outline-none focus:ring-2 focus:ring-[#2D2A56]/10 disabled:opacity-50",
+            "flex h-10 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm transition-colors hover:border-[#332151]/30 focus:outline-none focus:ring-2 focus:ring-[#332151]/10 disabled:opacity-50",
             className,
           )}
         >
           <CalendarDays className="h-4 w-4 shrink-0 text-slate-400" />
-          <span className={cn("truncate", value ? "font-semibold text-[#2D2A56]" : "font-medium text-slate-400")}>
+          <span className={cn("truncate", value ? "font-semibold text-[#332151]" : "font-medium text-slate-400")}>
             {value ? fmt(value) : placeholder}
           </span>
         </button>
@@ -94,7 +94,7 @@ export function DateTimePicker({
                   onClick={() => handleTime(t)}
                   className={cn(
                     "rounded-lg px-2 py-1.5 text-xs font-bold transition-colors",
-                    selectedTime === t ? "bg-[#2D2A56] text-white" : "text-[#2D2A56] hover:bg-slate-100",
+                    selectedTime === t ? "bg-[#332151] text-white" : "text-[#332151] hover:bg-slate-100",
                   )}
                 >
                   {t}

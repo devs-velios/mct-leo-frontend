@@ -45,7 +45,7 @@ export default function ConversationsList({
       <header className="px-4 sm:px-6 py-4 sm:py-6 bg-white border-b border-slate-100 shrink-0 relative z-10 w-full min-w-0">
         {setMobileMenuOpen && (
           <div className="flex items-center justify-between lg:hidden mb-2 w-full">
-            <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
+            <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
@@ -57,7 +57,7 @@ export default function ConversationsList({
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A] mb-1 block">
           CANAL WHATSAPP
         </span>
-        <h2 className="text-3xl font-extrabold font-serif-mct text-[#2D2A56] tracking-tight">
+        <h2 className="text-3xl font-extrabold font-serif-mct text-[#332151] tracking-tight">
           Conversations
         </h2>
         <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -79,7 +79,7 @@ export default function ConversationsList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher par nom de groupe ou ville..."
-              className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#2D2A56] focus:bg-white transition-all font-semibold"
+              className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#332151] focus:bg-white transition-all font-semibold"
             />
           </div>
 
@@ -88,10 +88,10 @@ export default function ConversationsList({
             <button
               type="button"
               onClick={() => setIsPhaseDropdownOpen(!isPhaseDropdownOpen)}
-              className="w-full rounded-xl bg-slate-50 pl-4 pr-8 py-2.5 text-xs font-bold text-[#2D2A56] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors shadow-sm"
+              className="w-full rounded-xl bg-slate-50 pl-4 pr-8 py-2.5 text-xs font-bold text-[#332151] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors shadow-sm"
             >
               <span>{selectedPhase}</span>
-              <ChevronDown className={`h-4 w-4 text-[#2D2A56] transition-transform duration-200 ${isPhaseDropdownOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`h-4 w-4 text-[#332151] transition-transform duration-200 ${isPhaseDropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
             <AnimatePresence>
@@ -113,8 +113,8 @@ export default function ConversationsList({
                       }}
                       className={`w-full text-left px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer rounded-lg mb-0.5 last:mb-0 ${
                         selectedPhase === phase
-                          ? "bg-[#EA5B2D]/10 text-[#EA5B2D]"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-[#2D2A56]"
+                          ? "bg-[#E34F2D]/10 text-[#E34F2D]"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-[#332151]"
                       }`}
                     >
                       {phase}
@@ -145,19 +145,19 @@ export default function ConversationsList({
                 whileHover={{ y: -4, scale: 1.015 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 onClick={() => onSelectConversation(conv.id)}
-                className="group p-5 sm:p-6 rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.012)] border border-slate-100/80 hover:border-[#EA5B2D]/20 hover:shadow-[0_12px_30px_rgba(0,0,0,0.03)] transition-all flex flex-col justify-between gap-5 cursor-pointer relative overflow-hidden min-w-0"
+                className="group p-5 sm:p-6 rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.012)] border border-slate-100/80 hover:border-[#E34F2D]/20 hover:shadow-[0_12px_30px_rgba(0,0,0,0.03)] transition-all flex flex-col justify-between gap-5 cursor-pointer relative overflow-hidden min-w-0"
               >
                 {/* Top Row: Icon + Title & Subtitle + Phase */}
                 <div className="flex items-start justify-between gap-4 min-w-0">
                   <div className="flex items-start gap-3.5 min-w-0">
                     {/* Orange Message Icon Block */}
-                    <div className="flex h-11 w-11 shrink-0 rounded-xl bg-orange-50 border border-orange-100/50 text-[#EA5B2D] items-center justify-center relative shadow-sm">
+                    <div className="flex h-11 w-11 shrink-0 rounded-xl bg-orange-50 border border-orange-100/50 text-[#E34F2D] items-center justify-center relative shadow-sm">
                       <MessageSquare className="h-5 w-5" />
                     </div>
 
                     {/* Title and subtitle */}
                     <div className="min-w-0">
-                      <h4 className="text-sm font-extrabold text-[#2D2A56] group-hover:text-[#EA5B2D] transition-colors font-serif-mct leading-tight">
+                      <h4 className="text-sm font-extrabold text-[#332151] group-hover:text-[#E34F2D] transition-colors font-serif-mct leading-tight">
                         {conv.title}
                       </h4>
                       <p className="text-[11.5px] font-semibold text-slate-400 mt-1.5 truncate">
@@ -170,7 +170,7 @@ export default function ConversationsList({
                     conv.phase === "Signature"
                       ? "bg-slate-50 text-slate-600 border-slate-200"
                       : conv.phase === "Onboarding"
-                        ? "bg-[#EA5B2D]/10 text-[#EA5B2D] border-[#EA5B2D]/20"
+                        ? "bg-[#E34F2D]/10 text-[#E34F2D] border-[#E34F2D]/20"
                         : "bg-emerald-50 text-emerald-600 border-emerald-100"
                   }`}>
                     {conv.phase}
@@ -182,7 +182,7 @@ export default function ConversationsList({
                   <span className="text-[10px] font-bold text-slate-400">
                     Dernière activité {conv.lastActivity}
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#EA5B2D] text-[10px] font-extrabold transition-all group-hover:translate-x-0.5">
+                  <span className="flex items-center gap-1.5 text-[#E34F2D] text-[10px] font-extrabold transition-all group-hover:translate-x-0.5">
                     <span>Ouvrir le dossier</span>
                     <span>&rarr;</span>
                   </span>

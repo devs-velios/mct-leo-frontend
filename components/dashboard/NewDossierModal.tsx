@@ -190,7 +190,7 @@ export default function NewDossierModal({ isOpen, onClose, onCreate }: NewDossie
               <div className="bg-slate-50/70 p-5 border-t border-slate-100 flex items-center justify-end shrink-0">
                 <button
                   type="submit"
-                  className="px-5 py-3 text-xs font-bold rounded-xl bg-[#EA5B2D] hover:bg-[#d84e20] hover:scale-[1.01] active:scale-95 text-white transition-all cursor-pointer shadow-md shadow-[#EA5B2D]/10 inline-flex items-center gap-2 select-none"
+                  className="px-5 py-3 text-xs font-bold rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] hover:scale-[1.01] active:scale-95 text-white transition-all cursor-pointer shadow-md shadow-[#E34F2D]/10 inline-flex items-center gap-2 select-none"
                 >
                   <Sparkles className="h-4 w-4 shrink-0 text-white" />
                   <span>Créer le dossier</span>

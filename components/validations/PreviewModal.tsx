@@ -40,7 +40,7 @@ export default function PreviewModal({ item, onClose }: { item: PreviewTarget | 
             <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 shrink-0">
               <div className="min-w-0">
                 <span className="block text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Aperçu du document</span>
-                <h3 className="truncate text-sm font-extrabold text-[#2D2A56]">{item.docType} — {item.code}</h3>
+                <h3 className="truncate text-sm font-extrabold text-[#332151]">{item.docType} — {item.code}</h3>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {view && (
@@ -48,14 +48,14 @@ export default function PreviewModal({ item, onClose }: { item: PreviewTarget | 
                     href={view}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-[10.5px] font-bold text-[#2D2A56] hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-[10.5px] font-bold text-[#332151] hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     Ouvrir dans Drive <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-xl text-[#5A5A7A] hover:bg-slate-100 hover:text-[#2D2A56] transition cursor-pointer"
+                  className="p-2 rounded-xl text-[#5A5A7A] hover:bg-slate-100 hover:text-[#332151] transition cursor-pointer"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -76,7 +76,7 @@ export default function PreviewModal({ item, onClose }: { item: PreviewTarget | 
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                     <FileX2 className="h-7 w-7" />
                   </span>
-                  <p className="text-sm font-bold text-[#2D2A56]">Aucun fichier à prévisualiser</p>
+                  <p className="text-sm font-bold text-[#332151]">Aucun fichier à prévisualiser</p>
                   <p className="max-w-sm text-xs font-semibold text-slate-400">
                     Ce document n&apos;a pas encore de fichier Drive associé.
                   </p>

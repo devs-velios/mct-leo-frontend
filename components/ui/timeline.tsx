@@ -127,7 +127,7 @@ const timelineHeadingVariants = cva("row-start-1 row-end-1 line-clamp-1 max-w-fu
       left: "col-start-1 col-end-2 ml-auto text-right",
     },
     variant: {
-      primary: "text-sm font-bold text-[#2D2A56]",
+      primary: "text-sm font-bold text-[#332151]",
       secondary: "text-xs font-medium text-muted-foreground",
     },
   },

@@ -37,20 +37,20 @@ export default function AlertsBell({ onOpenDossier }: AlertsBellProps) {
         title={`${count} alerte${count > 1 ? "s" : ""} active${count > 1 ? "s" : ""}`}
         className={`relative flex items-center justify-center h-10 w-10 rounded-lg border transition-colors cursor-pointer ${
           count > 0
-            ? "border-[#EA5B2D]/30 bg-[#EA5B2D]/10 text-[#EA5B2D] hover:bg-[#EA5B2D]/15"
-            : "border-slate-200 bg-white text-[#2D2A56] hover:bg-slate-50"
+            ? "border-[#E34F2D]/30 bg-[#E34F2D]/10 text-[#E34F2D] hover:bg-[#E34F2D]/15"
+            : "border-slate-200 bg-white text-[#332151] hover:bg-slate-50"
         }`}
       >
         <Bell className="h-4.5 w-4.5" />
         {count > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EA5B2D] px-1 text-[8px] font-extrabold text-white ring-2 ring-white">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E34F2D] px-1 text-[8px] font-extrabold text-white ring-2 ring-white">
             {count > 9 ? "9+" : count}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-2 w-80 max-h-[60vh] overflow-y-auto custom-scrollbar bg-white text-[#2D2A56] border border-slate-100 rounded-2xl shadow-2xl p-2 z-50">
+        <div className="absolute top-full right-0 mt-2 w-80 max-h-[60vh] overflow-y-auto custom-scrollbar bg-white text-[#332151] border border-slate-100 rounded-2xl shadow-2xl p-2 z-50">
           <div className="px-2 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
             {count} alerte{count > 1 ? "s" : ""} active{count > 1 ? "s" : ""}
           </div>

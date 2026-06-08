@@ -82,7 +82,7 @@ export default function DashboardLayout({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", bounce: 0.15 }}
-              className="fixed inset-y-0 left-0 w-80 bg-[#2D2A56] text-[#F5F0E8] z-50 p-6 flex flex-col justify-between shadow-2xl lg:hidden"
+              className="fixed inset-y-0 left-0 w-80 bg-[#332151] text-[#F5F0E8] z-50 p-6 flex flex-col justify-between shadow-2xl lg:hidden"
             >
               <div>
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
@@ -92,7 +92,7 @@ export default function DashboardLayout({
                     </div>
                     <div>
                       <h1 className="text-lg font-bold font-serif-mct text-[#F5F0E8]">MCT Léo</h1>
-                      <p className="text-[9px] text-[#EA5B2D] uppercase tracking-wider font-bold">AI Onboarding</p>
+                      <p className="text-[9px] text-[#E34F2D] uppercase tracking-wider font-bold">AI Onboarding</p>
                     </div>
                   </div>
                   <button
@@ -116,12 +116,12 @@ export default function DashboardLayout({
                         }}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                           isActive
-                            ? "text-[#EA5B2D] bg-white/5 border-l-4 border-[#EA5B2D]"
+                            ? "text-[#E34F2D] bg-white/5 border-l-4 border-[#E34F2D]"
                             : "text-[#F5F0E8]/70 hover:text-[#F5F0E8] hover:bg-white/5"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={`h-4.5 w-4.5 ${isActive ? "text-[#EA5B2D]" : "text-[#F5F0E8]/60"}`} />
+                          <Icon className={`h-4.5 w-4.5 ${isActive ? "text-[#E34F2D]" : "text-[#F5F0E8]/60"}`} />
                           <span>{item.name}</span>
                         </div>
 
@@ -135,7 +135,7 @@ export default function DashboardLayout({
               <div className="pt-4 border-t border-white/5">
                 <div className="flex items-center justify-between rounded-xl bg-white/5 p-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-8.5 w-8.5 rounded-full bg-[#EA5B2D]/20 flex items-center justify-center font-bold text-xs text-[#EA5B2D]">
+                    <div className="h-8.5 w-8.5 rounded-full bg-[#E34F2D]/20 flex items-center justify-center font-bold text-xs text-[#E34F2D]">
                       OP
                     </div>
                     <div className="text-left truncate max-w-[120px]">

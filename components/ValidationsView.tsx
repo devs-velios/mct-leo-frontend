@@ -303,7 +303,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
       <header className="px-4 sm:px-6 py-4 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 bg-white border-b border-slate-100 relative z-10 shrink-0 w-full min-w-0">
         <div className="w-full xl:w-auto">
           <div className="flex items-center justify-between md:hidden mb-2 w-full">
-            <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
+            <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
@@ -312,7 +312,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
             </button>
           </div>
 
-          <h2 className="text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight">
+          <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
             À traiter
           </h2>
         </div>
@@ -325,17 +325,17 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
           {/* Stats Cards (minimal) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             {[
-              { label: "En attente", value: countEnAttente, Icon: Clock, tone: "bg-slate-100 text-[#2D2A56]" },
-              { label: "À identifier", value: countAIdentifier, Icon: AlertCircle, tone: "bg-slate-100 text-[#2D2A56]" },
-              { label: "Validées auj.", value: countValidees, Icon: CheckCircle2, tone: "bg-slate-100 text-[#2D2A56]" },
-              { label: "Conf. IA", value: `${countEnAttente > 0 ? averageConfidence : 100}%`, Icon: Cpu, tone: "bg-slate-100 text-[#2D2A56]" },
+              { label: "En attente", value: countEnAttente, Icon: Clock, tone: "bg-slate-100 text-[#332151]" },
+              { label: "À identifier", value: countAIdentifier, Icon: AlertCircle, tone: "bg-slate-100 text-[#332151]" },
+              { label: "Validées auj.", value: countValidees, Icon: CheckCircle2, tone: "bg-slate-100 text-[#332151]" },
+              { label: "Conf. IA", value: `${countEnAttente > 0 ? averageConfidence : 100}%`, Icon: Cpu, tone: "bg-slate-100 text-[#332151]" },
             ].map(({ label, value, Icon, tone }) => (
               <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white px-5 py-4">
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone}`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-none text-[#2D2A56]">{value}</p>
+                  <p className="text-2xl font-bold leading-none text-[#332151]">{value}</p>
                   <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{label}</p>
                 </div>
               </div>
@@ -364,7 +364,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
           <div className="relative z-20 bg-white p-6 rounded-3xl shadow-[0_10px_35px_rgba(45,42,86,0.02)] border border-slate-100/50 space-y-5">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               <div>
-                <h3 className="text-xs font-black text-[#2D2A56] uppercase tracking-widest">
+                <h3 className="text-xs font-black text-[#332151] uppercase tracking-widest">
                   ADVANCED FILTERS
                 </h3>
                 <p className="text-[10px] font-semibold text-slate-400 mt-1">
@@ -384,7 +384,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="SEARCH FOLDER, NAME..."
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-9 pr-8 py-2.5 text-[10px] font-bold text-slate-700 placeholder-slate-400 uppercase tracking-wider outline-none focus:border-[#2D2A56] focus:bg-white transition-all shadow-sm"
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-9 pr-8 py-2.5 text-[10px] font-bold text-slate-700 placeholder-slate-400 uppercase tracking-wider outline-none focus:border-[#332151] focus:bg-white transition-all shadow-sm"
                   />
                   {searchQuery && (
                     <button
@@ -401,13 +401,13 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   <button
                     type="button"
                     onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                    className="w-full rounded-xl bg-slate-50 pl-9 pr-8 py-2.5 text-[10px] font-bold text-[#2D2A56] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors shadow-sm border border-slate-200/20"
+                    className="w-full rounded-xl bg-slate-50 pl-9 pr-8 py-2.5 text-[10px] font-bold text-[#332151] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors shadow-sm border border-slate-200/20"
                   >
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#2D2A56]">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#332151]">
                       <Calendar className="h-3.5 w-3.5" />
                     </div>
                     <span>{dateFilter === "toutes" ? "Toutes les dates" : dateFilter === "aujourdhui" ? "Aujourd'hui" : "Cette semaine"}</span>
-                    <ChevronDown className={`h-3.5 w-3.5 text-[#2D2A56] transition-transform duration-200 ${isDateDropdownOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`h-3.5 w-3.5 text-[#332151] transition-transform duration-200 ${isDateDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
 
                   <AnimatePresence>
@@ -434,8 +434,8 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                             }}
                             className={`w-full text-left px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer rounded-lg mb-0.5 last:mb-0 ${
                               dateFilter === option.key
-                                ? "bg-[#EA5B2D]/10 text-[#EA5B2D]"
-                                : "text-slate-600 hover:bg-slate-50 hover:text-[#2D2A56]"
+                                ? "bg-[#E34F2D]/10 text-[#E34F2D]"
+                                : "text-slate-600 hover:bg-slate-50 hover:text-[#332151]"
                             }`}
                           >
                             {option.label}
@@ -471,8 +471,8 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   onClick={() => setSelectedConfFilter(selectedConfFilter === "high" ? "all" : "high")}
                   className={`px-3.5 py-1.5 text-[10px] font-extrabold rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
                     selectedConfFilter === "high"
-                      ? "bg-white text-[#2D2A56] shadow-sm"
-                      : "text-[#5A5A7A] hover:text-[#2D2A56] hover:bg-white/50"
+                      ? "bg-white text-[#332151] shadow-sm"
+                      : "text-[#5A5A7A] hover:text-[#332151] hover:bg-white/50"
                   }`}
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
@@ -482,8 +482,8 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   onClick={() => setSelectedConfFilter(selectedConfFilter === "low" ? "all" : "low")}
                   className={`px-3.5 py-1.5 text-[10px] font-extrabold rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
                     selectedConfFilter === "low"
-                      ? "bg-white text-[#2D2A56] shadow-sm"
-                      : "text-[#5A5A7A] hover:text-[#2D2A56] hover:bg-white/50"
+                      ? "bg-white text-[#332151] shadow-sm"
+                      : "text-[#5A5A7A] hover:text-[#332151] hover:bg-white/50"
                   }`}
                 >
                   <AlertCircle className="h-3.5 w-3.5" />
@@ -509,7 +509,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#2D2A56]">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#332151]">
                     <ArrowUpDown className="h-3.5 w-3.5" /> Trier
                   </Button>
                 </DropdownMenuTrigger>
@@ -549,7 +549,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                     <TableRow key={item.id} className="cursor-pointer group" onClick={() => { if (item.centreId) onOpenDossier?.(item.centreId); }}>
                       {/* Primary: centre (title) + merged metadata (type · code · ville) */}
                       <TableCell className="px-5">
-                        <p className="text-sm font-bold text-[#2D2A56] group-hover:text-[#EA5B2D] transition-colors">{item.nom}</p>
+                        <p className="text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{item.nom}</p>
                         <p className="mt-0.5 text-[11px] text-slate-500">
                           <span className="font-medium text-[#5A5A7A]">{docLabel(item.docType)}</span>
                           <span className="text-slate-300"> · </span>
@@ -649,7 +649,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 flex items-center gap-1 cursor-pointer ${
                     currentPage === 1
                       ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                      : "bg-white border border-slate-200 text-[#2D2A56] hover:bg-slate-50 active:scale-95 shadow-sm"
+                      : "bg-white border border-slate-200 text-[#332151] hover:bg-slate-50 active:scale-95 shadow-sm"
                   }`}
                 >
                   Précédent
@@ -661,8 +661,8 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                     onClick={() => setCurrentPage(page)}
                     className={`h-7 w-7 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
                       currentPage === page
-                        ? "bg-[#2D2A56] text-white shadow-sm"
-                        : "bg-white border border-slate-200 text-[#2D2A56] hover:bg-slate-50"
+                        ? "bg-[#332151] text-white shadow-sm"
+                        : "bg-white border border-slate-200 text-[#332151] hover:bg-slate-50"
                     }`}
                   >
                     {page}
@@ -675,7 +675,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 flex items-center gap-1 cursor-pointer ${
                     currentPage === totalPages
                       ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                      : "bg-white border border-slate-200 text-[#2D2A56] hover:bg-slate-50 active:scale-95 shadow-sm"
+                      : "bg-white border border-slate-200 text-[#332151] hover:bg-slate-50 active:scale-95 shadow-sm"
                   }`}
                 >
                   Suivant

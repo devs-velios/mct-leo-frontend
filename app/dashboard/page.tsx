@@ -42,13 +42,13 @@ export default function DashboardPage() {
       />
 
       {/* Main dashboard content container */}
-      <div className="flex-1 p-4 lg:p-5 xl:p-6 space-y-4 lg:space-y-5 xl:space-y-6 overflow-y-auto w-full min-w-0">
+      <div className="flex-1 p-4 lg:p-5 xl:p-6 space-y-4 lg:space-y-5 xl:space-y-6 overflow-y-auto overflow-x-clip w-full min-w-0">
         <div className="max-w-[1400px] mx-auto space-y-6">
           {/* 1. Analytics KPI Grid */}
           <AnalyticsCards />
 
           {/* 2. Analytics & Insights Section */}
-          <Charts />
+          <Charts onOpenDossier={setSelectedDossierId} />
 
           {/* 3. Bottom: full-width alerts table, with the live activity stream below it */}
           <div className="space-y-4 lg:space-y-5 xl:space-y-6 w-full min-w-0">

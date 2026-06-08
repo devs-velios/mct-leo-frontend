@@ -110,10 +110,10 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
       <header className="px-4 sm:px-6 py-4 bg-white border-b border-slate-100 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight">Centres Agréés</h2>
+            <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">Centres Agréés</h2>
             <p className="text-xs text-[#5A5A7A] mt-0.5">Sélectionnez un centre pour ouvrir son dossier — suivi, pièces, relances et conformité.</p>
           </div>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="shrink-0 rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100 md:hidden" aria-label="Ouvrir le menu"><Menu className="h-5 w-5" /></button>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="shrink-0 rounded-lg p-2 text-[#332151] hover:bg-slate-100 md:hidden" aria-label="Ouvrir le menu"><Menu className="h-5 w-5" /></button>
         </div>
         <Button onClick={openCreate} className="gap-1.5 text-xs font-bold self-start">
           <Plus className="h-4 w-4" /> Créer un centre
@@ -130,7 +130,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher par code, enseigne, ville..."
-                className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none focus:border-[#2D2A56] focus:bg-white transition-all"
+                className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none focus:border-[#332151] focus:bg-white transition-all"
               />
             </div>
             <Tabs value={filter} onValueChange={setFilter}>
@@ -138,7 +138,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                 {FILTERS.map((f) => (
                   <TabsTrigger key={f.key} value={f.key}>
                     {f.label}
-                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#2D2A56]">{counts[f.key]}</span>
+                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{counts[f.key]}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -166,14 +166,14 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                       <TableRow key={c.id} className="cursor-pointer group" onClick={() => onOpenDossier?.(c.id)}>
                         {/* Primary: enseigne (title) + merged code · ville */}
                         <TableCell className="px-5">
-                          <p className="text-sm font-bold text-[#2D2A56] group-hover:text-[#EA5B2D] transition-colors">{c.enseigne ?? "—"}</p>
+                          <p className="text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{c.enseigne ?? "—"}</p>
                           <p className="mt-0.5 text-[11px] text-slate-500">
                             <span className="font-mono">{c.code_centre}</span>
                             {c.ville && <><span className="text-slate-300"> · </span>{c.ville}</>}
                           </p>
                         </TableCell>
                         <TableCell className="w-[180px] px-3 text-[11px] font-semibold text-[#5A5A7A]">
-                          {(c.activites ?? []).join(" · ") || "—"}
+                          {(c.activites ?? []).join(" · ") || "Non disponible"}
                         </TableCell>
                         <TableCell className="w-[150px] px-3">
                           <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>
@@ -185,7 +185,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                             <Button
                               size="sm"
                               onClick={(e) => { e.stopPropagation(); onOpenDossier?.(c.id); }}
-                              className="gap-1.5 text-[11px] font-bold bg-[#EA5B2D]/10 text-[#EA5B2D] shadow-none hover:bg-[#EA5B2D]/20 hover:text-[#EA5B2D]"
+                              className="gap-1.5 text-[11px] font-bold bg-[#E34F2D]/10 text-[#E34F2D] shadow-none hover:bg-[#E34F2D]/20 hover:text-[#E34F2D]"
                             >
                               Ouvrir le dossier
                               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />

@@ -59,13 +59,13 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
         <div className="mb-2 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100">
+          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Dossiers Drive</h1>
+          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Dossiers Drive</h1>
           <p className="text-xs text-[#5A5A7A]">Catalogue des dossiers et routage des documents</p>
         </div>
       </header>
@@ -88,10 +88,10 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
         ) : (
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
             {/* Folders List Card */}
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.04)] transition-all duration-300">
-              <h2 className="mb-4 font-serif-mct text-lg font-bold text-[#2D2A56] flex items-center justify-between">
+            <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.04)] transition-all duration-200">
+              <h2 className="mb-4 font-serif-mct text-lg font-bold text-[#332151] flex items-center justify-between">
                 <span>Dossiers</span>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#EA5B2D] px-2.5 py-0.5 rounded-md bg-orange-50 border border-orange-100/50">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#E34F2D] px-2.5 py-0.5 rounded-md bg-orange-50 border border-orange-100/50">
                   {folders.length} configurés
                 </span>
               </h2>
@@ -103,7 +103,7 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
                     className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 text-sm hover:bg-slate-50/50 transition hover:shadow-sm"
                   >
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="font-bold text-[#2D2A56] truncate">{f.label ?? f.name}</span>
+                      <span className="font-bold text-[#332151] truncate">{f.label ?? f.name}</span>
                       <span className="text-[10px] text-slate-400 font-medium">
                         {f.name} {f.is_review ? " · révision" : ""}
                       </span>
@@ -111,7 +111,7 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
                     <button
                       onClick={() => renameFolder(f)}
                       title="Renommer"
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#2D2A56] cursor-pointer transition active:scale-90"
+                      className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#332151] cursor-pointer transition active:scale-90"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -130,7 +130,7 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder="Ex: 07_Nouveau"
-                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm"
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm"
                     />
                   </div>
                   <div className="flex-1">
@@ -141,16 +141,16 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
                       placeholder="Libellé du dossier"
-                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm"
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm"
                     />
                   </div>
                 </div>
                 
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-xl bg-[#EA5B2D] hover:bg-[#d24e24] px-4 py-2.5 text-xs font-extrabold text-white cursor-pointer transition active:scale-95 shadow-md"
+                  className="flex items-center gap-1.5 rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] px-4 py-2.5 text-xs font-extrabold text-white cursor-pointer transition active:scale-95 shadow-md"
                 >
-                  <FolderPlus className="h-4 w-4 text-[#EA5B2D]" /> Ajouter
+                  <FolderPlus className="h-4 w-4 text-[#E34F2D]" /> Ajouter
                 </button>
                 
                 {msg && <p className="text-[11px] font-bold text-red-600 animate-pulse">{msg}</p>}
@@ -158,8 +158,8 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
             </div>
 
             {/* Document Routing Card */}
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.04)] transition-all duration-300">
-              <h2 className="mb-4 font-serif-mct text-lg font-bold text-[#2D2A56] flex items-center justify-between">
+            <div className="group relative overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.04)] transition-all duration-200">
+              <h2 className="mb-4 font-serif-mct text-lg font-bold text-[#332151] flex items-center justify-between">
                 <span>Routage des documents</span>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-100/50">
                   Automatisé
@@ -173,8 +173,8 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-100 px-4 py-3 text-sm hover:bg-slate-50/50 transition hover:shadow-sm"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Save className="h-4 w-4 text-[#EA5B2D] shrink-0" />
-                      <span className="truncate font-bold text-[#2D2A56]">{r.doc_key}</span>
+                      <Save className="h-4 w-4 text-[#E34F2D] shrink-0" />
+                      <span className="truncate font-bold text-[#332151]">{r.doc_key}</span>
                     </div>
                     <Select
                       value={r.folder_name}

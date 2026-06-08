@@ -23,11 +23,11 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
         <div className="mb-2 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100"><Menu className="h-5 w-5" /></button>
+          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100"><Menu className="h-5 w-5" /></button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Drive</h1>
+          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Drive</h1>
           <p className="text-xs text-[#5A5A7A]">Arborescence des documents (lecture seule)</p>
         </div>
       </header>
@@ -41,8 +41,8 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
             title="Revenir à la racine du Drive"
             className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-bold transition ${
               path
-                ? "bg-slate-100 hover:bg-[#EA5B2D] hover:text-white text-[#2D2A56] cursor-pointer"
-                : "bg-[#EA5B2D]/10 text-[#EA5B2D] cursor-default"
+                ? "bg-slate-100 hover:bg-[#E34F2D] hover:text-white text-[#332151] cursor-pointer"
+                : "bg-[#E34F2D]/10 text-[#E34F2D] cursor-default"
             }`}
           >
             <Home className="h-3.5 w-3.5" />
@@ -53,7 +53,7 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
               <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
               <button
                 onClick={() => setPath(segments.slice(0, i + 1).join("/"))}
-                className="rounded-xl px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#2D2A56] font-bold transition cursor-pointer"
+                className="rounded-xl px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#332151] font-bold transition cursor-pointer"
               >
                 {seg}
               </button>
@@ -69,10 +69,10 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
               <button
                 key={f.id}
                 onClick={() => setPath(path ? `${path}/${f.name}` : f.name)}
-                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 text-left text-sm hover:border-[#EA5B2D]/40 hover:bg-[#EA5B2D]/5 transition-all duration-200 shadow-sm cursor-pointer"
+                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 text-left text-sm hover:border-[#E34F2D]/40 hover:bg-[#E34F2D]/5 transition-all duration-200 shadow-sm cursor-pointer"
               >
-                <Folder className="h-5 w-5 shrink-0 text-[#EA5B2D]" />
-                <span className="truncate font-bold text-[#2D2A56]">{f.name}</span>
+                <Folder className="h-5 w-5 shrink-0 text-[#E34F2D]" />
+                <span className="truncate font-bold text-[#332151]">{f.name}</span>
               </button>
             ))}
             {files.map((f) => (
@@ -81,7 +81,7 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
                 href={`https://drive.google.com/file/d/${f.id}/view`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 text-sm hover:border-[#2D2A56]/40 hover:bg-slate-50 transition-all duration-200 shadow-sm"
+                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 text-sm hover:border-[#332151]/40 hover:bg-slate-50 transition-all duration-200 shadow-sm"
               >
                 <FileText className="h-5 w-5 shrink-0 text-slate-400" />
                 <span className="truncate text-[#1A1A1A] font-semibold">{f.name}</span>
@@ -93,7 +93,7 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
                   <Folder className="h-8 w-8" />
                 </div>
 
-                <h3 className="font-serif-mct text-lg font-bold text-[#2D2A56]">
+                <h3 className="font-serif-mct text-lg font-bold text-[#332151]">
                   Dossier vide
                 </h3>
                 <p className="mt-2 text-xs text-[#5A5A7A] leading-relaxed max-w-xs mx-auto">
@@ -101,10 +101,10 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
                 </p>
 
                 {/* Nice card/div below the empty state statement */}
-                <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-300 text-left relative">
+                <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-200 text-left relative">
                   <div className="flex items-center justify-between border-b border-slate-50 pb-3 mb-3">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Documents synchronisés</span>
-                    <span className="flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-[#EA5B2D]">
+                    <span className="flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-[#E34F2D]">
                       Lecture seule
                     </span>
                   </div>

@@ -89,8 +89,8 @@ export default function PipelineBoards({ etape, statut, nextStage, prevStage, co
                 const isCurrentGroup = !isBlocked && group.key === currentMacro;
                 const groupDone = currentMicroIdx >= 0 && group.micros.every((m) => MICRO_KEYS.indexOf(m) < currentMicroIdx);
                 return (
-                  <TableRow key={group.key} className={`hover:bg-transparent ${isCurrentGroup ? "bg-[#EA5B2D]/5" : ""}`}>
-                    <TableCell className="px-0 py-2.5 font-bold text-[#2D2A56]">{group.label}</TableCell>
+                  <TableRow key={group.key} className={`hover:bg-transparent ${isCurrentGroup ? "bg-[#E34F2D]/5" : ""}`}>
+                    <TableCell className="px-0 py-2.5 font-bold text-[#332151]">{group.label}</TableCell>
                     <TableCell className="px-0 py-2.5 text-[10px] font-semibold text-slate-500">{group.micros.map((m) => MICRO_LABEL[m]).join(" · ")}</TableCell>
                     <TableCell className="px-0 py-2.5 text-right">
                       <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${isCurrentGroup ? "bg-amber-50 text-amber-700" : groupDone ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
@@ -154,16 +154,16 @@ function MicroBoard({
               onDrop={movable ? (e) => { e.preventDefault(); setOverKey(null); setDragging(false); onMove(s.key); } : undefined}
               className={`w-64 shrink-0 flex flex-col rounded-2xl p-4 transition-all duration-200 ${
                 isOver
-                  ? "bg-[#EA5B2D]/5 border-2 border-dashed border-[#EA5B2D]/40 scale-[1.01]"
+                  ? "bg-[#E34F2D]/5 border-2 border-dashed border-[#E34F2D]/40 scale-[1.01]"
                   : isCurrent
-                  ? "bg-white border border-[#EA5B2D]/30"
+                  ? "bg-white border border-[#E34F2D]/30"
                   : "bg-slate-100/60 border border-slate-200/40"
               }`}
             >
               {/* Column header */}
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200/50">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5A5A7A]">{s.label}</span>
-                {isDone ? <Check className="h-3.5 w-3.5 text-slate-400 shrink-0" /> : isCurrent ? <span className="h-1.5 w-1.5 rounded-full bg-[#EA5B2D] shrink-0" /> : null}
+                {isDone ? <Check className="h-3.5 w-3.5 text-slate-400 shrink-0" /> : isCurrent ? <span className="h-1.5 w-1.5 rounded-full bg-[#E34F2D] shrink-0" /> : null}
               </div>
 
               {/* Card slot */}
@@ -175,19 +175,19 @@ function MicroBoard({
                   className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="font-mono font-extrabold text-[10px] text-[#2D2A56] leading-none">{cardCode}</span>
+                    <span className="font-mono font-extrabold text-[10px] text-[#332151] leading-none">{cardCode}</span>
                     <GripVertical className="h-4 w-4 text-slate-300 shrink-0" />
                   </div>
                   <h4 className="text-sm font-bold text-slate-800 leading-snug">{cardName}</h4>
-                  <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#EA5B2D]">Étape en cours</p>
+                  <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">Étape en cours</p>
                 </div>
               ) : (
                 <div className={`flex-1 min-h-[120px] rounded-xl border-2 border-dashed flex items-center justify-center text-center p-4 ${
-                  isOver ? "border-[#EA5B2D]/40 bg-[#EA5B2D]/[0.03]"
+                  isOver ? "border-[#E34F2D]/40 bg-[#E34F2D]/[0.03]"
                   : movable ? "border-slate-200 bg-white/50"
                   : "border-transparent"
                 }`}>
-                  <span className={`text-xs font-bold ${isOver ? "text-[#EA5B2D]" : "text-slate-400"}`}>
+                  <span className={`text-xs font-bold ${isOver ? "text-[#E34F2D]" : "text-slate-400"}`}>
                     {movable ? "Déposer ici" : isDone ? "Terminé" : "—"}
                   </span>
                 </div>

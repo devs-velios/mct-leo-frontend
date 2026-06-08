@@ -47,7 +47,7 @@ interface Props {
 }
 
 const fieldCls =
-  "w-full rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-[#1A1A1A] placeholder-slate-400 outline-none transition-all shadow-sm focus:border-[#EA5B2D] focus:bg-white";
+  "w-full rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-[#1A1A1A] placeholder-slate-400 outline-none transition-all shadow-sm focus:border-[#E34F2D] focus:bg-white";
 const labelCls = "mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]";
 
 export default function CreateCentreModal({ open, mode = "create", initial, submitting, error, onClose, onSubmit }: Props) {
@@ -84,11 +84,11 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EA5B2D]/10 text-[#EA5B2D] shrink-0">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E34F2D]/10 text-[#E34F2D] shrink-0">
                   <Building2 className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="text-xl font-extrabold font-serif-mct text-[#2D2A56] leading-tight">
+                  <h3 className="text-xl font-extrabold font-serif-mct text-[#332151] leading-tight">
                     {mode === "edit" ? "Modifier le Centre" : "Créer un Nouveau Centre"}
                   </h3>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
@@ -96,7 +96,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
                   </p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-[#5A5A7A] hover:text-[#2D2A56] transition cursor-pointer shrink-0">
+              <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-[#5A5A7A] hover:text-[#332151] transition cursor-pointer shrink-0">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -107,7 +107,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
             >
               {/* 1. Identification */}
               <section className="space-y-4">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#EA5B2D]">1. Identification du centre</p>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#E34F2D]">1. Identification du centre</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Code unique centre *</label>
@@ -131,7 +131,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
                           type="button"
                           key={val}
                           onClick={() => set("type_contrat", val)}
-                          className={`flex-1 rounded-lg py-2 text-[10px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${v.type_contrat === val ? "bg-white text-[#2D2A56] shadow-sm" : "text-[#5A5A7A] hover:text-[#2D2A56]"}`}
+                          className={`flex-1 rounded-lg py-2 text-[10px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${v.type_contrat === val ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:text-[#332151]"}`}
                         >
                           {lbl}
                         </button>
@@ -146,7 +146,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
                           type="button"
                           key={a}
                           onClick={() => toggleAct(a)}
-                          className={`flex-1 rounded-xl border py-2.5 text-xs font-extrabold transition-all cursor-pointer ${v.activites.includes(a) ? "border-[#EA5B2D] bg-[#EA5B2D]/5 text-[#EA5B2D] ring-2 ring-[#EA5B2D]/25" : "border-slate-200 text-[#5A5A7A] hover:bg-slate-50"}`}
+                          className={`flex-1 rounded-xl border py-2.5 text-xs font-extrabold transition-all cursor-pointer ${v.activites.includes(a) ? "border-[#E34F2D] bg-[#E34F2D]/5 text-[#E34F2D] ring-2 ring-[#E34F2D]/25" : "border-slate-200 text-[#5A5A7A] hover:bg-slate-50"}`}
                         >
                           {a}
                         </button>
@@ -158,7 +158,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
 
               {/* 2. Responsables & WhatsApp */}
               <section className="space-y-4 border-t border-slate-100 pt-5">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#EA5B2D]">2. Responsables &amp; WhatsApp onboarding</p>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#E34F2D]">2. Responsables &amp; WhatsApp onboarding</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={`${labelCls} flex items-center gap-1.5`}><User className="h-3 w-3" /> Nom du responsable</label>
@@ -177,7 +177,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
 
               {/* 3. Localisation */}
               <section className="space-y-4 border-t border-slate-100 pt-5">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#EA5B2D]">3. Localisation &amp; adresse physique</p>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#E34F2D]">3. Localisation &amp; adresse physique</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={`${labelCls} flex items-center gap-1.5`}><MapPin className="h-3 w-3" /> Adresse ligne 1</label>
@@ -214,7 +214,7 @@ export default function CreateCentreModal({ open, mode = "create", initial, subm
                 <button
                   type="submit"
                   disabled={!canSubmit || submitting}
-                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-extrabold rounded-xl bg-[#EA5B2D] hover:bg-[#d24e24] text-white transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-extrabold rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] text-white transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   {mode === "edit" ? "Enregistrer" : "Créer le Centre"}

@@ -30,8 +30,8 @@ export default function DrivePage() {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 rounded-t-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer border-b-2 -mb-px ${
                 active
-                  ? "border-[#EA5B2D] text-[#EA5B2D]"
-                  : "border-transparent text-[#5A5A7A] hover:text-[#2D2A56] hover:bg-slate-50"
+                  ? "border-[#E34F2D] text-[#E34F2D]"
+                  : "border-transparent text-[#5A5A7A] hover:text-[#332151] hover:bg-slate-50"
               }`}
             >
               <Icon className="h-4 w-4" />

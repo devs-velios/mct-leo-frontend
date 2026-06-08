@@ -58,8 +58,8 @@ export default function Table({
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-3">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#EA5B2D]">ALERTES</span>
-            <h4 className="text-base font-bold font-serif-mct text-[#2D2A56]">Dossiers nécessitant un suivi</h4>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">ALERTES</span>
+            <h4 className="text-base font-bold font-serif-mct text-[#332151]">Dossiers nécessitant un suivi</h4>
             <p className="text-[10px] text-[#5A5A7A] mt-0.5">Top des dossiers inactifs en onboarding ou dépôt agrément</p>
           </div>
           
@@ -93,7 +93,7 @@ export default function Table({
               >
                 {/* Primary: enseigne (title) + merged code · ville */}
                 <TableCell>
-                  <p className="text-[13px] font-bold text-slate-800 leading-snug group-hover:text-[#EA5B2D] transition-colors">{dossier.enseigne}</p>
+                  <p className="text-[13px] font-bold text-slate-800 leading-snug group-hover:text-[#E34F2D] transition-colors">{dossier.enseigne}</p>
                   <p className="mt-0.5 text-[11px] text-slate-500">
                     <span className="font-mono">{dossier.code ?? dossier.id}</span>
                     {dossier.ville && <><span className="text-slate-300"> · </span>{dossier.ville}</>}
@@ -111,12 +111,12 @@ export default function Table({
                   </span>
                 </TableCell>
                 <TableCell className="w-[110px] text-center">
-                  <span className="text-xs font-semibold tabular-nums text-[#EA5B2D]">{dossier.joursInactif} j</span>
+                  <span className="text-xs font-semibold tabular-nums text-[#E34F2D]">{dossier.joursInactif} j</span>
                 </TableCell>
                 <TableCell className="w-[70px] text-right">
                   <button
                     onClick={(e) => { e.stopPropagation(); onOpenDossier?.(dossier.id); }}
-                    className="p-1.5 rounded-lg text-slate-400 group-hover:text-[#EA5B2D] group-hover:bg-[#EA5B2D]/10 transition-all cursor-pointer inline-flex items-center justify-center"
+                    className="p-1.5 rounded-lg text-slate-400 group-hover:text-[#E34F2D] group-hover:bg-[#E34F2D]/10 transition-all cursor-pointer inline-flex items-center justify-center"
                     title="Voir le dossier"
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -147,7 +147,7 @@ export default function Table({
             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 flex items-center gap-1 cursor-pointer ${
               currentPage === 1
                 ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                : "bg-white border border-slate-200 text-[#2D2A56] hover:bg-slate-50 active:scale-95 shadow-sm"
+                : "bg-white border border-slate-200 text-[#332151] hover:bg-slate-50 active:scale-95 shadow-sm"
             }`}
           >
             Précédent
@@ -159,8 +159,8 @@ export default function Table({
               onClick={() => setCurrentPage(page)}
               className={`h-7 w-7 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
                 currentPage === page
-                  ? "bg-[#2D2A56] text-white shadow-sm"
-                  : "bg-white border border-slate-200 text-[#2D2A56] hover:bg-slate-50"
+                  ? "bg-[#332151] text-white shadow-sm"
+                  : "bg-white border border-slate-200 text-[#332151] hover:bg-slate-50"
               }`}
             >
               {page}
@@ -173,7 +173,7 @@ export default function Table({
             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 flex items-center gap-1 cursor-pointer ${
               currentPage === totalPages
                 ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                : "bg-white border border-slate-200 text-[#2D2A56] hover:bg-slate-50 active:scale-95 shadow-sm"
+                : "bg-white border border-slate-200 text-[#332151] hover:bg-slate-50 active:scale-95 shadow-sm"
             }`}
           >
             Suivant

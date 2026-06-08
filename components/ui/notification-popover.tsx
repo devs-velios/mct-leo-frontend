@@ -31,8 +31,8 @@ const NotificationItem = ({ notification, index, onSelect }: NotificationItemPro
   >
     <div className="flex items-start justify-between gap-3">
       <div className="flex items-center gap-2 min-w-0">
-        {!notification.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#EA5B2D]" />}
-        <h4 className="truncate text-[13px] font-bold text-[#2D2A56]">{notification.title}</h4>
+        {!notification.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#E34F2D]" />}
+        <h4 className="truncate text-[13px] font-bold text-[#332151]">{notification.title}</h4>
       </div>
       <span className="shrink-0 text-[10px] font-semibold text-slate-400">
         {notification.timestamp.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
@@ -79,12 +79,12 @@ export function NotificationPopover({
         title={`${unreadCount} alerte${unreadCount > 1 ? "s" : ""}`}
         className={cn(
           "relative h-10 w-10",
-          unreadCount > 0 && "border-[#EA5B2D]/30 bg-[#EA5B2D]/10 text-[#EA5B2D] hover:bg-[#EA5B2D]/15"
+          unreadCount > 0 && "border-[#E34F2D]/30 bg-[#E34F2D]/10 text-[#E34F2D] hover:bg-[#E34F2D]/15"
         )}
       >
         <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EA5B2D] px-1 text-[8px] font-extrabold text-white ring-2 ring-white">
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E34F2D] px-1 text-[8px] font-extrabold text-white ring-2 ring-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -107,7 +107,7 @@ export function NotificationPopover({
                   onClick={onMarkAllAsRead}
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-[10px] font-bold text-[#EA5B2D] hover:bg-[#EA5B2D]/5"
+                  className="h-7 px-2 text-[10px] font-bold text-[#E34F2D] hover:bg-[#E34F2D]/5"
                 >
                   Tout marquer comme lu
                 </Button>

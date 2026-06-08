@@ -62,7 +62,7 @@ export default function DossiersBoard({ onOpenDossier }: { onOpenDossier?: (id: 
           <button
             onClick={() => setViewMode("tableau")}
             className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-              viewMode === "tableau" ? "bg-white text-[#2D2A56] shadow-sm" : "text-[#5A5A7A] hover:text-slate-800 hover:bg-white"
+              viewMode === "tableau" ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:text-slate-800 hover:bg-white"
             }`}
           >
             <List className="h-3.5 w-3.5" /> Tableau
@@ -70,7 +70,7 @@ export default function DossiersBoard({ onOpenDossier }: { onOpenDossier?: (id: 
           <button
             onClick={() => setViewMode("kanban")}
             className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-              viewMode === "kanban" ? "bg-white text-[#2D2A56] shadow-sm" : "text-[#5A5A7A] hover:text-slate-800 hover:bg-white"
+              viewMode === "kanban" ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:text-slate-800 hover:bg-white"
             }`}
           >
             <KanbanIcon className="h-3.5 w-3.5" /> Kanban

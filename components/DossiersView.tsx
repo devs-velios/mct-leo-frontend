@@ -20,6 +20,8 @@ import DossiersKanban from "./dossiers/DossiersKanban";
 import { useDossiersContext } from "@/lib/features/dossiers";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRowSelection } from "@/components/hooks/useRowSelection";
+import { BulkActionBar } from "@/components/ui/bulk-action-bar";
 
 interface DossiersViewProps {
   onOpenDossier?: (id: string) => void;
@@ -116,6 +118,19 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
   const endIndex = startIndex + itemsPerPage;
   const displayedDossiers = filteredDossiers.slice(startIndex, endIndex);
 
+  // Row selection scoped to the visible (filtered) set, so "select all" + bulk
+  // actions act on what the user can see.
+  const selection = useRowSelection(filteredDossiers.map((d) => d.id));
+
+  // Bulk delete. NOTE: the backend has no dossiers DELETE route yet — this is a
+  // UI-only sample that removes the rows from the local list. Wire it to the real
+  // endpoint once available (see BACKEND_NOTES.md → "Bulk delete").
+  const handleBulkDelete = async () => {
+    const ids = new Set(selection.selectedIds);
+    // TODO(backend): await Promise.all([...ids].map((id) => api.del(`dossiers/${id}`)));
+    setDossiersList((prev) => prev.filter((d) => !ids.has(d.id)));
+  };
+
   // Drag and drop HTML5 handlers
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id);
@@ -157,7 +172,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
         <div className="w-full xl:w-auto">
           {setMobileMenuOpen && (
             <div className="flex items-center justify-between md:hidden mb-2 w-full">
-              <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
+              <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
               <button
                 onClick={() => setMobileMenuOpen(true)}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
@@ -166,7 +181,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
               </button>
             </div>
           )}
-          <h2 className="text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight">
+          <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
             Tous les dossiers
           </h2>
           <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -182,15 +197,15 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
           {/* 2. KPI CARDS (minimal) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             {[
-              { label: "Total", value: statTotal, hint: "dossiers actifs", Icon: Folder, tone: "bg-slate-100 text-[#2D2A56]" },
-              { label: "À relancer", value: statRelancer, hint: "≥ 5j sans activité", Icon: Clock, tone: "bg-[#EA5B2D]/10 text-[#EA5B2D]" },
+              { label: "Total", value: statTotal, hint: "dossiers actifs", Icon: Folder, tone: "bg-slate-100 text-[#332151]" },
+              { label: "À relancer", value: statRelancer, hint: "≥ 5j sans activité", Icon: Clock, tone: "bg-[#E34F2D]/10 text-[#E34F2D]" },
               { label: "Bloqués", value: statBloques, hint: "agrément ou ≥ 14j", Icon: AlertTriangle, tone: "bg-rose-50 text-rose-600" },
               { label: "Ouverts", value: statOuverts, hint: "centres ouverts", Icon: Building, tone: "bg-emerald-50 text-emerald-600" },
             ].map(({ label, value, hint, Icon, tone }) => (
               <div key={label} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4">
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{label}</p>
-                  <h3 className="mt-1 text-2xl font-bold text-[#2D2A56]">{value}</h3>
+                  <h3 className="mt-1 text-2xl font-bold text-[#332151]">{value}</h3>
                   <p className="mt-0.5 text-[10px] text-slate-400">{hint}</p>
                 </div>
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone}`}>
@@ -214,7 +229,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
                 ].map((tab) => (
                   <TabsTrigger key={tab.key} value={tab.key}>
                     {tab.label}
-                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#2D2A56]">{tab.count}</span>
+                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{tab.count}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -232,7 +247,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Code, ville, gérant..."
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-9 pr-8 py-2.5 text-[10.5px] font-bold text-slate-700 placeholder-slate-400 outline-none focus:border-[#2D2A56] focus:bg-white focus:ring-2 focus:ring-[#2D2A56]/5 transition-all uppercase tracking-wider shadow-sm"
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-9 pr-8 py-2.5 text-[10.5px] font-bold text-slate-700 placeholder-slate-400 outline-none focus:border-[#332151] focus:bg-white focus:ring-2 focus:ring-[#332151]/5 transition-all uppercase tracking-wider shadow-sm"
                 />
                 {searchQuery && (
                   <button
@@ -249,10 +264,10 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
                 <button
                   type="button"
                   onClick={() => setIsNetworkDropdownOpen(!isNetworkDropdownOpen)}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200/20 pl-4 pr-8 py-2.5 text-[10.5px] font-bold text-[#2D2A56] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors shadow-sm"
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200/20 pl-4 pr-8 py-2.5 text-[10.5px] font-bold text-[#332151] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors shadow-sm"
                 >
                   <span>{selectedNetwork}</span>
-                  <ChevronDown className={`h-3.5 w-3.5 text-[#2D2A56] transition-transform duration-200 ${isNetworkDropdownOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-3.5 w-3.5 text-[#332151] transition-transform duration-200 ${isNetworkDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 <AnimatePresence>
@@ -275,8 +290,8 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
                           }}
                           className={`w-full text-left px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer rounded-lg mb-0.5 last:mb-0 ${
                             selectedNetwork === network
-                              ? "bg-[#EA5B2D]/10 text-[#EA5B2D]"
-                              : "text-slate-600 hover:bg-slate-50 hover:text-[#2D2A56]"
+                              ? "bg-[#E34F2D]/10 text-[#E34F2D]"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-[#332151]"
                           }`}
                         >
                           {network}
@@ -314,6 +329,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
                 goToPage={setCurrentPage}
                 onOpenDossier={onOpenDossier}
                 onAdvance={handleAdvance}
+                selection={selection}
               />
             ) : (
               <DossiersKanban
@@ -333,6 +349,13 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
 
         </div>
       </div>
+
+      <BulkActionBar
+        count={selection.count}
+        onClear={selection.clear}
+        onDelete={handleBulkDelete}
+        noun={["dossier", "dossiers"]}
+      />
     </div>
   );
 }

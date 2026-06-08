@@ -29,13 +29,13 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
         <div className="mb-2 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100">
+          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Alertes</h1>
+          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Alertes</h1>
           <p className="text-xs text-[#5A5A7A]">Blocages signalés nécessitant une intervention</p>
         </div>
       </header>
@@ -49,8 +49,8 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
                 onClick={() => setTab(t)}
                 className={`px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all duration-150 cursor-pointer ${
                   tab === t
-                    ? "bg-[#EA5B2D] text-white shadow-sm"
-                    : "text-[#5A5A7A] hover:text-[#2D2A56] hover:bg-white/50"
+                    ? "bg-[#E34F2D] text-white shadow-sm"
+                    : "text-[#5A5A7A] hover:text-[#332151] hover:bg-white/50"
                 }`}
               >
                 {t === "open" ? "Ouvertes" : "Résolues"}
@@ -67,20 +67,20 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
               {/* Outer glowing pulse ring */}
               <div
                 className={`absolute inset-0 rounded-full blur-xl opacity-35 animate-pulse ${
-                  tab === "open" ? "bg-emerald-400" : "bg-[#EA5B2D]/35"
+                  tab === "open" ? "bg-emerald-400" : "bg-[#E34F2D]/35"
                 }`}
               />
               {/* Inner container */}
               <div
                 className={`relative flex h-16 w-16 items-center justify-center rounded-full border border-slate-100 shadow-sm ${
-                  tab === "open" ? "bg-emerald-50 text-emerald-600" : "bg-orange-50/50 text-[#EA5B2D]"
+                  tab === "open" ? "bg-emerald-50 text-emerald-600" : "bg-orange-50/50 text-[#E34F2D]"
                 }`}
               >
                 {tab === "open" ? <ShieldCheck className="h-8 w-8" /> : <Info className="h-8 w-8" />}
               </div>
             </div>
 
-            <h3 className="font-serif-mct text-lg font-bold text-[#2D2A56]">
+            <h3 className="font-serif-mct text-lg font-bold text-[#332151]">
               {tab === "open" ? "Aucune alerte ouverte" : "Aucune alerte résolue"}
             </h3>
             <p className="mt-2 text-xs text-[#5A5A7A] leading-relaxed max-w-xs mx-auto">
@@ -90,7 +90,7 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
             </p>
 
             {/* Nice card/div below the empty state statement */}
-            <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-300 text-left relative">
+            <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-200 text-left relative">
               <div className="flex items-center justify-between border-b border-slate-50 pb-3 mb-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Surveillance active</span>
                 <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
@@ -112,7 +112,7 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
             {alerts.map((a) => (
               <div
                 key={a.id}
-                className="group relative overflow-hidden flex items-start gap-4 rounded-3xl border border-slate-100/80 bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.005)] hover:border-[#EA5B2D]/20 hover:shadow-[0_12px_35px_rgba(45,42,86,0.04)] transition-all duration-300"
+                className="group relative overflow-hidden flex items-start gap-4 rounded-3xl border border-slate-100/80 bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.005)] hover:border-[#E34F2D]/20 hover:shadow-[0_12px_35px_rgba(45,42,86,0.04)] transition-all duration-200"
               >
                 {/* Decorative status indicator line */}
                 <div
@@ -138,7 +138,7 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
                   <p className="mt-1.5 text-sm text-[#1A1A1A] leading-relaxed">{a.message}</p>
                   <button
                     onClick={() => onOpenDossier?.(a.centre_id)}
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#EA5B2D]/10 px-3 py-1.5 text-xs font-bold text-[#EA5B2D] transition-colors hover:bg-[#EA5B2D] hover:text-white cursor-pointer"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#E34F2D]/10 px-3 py-1.5 text-xs font-bold text-[#E34F2D] transition-colors hover:bg-[#E34F2D] hover:text-white cursor-pointer"
                   >
                     Voir le centre <ChevronRight className="h-3.5 w-3.5" />
                   </button>
@@ -146,7 +146,7 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
                 {a.status === "open" && (
                   <button
                     onClick={() => resolve(a.id)}
-                    className="shrink-0 rounded-xl bg-[#2D2A56] px-3.5 py-2 text-xs font-bold text-white transition hover:bg-[#3a3670] hover:shadow-[0_4px_12px_rgba(45,42,86,0.15)] active:scale-95 cursor-pointer"
+                    className="shrink-0 rounded-xl bg-[#332151] px-3.5 py-2 text-xs font-bold text-white transition hover:bg-[#3a3670] hover:shadow-[0_4px_12px_rgba(45,42,86,0.15)] active:scale-95 cursor-pointer"
                   >
                     Résoudre
                   </button>

@@ -50,7 +50,7 @@ export default function Navbar({ setMobileMenuOpen, onOpenDossier }: NavbarProps
   return (
     <header className="flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
       <div className="min-w-0">
-        <h2 className="font-serif-mct text-xl sm:text-2xl font-bold tracking-tight text-[#2D2A56]">Dashboard</h2>
+        <h2 className="font-serif-mct text-xl sm:text-2xl font-bold tracking-tight text-[#332151]">Dashboard</h2>
         {today && <p className="truncate text-xs text-[#5A5A7A]">{today}</p>}
       </div>
 
@@ -64,7 +64,7 @@ export default function Navbar({ setMobileMenuOpen, onOpenDossier }: NavbarProps
         <Button
           variant="outline"
           onClick={() => router.push("/dashboard/simulateur")}
-          className="hidden gap-1.5 text-xs font-bold text-[#2D2A56] sm:inline-flex"
+          className="hidden gap-1.5 text-xs font-bold text-[#332151] sm:inline-flex"
         >
           Lancer onboarding
         </Button>
@@ -74,7 +74,7 @@ export default function Navbar({ setMobileMenuOpen, onOpenDossier }: NavbarProps
         {/* Hamburger — right side, mobile only */}
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100 md:hidden"
+          className="rounded-lg p-2 text-[#332151] hover:bg-slate-100 md:hidden"
           aria-label="Ouvrir le menu"
         >
           <Menu className="h-5 w-5" />

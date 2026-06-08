@@ -58,7 +58,7 @@ function Field({ icon, label, value }: { icon: ReactNode; label: string; value: 
         <span className="text-slate-300">{icon}</span>
         {label}
       </span>
-      <span className="block text-[11.5px] font-bold text-[#2D2A56] truncate">{value}</span>
+      <span className="block text-[11.5px] font-bold text-[#332151] truncate">{value}</span>
     </div>
   );
 }
@@ -181,14 +181,14 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
         <div className="mb-2 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100">
+          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </button>
         </div>
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Rappels</h1>
+            <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Rappels</h1>
             <p className="text-xs text-[#5A5A7A]">Relances automatiques et manuelles des pièces manquantes</p>
           </div>
           <Button onClick={() => setShowCreate(true)} className="gap-1.5 text-xs font-bold shrink-0">
@@ -206,7 +206,7 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
               <Bell className="h-8 w-8" />
             </div>
 
-            <h3 className="font-serif-mct text-lg font-bold text-[#2D2A56]">
+            <h3 className="font-serif-mct text-lg font-bold text-[#332151]">
               Aucun rappel programmé
             </h3>
             <p className="mt-2 text-xs text-[#5A5A7A] leading-relaxed max-w-xs mx-auto">
@@ -214,10 +214,10 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
             </p>
 
             {/* Nice card/div below the empty state statement */}
-            <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-300 text-left relative">
+            <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-200 text-left relative">
               <div className="flex items-center justify-between border-b border-slate-50 pb-3 mb-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Fonctionnement des relances</span>
-                <span className="flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-[#EA5B2D]">
+                <span className="flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-[#E34F2D]">
                   Automatique
                 </span>
               </div>
@@ -252,10 +252,10 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                     >
                       <TableCell className="px-5">
                         {centre?.code_centre && (
-                          <span className="font-mono text-[10.5px] font-bold text-[#2D2A56]">{centre.code_centre}</span>
+                          <span className="font-mono text-[10.5px] font-bold text-[#332151]">{centre.code_centre}</span>
                         )}
-                        <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-[#2D2A56]">
-                          <Building2 className="h-3.5 w-3.5 text-[#EA5B2D] shrink-0" />
+                        <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-[#332151]">
+                          <Building2 className="h-3.5 w-3.5 text-[#E34F2D] shrink-0" />
                           <span className="truncate">{centreName}</span>
                         </p>
                         {centre?.ville && <p className="text-[11px] font-semibold text-slate-400">{centre.ville}</p>}
@@ -264,21 +264,21 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-[#5A5A7A]">{KIND_LABEL[r.kind] ?? r.kind}</span>
                           {r.escalation > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-[#EA5B2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#EA5B2D]">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#E34F2D]">
                               <Repeat className="h-2.5 w-2.5" /> Relance n°{r.escalation}
                             </span>
                           )}
                         </div>
                         <p className="mt-1 text-[11px] font-semibold text-slate-500">{r.piece_attendue ?? "Digest (toutes pièces)"}</p>
                       </TableCell>
-                      <TableCell className="px-5 whitespace-nowrap text-[11px] font-bold text-[#2D2A56]">{fmtDate(r.scheduled_at)}</TableCell>
+                      <TableCell className="px-5 whitespace-nowrap text-[11px] font-bold text-[#332151]">{fmtDate(r.scheduled_at)}</TableCell>
                       <TableCell className="px-5">
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{statusLabel(r.status)}</span>
                       </TableCell>
                       <TableCell className="px-5">
                         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                           {centre?.id && (
-                            <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#2D2A56]">
+                            <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#332151]">
                               Ouvrir <ArrowRight className="h-3.5 w-3.5" />
                             </Button>
                           )}
@@ -324,14 +324,14 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
               className="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 text-[#1A1A1A] shadow-2xl border border-slate-100"
             >
               <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-                <h3 className="text-xl font-extrabold font-serif-mct text-[#2D2A56] flex items-center gap-2">
-                  <Plus className="h-5 w-5 text-[#EA5B2D]" />
+                <h3 className="text-xl font-extrabold font-serif-mct text-[#332151] flex items-center gap-2">
+                  <Plus className="h-5 w-5 text-[#E34F2D]" />
                   {editingId ? "Modifier le rappel" : "Créer un rappel"}
                 </h3>
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 text-[#5A5A7A] hover:text-[#2D2A56] cursor-pointer transition"
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-[#5A5A7A] hover:text-[#332151] cursor-pointer transition"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -350,7 +350,7 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                   >
                     <span className="truncate">{selectedDossierLabel}</span>
                     <ChevronDown
-                      className={`h-4.5 w-4.5 text-[#2D2A56] transition-transform duration-200 shrink-0 ${
+                      className={`h-4.5 w-4.5 text-[#332151] transition-transform duration-200 shrink-0 ${
                         isDossierDropdownOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -372,7 +372,7 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                             placeholder="Rechercher un dossier/centre..."
                             value={dossierSearchQuery}
                             onChange={(e) => setDossierSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#EA5B2D] focus:bg-white transition-all uppercase tracking-wider"
+                            className="w-full pl-9 pr-4 py-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#E34F2D] focus:bg-white transition-all uppercase tracking-wider"
                           />
                         </div>
 
@@ -389,8 +389,8 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                               }}
                               className={`w-full text-left px-3 py-2.5 text-xs font-bold transition-all cursor-pointer rounded-xl flex flex-col gap-0.5 ${
                                 form.dossier_id === d.id
-                                  ? "bg-[#EA5B2D] text-white shadow-sm"
-                                  : "text-slate-700 hover:bg-slate-50 hover:text-[#EA5B2D]"
+                                  ? "bg-[#E34F2D] text-white shadow-sm"
+                                  : "text-slate-700 hover:bg-slate-50 hover:text-[#E34F2D]"
                               }`}
                             >
                               <span className="truncate">
@@ -427,7 +427,7 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                       value={form.piece}
                       onChange={(e) => setForm((f) => ({ ...f, piece: e.target.value }))}
                       placeholder="Ex: kbis, assurance..."
-                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm"
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm"
                     />
                   </div>
 
@@ -455,7 +455,7 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                     value={form.message}
                     onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                     placeholder="Merci d'envoyer votre Kbis..."
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm resize-none"
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm resize-none"
                   />
                 </div>
 
@@ -471,7 +471,7 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                   <button
                     type="submit"
                     disabled={!form.dossier_id || !form.scheduled_at}
-                    className="flex-1 py-3 text-xs font-extrabold rounded-xl bg-[#EA5B2D] hover:bg-[#d24e24] disabled:opacity-50 text-white transition-colors cursor-pointer shadow-[0_4px_12px_rgba(234,91,45,0.2)]"
+                    className="flex-1 py-3 text-xs font-extrabold rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] disabled:opacity-50 text-white transition-colors cursor-pointer shadow-[0_4px_12px_rgba(234,91,45,0.2)]"
                   >
                     {editingId ? "Enregistrer" : "Créer le rappel"}
                   </button>

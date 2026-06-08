@@ -44,7 +44,7 @@ export default function DossierDetailPage() {
         <p className="text-sm font-bold text-slate-500">Dossier introuvable.</p>
         <button
           onClick={() => router.push("/dashboard/dossiers")}
-          className="rounded-xl bg-[#2D2A56] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#EA5B2D] transition-colors cursor-pointer"
+          className="rounded-xl bg-[#332151] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#E34F2D] transition-colors cursor-pointer"
         >
           Retour aux dossiers
         </button>

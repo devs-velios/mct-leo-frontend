@@ -36,10 +36,10 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
     () =>
       msgs.map((m, i) => (
         <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${m.role === "user" ? "bg-[#2D2A56] text-white" : "bg-[#EA5B2D]/10 text-[#EA5B2D]"}`}>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${m.role === "user" ? "bg-[#332151] text-white" : "bg-[#E34F2D]/10 text-[#E34F2D]"}`}>
             {m.role === "user" ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
           </div>
-          <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${m.role === "user" ? "bg-[#2D2A56] text-white" : "bg-white text-[#1A1A1A] border border-slate-100"}`}>
+          <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${m.role === "user" ? "bg-[#332151] text-white" : "bg-white text-[#1A1A1A] border border-slate-100"}`}>
             {m.role === "leo" ? (
               <Markdown>{m.text}</Markdown>
             ) : (
@@ -66,13 +66,13 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
         <div className="mb-2 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#2D2A56]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#2D2A56] hover:bg-slate-100">
+          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#2D2A56]">Assistant Léo</h1>
+          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Assistant Léo</h1>
           <p className="text-xs text-[#5A5A7A]">Questions réglementaires — réponses sourcées</p>
         </div>
       </header>
@@ -84,14 +84,14 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
               <div className="mx-auto max-w-md text-center py-12 px-4">
                 <div className="relative mb-6 inline-flex items-center justify-center">
                   {/* Outer glowing pulse ring */}
-                  <div className="absolute inset-0 rounded-full blur-xl opacity-35 bg-[#EA5B2D]/35 animate-pulse" />
+                  <div className="absolute inset-0 rounded-full blur-xl opacity-35 bg-[#E34F2D]/35 animate-pulse" />
                   {/* Inner container */}
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-slate-100 shadow-sm bg-orange-50/50 text-[#EA5B2D]">
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-slate-100 shadow-sm bg-orange-50/50 text-[#E34F2D]">
                     <Sparkles className="h-8 w-8 animate-pulse" />
                   </div>
                 </div>
 
-                <h3 className="font-serif-mct text-lg font-bold text-[#2D2A56]">
+                <h3 className="font-serif-mct text-lg font-bold text-[#332151]">
                   Assistant réglementaire Léo
                 </h3>
                 <p className="mt-2 text-xs text-[#5A5A7A] leading-relaxed max-w-xs mx-auto">
@@ -99,7 +99,7 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
                 </p>
 
                 {/* Nice interactive examples card */}
-                <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#EA5B2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-300 text-left relative">
+                <div className="group mt-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#E34F2D]/20 hover:shadow-[0_20px_45px_rgba(234,91,45,0.08)] transition-all duration-200 text-left relative">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A] block border-b border-slate-100 pb-3 mb-3">
                     Exemples de questions (cliquez pour essayer)
                   </span>
@@ -107,18 +107,18 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
                     <button
                       type="button"
                       onClick={() => setInput("Quels documents pour ouvrir un centre VL ?")}
-                      className="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-100 hover:border-[#EA5B2D]/20 hover:bg-slate-50/50 transition-all text-xs font-bold text-[#2D2A56] flex justify-between items-center group/btn cursor-pointer"
+                      className="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-100 hover:border-[#E34F2D]/20 hover:bg-slate-50/50 transition-all text-xs font-bold text-[#332151] flex justify-between items-center group/btn cursor-pointer"
                     >
                       <span className="truncate pr-4">Quels documents pour ouvrir un centre VL ?</span>
-                      <span className="text-[#EA5B2D] opacity-0 group-hover/btn:opacity-100 transition-opacity font-bold">→</span>
+                      <span className="text-[#E34F2D] opacity-0 group-hover/btn:opacity-100 transition-opacity font-bold">→</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setInput("Quelle est la procédure pour un dossier bloqué ?")}
-                      className="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-100 hover:border-[#EA5B2D]/20 hover:bg-slate-50/50 transition-all text-xs font-bold text-[#2D2A56] flex justify-between items-center group/btn cursor-pointer"
+                      className="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-100 hover:border-[#E34F2D]/20 hover:bg-slate-50/50 transition-all text-xs font-bold text-[#332151] flex justify-between items-center group/btn cursor-pointer"
                     >
                       <span className="truncate pr-4">Quelle est la procédure pour un dossier bloqué ?</span>
-                      <span className="text-[#EA5B2D] opacity-0 group-hover/btn:opacity-100 transition-opacity font-bold">→</span>
+                      <span className="text-[#E34F2D] opacity-0 group-hover/btn:opacity-100 transition-opacity font-bold">→</span>
                     </button>
                   </div>
                 </div>
@@ -131,16 +131,16 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
                 animate={{ opacity: 1, y: 0 }}
                 className="flex gap-3"
               >
-                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EA5B2D]/10 text-[#EA5B2D]">
-                  <span className="absolute inset-0 rounded-full bg-[#EA5B2D]/25 animate-ping" />
+                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E34F2D]/10 text-[#E34F2D]">
+                  <span className="absolute inset-0 rounded-full bg-[#E34F2D]/25 animate-ping" />
                   <Sparkles className="relative h-4 w-4 animate-pulse" />
                 </div>
-                <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md border border-[#EA5B2D]/15 bg-white px-4 py-3 shadow-sm">
-                  <span className="text-xs font-bold text-[#EA5B2D]">Léo réfléchit</span>
+                <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md border border-[#E34F2D]/15 bg-white px-4 py-3 shadow-sm">
+                  <span className="text-xs font-bold text-[#E34F2D]">Léo réfléchit</span>
                   <span className="flex gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#EA5B2D] animate-bounce [animation-delay:-0.3s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#EA5B2D] animate-bounce [animation-delay:-0.15s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#EA5B2D] animate-bounce" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#E34F2D] animate-bounce [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#E34F2D] animate-bounce [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#E34F2D] animate-bounce" />
                   </span>
                 </div>
               </motion.div>
@@ -154,9 +154,9 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Votre question…"
-              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-4 py-3 text-sm outline-none focus:border-[#EA5B2D] focus:ring-2 focus:ring-[#EA5B2D]/20 transition-all shadow-sm"
+              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-4 py-3 text-sm outline-none focus:border-[#E34F2D] focus:ring-2 focus:ring-[#E34F2D]/20 transition-all shadow-sm"
             />
-            <button type="submit" disabled={loading} className="rounded-xl bg-[#EA5B2D] hover:bg-[#d24e24] p-3 text-white transition cursor-pointer disabled:opacity-50">
+            <button type="submit" disabled={loading} className="rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] p-3 text-white transition cursor-pointer disabled:opacity-50">
               <Send className="h-5 w-5" />
             </button>
           </div>

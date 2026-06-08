@@ -63,10 +63,10 @@ export default function Select({ value, options, onChange, placeholder, classNam
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center justify-between gap-2 rounded-xl bg-slate-50 border border-slate-200/80 pl-3.5 pr-3 py-2 text-xs font-extrabold text-slate-800 outline-none transition-all shadow-sm hover:bg-slate-100/70 focus:border-[#EA5B2D] focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
+        className={`flex items-center justify-between gap-2 rounded-xl bg-slate-50 border border-slate-200/80 pl-3.5 pr-3 py-2 text-xs font-extrabold text-slate-800 outline-none transition-all shadow-sm hover:bg-slate-100/70 focus:border-[#E34F2D] focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
       >
         <span className="truncate">{selected?.label ?? placeholder ?? "—"}</span>
-        <ChevronDown className={`h-3.5 w-3.5 text-[#2D2A56] shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-3.5 w-3.5 text-[#332151] shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open &&
@@ -85,7 +85,7 @@ export default function Select({ value, options, onChange, placeholder, classNam
                   type="button"
                   onClick={() => { onChange(o.value); setOpen(false); }}
                   className={`w-full text-left px-3 py-2 text-xs font-bold rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer mb-0.5 last:mb-0 ${
-                    active ? "bg-[#EA5B2D]/10 text-[#EA5B2D]" : "text-slate-700 hover:bg-slate-50 hover:text-[#2D2A56]"
+                    active ? "bg-[#E34F2D]/10 text-[#E34F2D]" : "text-slate-700 hover:bg-slate-50 hover:text-[#332151]"
                   }`}
                 >
                   <span className="truncate">{o.label}</span>

@@ -50,7 +50,7 @@ function Field({ label, children, className = "" }: { label: string; children: R
   return (
     <div className={className}>
       <span className="mb-1 block text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{label}</span>
-      <div className="text-sm font-semibold text-[#2D2A56]">{children}</div>
+      <div className="text-sm font-semibold text-[#332151]">{children}</div>
     </div>
   );
 }
@@ -333,9 +333,9 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
             initial={{ opacity: 0, y: -50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-[#2D2A56] text-white px-4 py-3.5 rounded-xl shadow-xl border border-white/10 text-xs font-bold"
+            className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-[#332151] text-white px-4 py-3.5 rounded-xl shadow-xl border border-white/10 text-xs font-bold"
           >
-            <Zap className="h-4.5 w-4.5 text-[#EA5B2D]" />
+            <Zap className="h-4.5 w-4.5 text-[#E34F2D]" />
             <span>{toastMessage}</span>
           </motion.div>
         )}
@@ -346,13 +346,13 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-[#2D2A56] transition-colors cursor-pointer shrink-0"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-[#332151] transition-colors cursor-pointer shrink-0"
             title="Retour à la liste"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold font-serif-mct text-[#2D2A56] tracking-tight leading-tight">
+            <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight leading-tight">
               {dossier.code ?? dossier.id}
             </h2>
             <p className="truncate text-xs text-[#5A5A7A] mt-0.5">
@@ -366,10 +366,10 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
           <button
             type="button"
             onClick={() => setSwitcherOpen((o) => !o)}
-            className="w-full flex items-center justify-between gap-3 rounded-xl bg-slate-50 border border-slate-200/60 px-4 py-2.5 text-xs font-bold text-[#2D2A56] hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between gap-3 rounded-xl bg-slate-50 border border-slate-200/60 px-4 py-2.5 text-xs font-bold text-[#332151] hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2 min-w-0">
-              <Building2 className="h-4 w-4 text-[#EA5B2D] shrink-0" />
+              <Building2 className="h-4 w-4 text-[#E34F2D] shrink-0" />
               <span className="truncate">{dossier.code ?? dossier.id} — {dossier.centre}</span>
             </span>
             <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform shrink-0 ${switcherOpen ? "rotate-180" : ""}`} />
@@ -392,7 +392,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                       type="button"
                       onClick={() => { setSwitcherOpen(false); if (!active) onSwitch?.(c.id); }}
                       className={`w-full text-left px-3 py-2.5 text-[11px] font-bold transition-all cursor-pointer rounded-lg mb-0.5 last:mb-0 flex items-center justify-between gap-2 ${
-                        active ? "bg-[#EA5B2D]/10 text-[#EA5B2D]" : "text-slate-600 hover:bg-slate-50 hover:text-[#2D2A56]"
+                        active ? "bg-[#E34F2D]/10 text-[#E34F2D]" : "text-slate-600 hover:bg-slate-50 hover:text-[#332151]"
                       }`}
                     >
                       <span className="truncate">{c.code_centre} — {c.enseigne ?? c.ville ?? "—"}</span>
@@ -425,7 +425,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                 <div key={a.id} className="flex items-start justify-between gap-3 rounded-2xl border border-red-100 bg-white px-4 py-3">
                   <div className="min-w-0">
                     <span className="inline-block text-[8.5px] font-extrabold uppercase tracking-wider text-red-500 mb-1">{a.type}</span>
-                    <p className="text-xs font-semibold text-[#2D2A56] leading-relaxed break-words">{a.message}</p>
+                    <p className="text-xs font-semibold text-[#332151] leading-relaxed break-words">{a.message}</p>
                   </div>
                   <button
                     onClick={() => handleResolveAlert(a.id)}
@@ -445,12 +445,12 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
           <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <Building2 className="h-4 w-4 shrink-0 text-[#EA5B2D]" />
+                <Building2 className="h-4 w-4 shrink-0 text-[#E34F2D]" />
                 <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">Fiche du centre</span>
-                <span className="rounded-md bg-[#EA5B2D]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#EA5B2D]">Partenaire MCT</span>
+                <span className="rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#E34F2D]">Partenaire MCT</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <button onClick={handleEditCentre} title="Modifier le centre" className="rounded-lg border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#2D2A56]">
+                <button onClick={handleEditCentre} title="Modifier le centre" className="rounded-lg border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#332151]">
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button onClick={handleDeleteCentre} title="Supprimer le centre" className="rounded-lg border border-slate-200 p-2 text-slate-500 transition-colors hover:border-rose-500 hover:bg-rose-500 hover:text-white">
@@ -479,7 +479,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
             <div className="flex justify-end border-t border-slate-100 px-6 py-3">
               <button
                 onClick={() => onNavigateToTab?.("Carte")}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#EA5B2D]/10 px-3.5 py-2 text-xs font-bold text-[#EA5B2D] transition-colors hover:bg-[#EA5B2D] hover:text-white cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#E34F2D]/10 px-3.5 py-2 text-xs font-bold text-[#E34F2D] transition-colors hover:bg-[#E34F2D] hover:text-white cursor-pointer"
               >
                 <MapPin className="h-3.5 w-3.5" /> Voir sur la carte MCT <ChevronRight className="h-3.5 w-3.5" />
               </button>
@@ -539,7 +539,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
           <div className="lg:col-span-2 space-y-8">
 
             {/* WHATSAPP FEED & CHAT INPUT */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[500px] max-h-[640px] transition-all duration-300">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[500px] max-h-[640px] transition-all duration-200">
               
               {/* WhatsApp Header */}
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
@@ -548,7 +548,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="truncate text-sm font-bold text-[#2D2A56]">{dossier.code ?? dossier.id}</h4>
+                    <h4 className="truncate text-sm font-bold text-[#332151]">{dossier.code ?? dossier.id}</h4>
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Actif
                     </span>
@@ -567,13 +567,13 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                         className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm ${
                           outgoing
                             ? "bg-[#E7F7E3] text-[#1B3329] rounded-br-sm"
-                            : "bg-white border border-slate-200 text-[#2D2A56] rounded-bl-sm"
+                            : "bg-white border border-slate-200 text-[#332151] rounded-bl-sm"
                         }`}
                       >
                         {msg.type === "ai" && (
-                          <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-[#EA5B2D]">
+                          <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-[#E34F2D]">
                             Léo
-                            <span className="rounded bg-[#EA5B2D]/10 px-1 py-px text-[8px] font-extrabold uppercase tracking-wider">IA</span>
+                            <span className="rounded bg-[#E34F2D]/10 px-1 py-px text-[8px] font-extrabold uppercase tracking-wider">IA</span>
                           </span>
                         )}
                         {msg.type === "ai" ? (
@@ -624,7 +624,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   onClick={() => chatFileRef.current?.click()}
                   disabled={chatUploading}
                   title="Joindre un document"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-[#EA5B2D] disabled:opacity-50 transition-colors cursor-pointer"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-[#E34F2D] disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   {chatUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Paperclip className="h-5 w-5" />}
                 </button>
@@ -633,12 +633,12 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   value={whatsAppInput}
                   onChange={(e) => setWhatsAppInput(e.target.value)}
                   placeholder="Écrire un message (l'IA Léo répond)…"
-                  className="flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-[#2D2A56] placeholder-slate-400 outline-none focus:border-[#EA5B2D] focus:bg-white transition-colors font-medium"
+                  className="flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-[#332151] placeholder-slate-400 outline-none focus:border-[#E34F2D] focus:bg-white transition-colors font-medium"
                 />
                 <button
                   type="submit"
                   disabled={!whatsAppInput.trim()}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EA5B2D] text-white hover:bg-[#d24e24] disabled:opacity-40 transition-colors cursor-pointer"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E34F2D] text-white hover:bg-[#DF3714] disabled:opacity-40 transition-colors cursor-pointer"
                 >
                   <Send className="h-4.5 w-4.5" />
                 </button>
@@ -668,7 +668,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
               {(dossier.presentPieces ?? []).map((p, i) => (
                 <div key={`p-${i}-${p}`} className="flex items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-2.5">
-                  <span className="flex items-center gap-2 text-sm font-bold text-[#2D2A56] min-w-0">
+                  <span className="flex items-center gap-2 text-sm font-bold text-[#332151] min-w-0">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><Check className="h-3 w-3" /></span>
                     <span className="truncate">{p}</span>
                   </span>
@@ -684,7 +684,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   <button
                     onClick={() => pickFileFor(p)}
                     title={`Téléverser « ${p} »`}
-                    className="group/up flex items-center gap-1.5 shrink-0 rounded-full border border-[#EA5B2D]/25 bg-[#EA5B2D]/5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#EA5B2D] hover:bg-[#EA5B2D] hover:text-white hover:border-[#EA5B2D] transition-all duration-200 cursor-pointer"
+                    className="group/up flex items-center gap-1.5 shrink-0 rounded-full border border-[#E34F2D]/25 bg-[#E34F2D]/5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#E34F2D] hover:bg-[#E34F2D] hover:text-white hover:border-[#E34F2D] transition-all duration-200 cursor-pointer"
                   >
                     <Upload className="h-3 w-3 transition-transform group-hover/up:-translate-y-0.5" />
                     <span>Téléverser</span>
@@ -698,7 +698,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
             <div className="mt-4 flex justify-end border-t border-slate-100/60 pt-3">
               <button
                 onClick={() => onNavigateToTab?.("Validations")}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#EA5B2D]/10 px-3.5 py-2 text-xs font-bold text-[#EA5B2D] transition-colors hover:bg-[#EA5B2D] hover:text-white cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#E34F2D]/10 px-3.5 py-2 text-xs font-bold text-[#E34F2D] transition-colors hover:bg-[#E34F2D] hover:text-white cursor-pointer"
               >
                 Vérifier dans Validations <ChevronRight className="h-3.5 w-3.5" />
               </button>

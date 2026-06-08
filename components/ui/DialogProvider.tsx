@@ -129,14 +129,14 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                     </span>
                   )}
                   <div>
-                    <h3 className="text-lg font-extrabold font-serif-mct text-[#2D2A56] leading-snug">{dialog.title}</h3>
+                    <h3 className="text-lg font-extrabold font-serif-mct text-[#332151] leading-snug">{dialog.title}</h3>
                     {dialog.message && <p className="mt-1 text-xs text-[#5A5A7A] leading-relaxed">{dialog.message}</p>}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={cancel}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 text-[#5A5A7A] hover:text-[#2D2A56] cursor-pointer transition shrink-0"
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-[#5A5A7A] hover:text-[#332151] cursor-pointer transition shrink-0"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -159,7 +159,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                           value={values[f.name] ?? ""}
                           placeholder={f.placeholder}
                           onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-                          className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm resize-none"
+                          className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm resize-none"
                         />
                       ) : (
                         <input
@@ -168,7 +168,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                           value={values[f.name] ?? ""}
                           placeholder={f.placeholder}
                           onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-                          className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#EA5B2D] focus:bg-white transition-all shadow-sm"
+                          className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm"
                         />
                       )}
                     </div>
@@ -188,7 +188,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                     className={`flex-1 py-3 text-xs font-extrabold rounded-xl text-white transition-colors cursor-pointer disabled:opacity-50 shadow-sm ${
                       dialog.kind === "confirm" && dialog.danger
                         ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
-                        : "bg-[#EA5B2D] hover:bg-[#d24e24] shadow-[#EA5B2D]/20"
+                        : "bg-[#E34F2D] hover:bg-[#DF3714] shadow-[#E34F2D]/20"
                     }`}
                   >
                     {dialog.kind === "confirm" ? dialog.confirmLabel ?? "Confirmer" : dialog.submitLabel ?? "Enregistrer"}
