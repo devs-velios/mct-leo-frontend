@@ -95,6 +95,7 @@ export default function CarteView({ onOpenDossier, setMobileMenuOpen }: CarteVie
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">
       <CarteListingView
         filteredCenters={filteredCenters}
+        centers={centers}
         counts={counts}
         selectedFilter={selectedFilter}
         setSelectedFilter={setSelectedFilter}

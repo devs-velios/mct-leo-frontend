@@ -13,18 +13,22 @@ import {
   AlertTriangle,
   Building2,
   Paperclip,
-  Loader2
+  Loader2,
+  FileText,
+  ExternalLink,
+  Users,
+  ShieldCheck,
+  Clock
 } from "lucide-react";
 
 import { type Message, type DossierDetail, centreDetailToDossier } from "./dossier-details/dossierData";
-import PipelineBoards, { microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS } from "./dossier-details/PipelineBoards";
+import PipelineBoards, { microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS, stageLabel } from "./dossier-details/PipelineBoards";
 import { Timeline, TimelineItem, TimelineDot, TimelineLine, TimelineHeading, TimelineContent } from "@/components/ui/timeline";
 import { api } from "@/lib/api";
 import { useCentresContext, type CentreDetail as CentreFullDetail } from "@/lib/features/centres";
 import { useConversationsContext } from "@/lib/features/conversations";
-import { advanceDossierStage } from "@/lib/features/dossiers";
+import { useDossiersContext } from "@/lib/features/dossiers";
 import Markdown from "@/components/ui/Markdown";
-import { Button } from "@/components/ui/button";
 
 interface DossierDetailsViewProps {
   /** Centre id — the detail payload (GET /api/centres/:id) is centre-scoped. */
@@ -41,6 +45,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const { upload: uploadDoc, getDetail, centres, ensureList, revalidateList } = useCentresContext();
   // WhatsApp chat: send a message / document through the real pipeline (Léo replies).
   const { upload: uploadWhatsappDoc, send: sendWhatsappMessage } = useConversationsContext();
+  // Pipeline advance/revert goes through the shared dossiers context (feature pattern).
+  const { advance: advanceStage } = useDossiersContext();
   // Local active dossier state
   const [dossier, setDossier] = useState<DossierDetail | null>(null);
   // Full backend payload (GET /api/centres/:id) — holds dossiers (micro+macro+nav) and alerts.
@@ -53,8 +59,10 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const chatFileRef = useRef<HTMLInputElement>(null);
   // WhatsApp feed: auto-scroll the chat box (not the page) to the latest message.
   const messagesScrollRef = useRef<HTMLDivElement>(null);
-  // Macro view: kanban board by default, toggle to the static table.
-  const [macroView, setMacroView] = useState<"kanban" | "tableau">("kanban");
+  // Which of the centre's files (dossiers) is in focus. Defaults to the route's focus
+  // dossier; a click in the "Fichiers du centre" list overrides it without leaving the page.
+  const [focusOverride, setFocusOverride] = useState<string | undefined>(undefined);
+  const focusId = focusOverride ?? focusDossierId;
 
   // Centre-switcher needs the full list (the dashboard layout loads it, but be defensive).
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
@@ -92,15 +100,47 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   // The focused dossier (from the route id) carries the micro stage + derived macro + nav
   // hints; fall back to the most recent dossier when no specific id is requested.
   const activeDossier = raw?.dossiers?.length
-    ? (focusDossierId ? raw.dossiers.find((d) => d.id === focusDossierId) ?? raw.dossiers[raw.dossiers.length - 1] : raw.dossiers[raw.dossiers.length - 1])
+    ? (focusId ? raw.dossiers.find((d) => d.id === focusId) ?? raw.dossiers[raw.dossiers.length - 1] : raw.dossiers[raw.dossiers.length - 1])
     : null;
   const openAlerts = (raw?.alerts ?? []).filter((a) => a.status === "open");
+
+  // Centre files (dossiers) + stakeholders + validated pieces — surfaced straight from the
+  // backend detail payload (no extra calls). Used by the left-column panels below.
+  const centreDossiers = raw?.dossiers ?? [];
+  const TYPE_DOSSIER_LABEL: Record<string, string> = {
+    acquisition: "Acquisition", transfert: "Transfert", ouverture: "Ouverture",
+    renouvellement: "Renouvellement", controleur: "Contrôleur",
+  };
+  const fileTypeLabel = (t: string) => TYPE_DOSSIER_LABEL[t] ?? (t ? t.charAt(0).toUpperCase() + t.slice(1) : "Dossier");
+  // Stakeholders: the centre's contacts_clients map → labelled rows (strings only).
+  const STAKEHOLDER_LABEL: Record<string, string> = {
+    gerant: "Gérant", exploitant: "Exploitant", contact: "Contact",
+    telephone: "Téléphone", phone: "Téléphone", email: "E-mail", nom: "Nom",
+  };
+  const stakeholders = Object.entries((raw?.centre?.contacts_clients ?? {}) as Record<string, unknown>)
+    .filter((e): e is [string, string] => typeof e[1] === "string" && e[1].trim().length > 0)
+    .map(([k, v]) => ({ label: STAKEHOLDER_LABEL[k.toLowerCase()] ?? (k.charAt(0).toUpperCase() + k.slice(1)), value: v }));
+  // Received documents with their real metadata (drive link, validation, confidence).
+  const receivedPieces = raw?.pieces ?? [];
+  const PIECE_LABEL: Record<string, string> = {
+    kbis: "KBIS", piece_identite_exploitant: "Pièce d'identité (exploitant)",
+    attestation_conformite_logiciel: "Attestation conformité logiciel",
+    bail_commercial: "Bail commercial", assurance: "Attestation d'assurance",
+    plan_implantation: "Plan d'implantation",
+  };
+  const pieceLabel = (t: string) =>
+    PIECE_LABEL[t] ?? (t ? t.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) : "Document");
 
   // Advance/revert the dossier to an ADJACENT stage. Optimistic: move the card instantly,
   // then reconcile with the backend (no flicker waiting on the round-trip).
   const handleMoveStage = async (target: string) => {
     if (!activeDossier) return;
     const dossierUuid = activeDossier.id;
+    // Move by DIRECTION (next/back) relative to the current stage — the drop target is
+    // always an adjacent column, so derive the direction from the canonical order.
+    const current = activeDossier.etape_pipeline;
+    const direction = target === microNext(current ?? "") ? "next" : target === microPrev(current ?? "") ? "back" : null;
+    if (!direction) return; // not an adjacent step — ignore
     const prevRaw = raw;
     // Optimistically patch the active dossier's micro stage + derived macro + nav hints.
     setRaw((r) =>
@@ -116,7 +156,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
         : r,
     );
     try {
-      await advanceDossierStage(dossierUuid, { target });
+      await advanceStage(dossierUuid, { direction, target });
       void load(true); // reconcile in the background (same values → no visible change)
       void revalidateList(); // macro status on the centres list changes too
       triggerToast("Étape du dossier mise à jour.");
@@ -357,10 +397,10 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-8">
 
-          {/* LEFT COLUMN: Parcours timeline (aligns with the WhatsApp feed) */}
+          {/* LEFT COLUMN: pipeline + stakeholders + the centre's files (aligns with the WhatsApp feed) */}
           <div className="lg:col-span-1 space-y-8">
 
-            {/* PARCOURS — pipeline progression */}
+            {/* PARCOURS — single pipeline visualization (vertical timeline + adjacent-step controls) */}
             <div className="bg-white p-6 rounded-2xl border border-slate-100">
               <span className="mb-4 block border-b border-slate-100 pb-3 text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">
                 Parcours du dossier
@@ -369,28 +409,92 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                 const microIdx = activeDossier?.etape_pipeline ? MICRO_KEYS.indexOf(activeDossier.etape_pipeline) : -1;
                 const isBlocked = activeDossier?.statut_ouverture === "bloque";
                 return (
-                  <Timeline positions="left">
-                    {MICRO_STAGES.map((s, i) => {
-                      const done = microIdx >= 0 && i < microIdx;
-                      const current = i === microIdx;
-                      const status = current ? (isBlocked ? "error" : "current") : done ? "done" : "default";
-                      const last = i === MICRO_STAGES.length - 1;
-                      return (
-                        <TimelineItem key={s.key} status={done ? "done" : "default"}>
-                          <TimelineHeading variant="primary">{s.label}</TimelineHeading>
-                          <TimelineDot status={status} />
-                          {!last && <TimelineLine done={done} />}
-                          <TimelineContent>
-                            <span className="text-[11px] font-semibold">
-                              {current ? (isBlocked ? "Bloqué à cette étape" : "En cours") : done ? "Terminé" : "À venir"}
-                            </span>
-                          </TimelineContent>
-                        </TimelineItem>
-                      );
-                    })}
-                  </Timeline>
+                  <>
+                    {microIdx < 0 && !activeDossier?.etape_pipeline && (
+                      <p className="mb-4 rounded-lg bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-400">
+                        Aucune étape en cours — le dossier n&apos;est pas encore entré dans le pipeline.
+                      </p>
+                    )}
+                    <Timeline positions="left">
+                      {MICRO_STAGES.map((s, i) => {
+                        const done = microIdx >= 0 && i < microIdx;
+                        const current = i === microIdx;
+                        const status = current ? (isBlocked ? "error" : "current") : done ? "done" : "default";
+                        const last = i === MICRO_STAGES.length - 1;
+                        return (
+                          <TimelineItem key={s.key} status={done ? "done" : "default"}>
+                            <TimelineHeading variant="primary">{s.label}</TimelineHeading>
+                            <TimelineDot status={status} />
+                            {!last && <TimelineLine done={done} />}
+                            <TimelineContent>
+                              <span className="text-[11px] font-semibold">
+                                {current ? (isBlocked ? "Bloqué à cette étape" : "En cours") : done ? "Terminé" : "À venir"}
+                              </span>
+                            </TimelineContent>
+                          </TimelineItem>
+                        );
+                      })}
+                    </Timeline>
+                  </>
                 );
               })()}
+            </div>
+
+            {/* INTERVENANTS — stakeholders (centre contacts) */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100">
+              <span className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">
+                <Users className="h-3.5 w-3.5 text-[#E34F2D]" /> Intervenants
+              </span>
+              {stakeholders.length > 0 ? (
+                <dl className="space-y-3">
+                  {stakeholders.map((s, i) => (
+                    <div key={`${s.label}-${i}`} className="flex items-baseline justify-between gap-3">
+                      <dt className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{s.label}</dt>
+                      <dd className="min-w-0 truncate text-right text-xs font-semibold text-[#332151]">{s.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="text-xs font-semibold italic text-slate-400">Aucun intervenant renseigné.</p>
+              )}
+            </div>
+
+            {/* FICHIERS DU CENTRE — one centre = multiple files; click to focus one */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100">
+              <span className="mb-4 flex items-center justify-between gap-2 border-b border-slate-100 pb-3 text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">
+                <span className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-[#E34F2D]" /> Fichiers du centre</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-extrabold text-slate-500">{centreDossiers.length}</span>
+              </span>
+              {centreDossiers.length > 0 ? (
+                <div className="space-y-2">
+                  {centreDossiers.map((d) => {
+                    const active = d.id === activeDossier?.id;
+                    const blocked = d.statut_ouverture === "bloque";
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setFocusOverride(d.id)}
+                        className={`w-full rounded-xl border px-3.5 py-3 text-left transition-all cursor-pointer ${
+                          active ? "border-[#E34F2D]/40 bg-[#E34F2D]/5" : "border-slate-100 bg-slate-50/50 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`truncate text-xs font-bold ${active ? "text-[#E34F2D]" : "text-[#332151]"}`}>
+                            {fileTypeLabel(d.type_dossier)}
+                          </span>
+                          {blocked
+                            ? <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wider text-red-600">Bloqué</span>
+                            : active && <Check className="h-3.5 w-3.5 shrink-0 text-[#E34F2D]" />}
+                        </div>
+                        <p className="mt-1 truncate text-[11px] font-semibold text-slate-500">{stageLabel(d.etape_pipeline)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs font-semibold italic text-slate-400">Aucun fichier.</p>
+              )}
             </div>
 
             <input
@@ -519,7 +623,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
           </div>
 
-          {/* PIPELINE — micro (draggable) + macro (grouped, read-only), unified component */}
+          {/* PIPELINE — draggable kanban (change the stage by dragging the card to an adjacent column) */}
           <PipelineBoards
             etape={activeDossier?.etape_pipeline}
             statut={activeDossier?.statut_ouverture}
@@ -537,15 +641,56 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
               <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Checklist Live</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
-              {(dossier.presentPieces ?? []).map((p, i) => (
-                <div key={`p-${i}-${p}`} className="flex items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-2.5">
-                  <span className="flex items-center gap-2 text-sm font-bold text-[#332151] min-w-0">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><Check className="h-3 w-3" /></span>
-                    <span className="truncate">{p}</span>
-                  </span>
-                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-600 shrink-0">Reçu</span>
-                </div>
-              ))}
+              {receivedPieces.map((p) => {
+                const validated = p.valide_par_humain;
+                const label = pieceLabel(p.type_piece);
+                const meta = validated && p.validated_at
+                  ? `Validé le ${new Date(p.validated_at).toLocaleDateString("fr-FR")}`
+                  : p.rejet_raison
+                  ? `Rejeté · ${p.rejet_raison}`
+                  : "À valider";
+                return (
+                  <div key={p.id} className={`flex flex-col gap-1.5 rounded-xl border px-4 py-2.5 ${validated ? "border-emerald-100 bg-emerald-50/40" : "border-amber-100 bg-amber-50/40"}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm font-bold text-[#332151] min-w-0">
+                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white ${validated ? "bg-emerald-500" : "bg-amber-500"}`}>
+                          {validated ? <Check className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                        </span>
+                        <span className="truncate">{label}</span>
+                      </span>
+                      {p.drive_link && (
+                        <a
+                          href={p.drive_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Ouvrir dans le Drive"
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 hover:border-[#E34F2D] hover:text-[#E34F2D] transition-colors cursor-pointer"
+                        >
+                          <ExternalLink className="h-3 w-3" /> Drive
+                        </a>
+                      )}
+                    </div>
+                    {(p.nom_fichier_origine || p.nom_fichier_canonique) && (
+                      <span
+                        className="truncate pl-7 font-mono text-[11px] font-medium text-[#5A5A7A]"
+                        title={p.nom_fichier_origine ?? p.nom_fichier_canonique ?? ""}
+                      >
+                        {p.nom_fichier_origine ?? p.nom_fichier_canonique}
+                      </span>
+                    )}
+                    <div className="flex items-center justify-between gap-2 pl-7">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${validated ? "text-emerald-600" : p.rejet_raison ? "text-red-500" : "text-amber-600"}`}>
+                        {validated && <ShieldCheck className="h-3 w-3" />}{meta}
+                      </span>
+                      {typeof p.confiance_classification === "number" && (
+                        <span className="shrink-0 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
+                          IA {Math.round(p.confiance_classification * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
               {(dossier.missingPieces ?? []).map((p, i) => (
                 <div key={`m-${i}-${p}`} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-bold text-slate-500 min-w-0">
@@ -562,7 +707,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   </button>
                 </div>
               ))}
-              {(dossier.presentPieces ?? []).length === 0 && (dossier.missingPieces ?? []).length === 0 && (
+              {receivedPieces.length === 0 && (dossier.missingPieces ?? []).length === 0 && (
                 <p className="text-xs font-semibold italic text-slate-400 sm:col-span-2 xl:col-span-3">Aucune pièce attendue.</p>
               )}
             </div>

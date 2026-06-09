@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
   Search,
-  Calendar,
   Eye,
   ShieldCheck,
   FolderOpen,
@@ -13,10 +12,8 @@ import {
   Pencil,
   XCircle,
   ExternalLink,
-  ChevronDown,
   X,
   Menu,
-  IdCard,
   ArrowUpDown,
   MoreHorizontal
 } from "lucide-react";
@@ -29,7 +26,6 @@ import { usePiecesContext } from "@/lib/features/pieces";
 import { useFoldersContext } from "@/lib/features/folders";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
-import Tooltip from "@/components/ui/Tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -88,10 +84,23 @@ const STATUS_TONE: Record<string, string> = {
   "Rejeté": "bg-rose-50 text-rose-700",
 };
 
-// Human-readable document type (avoids showing raw enum values).
+// Human-readable document type — full set, mirrors the backend PIECE_TYPES.
 const DOC_LABEL: Record<string, string> = {
-  agrement_prefectoral: "Agrément préfectoral",
   kbis: "Kbis",
+  rapport_audit_initial: "Rapport d'audit initial",
+  plan_masse: "Plan de masse",
+  cadastre: "Cadastre",
+  liasse: "Liasse fiscale",
+  manuel_procedures: "Manuel de procédures",
+  attestation_conformite_logiciel: "Attestation conformité logiciel",
+  piece_identite_exploitant: "Pièce d'identité (exploitant)",
+  attestation_formation_exploitant: "Attestation de formation (exploitant)",
+  piece_identite_responsable_legal: "Pièce d'identité (responsable légal)",
+  recepisse_cofrac: "Récépissé COFRAC",
+  references_techniques: "Références techniques",
+  attestation_voirie_lourde: "Attestation voirie lourde",
+  attestation_planeite: "Attestation de planéité",
+  agrement_prefectoral: "Agrément préfectoral",
   assurance: "Assurance",
   piece_identite: "Pièce d'identité",
   autre: "Autre",
@@ -115,8 +124,6 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   const [selectedConfFilter, setSelectedConfFilter] = useState<"all" | "high" | "low">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<{ key: "recuLe" | "confIA" | "status"; order: "asc" | "desc" }>({ key: "recuLe", order: "desc" });
-  const [dateFilter, setDateFilter] = useState("toutes");
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Pagination states
@@ -148,23 +155,10 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     }
   }, [toastMessage]);
 
-  // Handle outside click to close the date dropdown
-  useEffect(() => {
-    if (!isDateDropdownOpen) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".date-dropdown-container")) {
-        setIsDateDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, [isDateDropdownOpen]);
-
   // Reset page when tab/filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTab, selectedConfFilter, searchQuery, dateFilter]);
+  }, [selectedTab, selectedConfFilter, searchQuery]);
 
   // Filter validations based on selections
   const filteredValidations = validationsList.filter((item) => {
@@ -185,18 +179,6 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
       if (item.confIA < 90) return false;
     } else if (selectedConfFilter === "low") {
       if (item.confIA >= 70) return false;
-    }
-
-    // 4. Date ranges (real timestamps)
-    if (dateFilter !== "toutes" && item.createdAt) {
-      const created = new Date(item.createdAt);
-      const now = new Date();
-      if (dateFilter === "aujourdhui") {
-        if (created.toDateString() !== now.toDateString()) return false;
-      } else if (dateFilter === "semaine") {
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
-        if (created < sevenDaysAgo) return false;
-      }
     }
 
     return true;
@@ -269,6 +251,27 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     }
   };
 
+  // Bulk validation for high-confidence clusters — the pending pieces in the current
+  // filter with AI confidence ≥ 90%. NOTE: no bulk-approve backend route yet, so this
+  // loops the existing per-piece verify (see BACKEND_NOTES.md → "Bulk validation").
+  const highConfidencePending = filteredValidations.filter(
+    (v) => v.pieceId && v.confIA >= 90 && (v.status === "À valider" || v.status === "À identifier"),
+  );
+  const handleBulkValidate = async () => {
+    if (highConfidencePending.length === 0) return;
+    const ok = await confirm({
+      title: `Valider ${highConfidencePending.length} pièce${highConfidencePending.length > 1 ? "s" : ""} fiable${highConfidencePending.length > 1 ? "s" : ""} ?`,
+      message: "Toutes les pièces en attente avec une confiance IA ≥ 90 % seront validées, et les clients notifiés par WhatsApp.",
+      confirmLabel: "Tout valider",
+    });
+    if (!ok) return;
+    let done = 0;
+    for (const it of highConfidencePending) {
+      try { await verify(it.pieceId!); done++; } catch { /* keep going */ }
+    }
+    setToastMessage(`${done} pièce${done > 1 ? "s" : ""} validée${done > 1 ? "s" : ""}.`);
+  };
+
   // Sort, then paginate.
   const sortedValidations = [...filteredValidations].sort((a, b) => {
     let cmp = 0;
@@ -304,6 +307,9 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
           <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
             À traiter
           </h2>
+          <p className="mt-0.5 text-xs text-[#5A5A7A]">
+            Tous les documents entrants nécessitant une validation.
+          </p>
         </div>
       </header>
 
@@ -330,136 +336,39 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
             )}
           </AnimatePresence>
 
-          {/* 2. Premium Filters Section */}
-          <div className="relative z-20 bg-white p-6 rounded-3xl shadow-[0_10px_35px_rgba(45,42,86,0.02)] border border-slate-100/50 space-y-5">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-              <div>
-                <h3 className="text-xs font-black text-[#332151] uppercase tracking-widest">
-                  ADVANCED FILTERS
-                </h3>
-                <p className="text-[10px] font-semibold text-slate-400 mt-1">
-                  Search and filter the files to be validated by phase or AI confidence level
-                </p>
-              </div>
+          {/* Filter bar — status tabs + AI confidence chips (no Advanced Filters block) */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+              <TabsList className="flex-wrap">
+                {[
+                  { key: "tout", label: "Tous" },
+                  { key: "À identifier", label: "À identifier" },
+                  { key: "À valider", label: "À valider" },
+                  { key: "Validé", label: "Validés" },
+                  { key: "Rejeté", label: "Rejetés" },
+                ].map((tab) => (
+                  <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
-              {/* Filter controls row */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-                {/* Search query input */}
-                <div className="relative flex-1 min-w-[220px]">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                    <Search className="h-3.5 w-3.5" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="SEARCH FOLDER, NAME..."
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-9 pr-8 py-2.5 text-[10px] font-bold text-slate-700 placeholder-slate-400 uppercase tracking-wider outline-none focus:border-[#332151] focus:bg-white transition-all shadow-sm"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Custom Date filter dropdown */}
-                <div className="relative min-w-[170px] date-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                    className="w-full rounded-xl bg-slate-50 pl-9 pr-8 py-2.5 text-[10px] font-bold text-[#332151] uppercase tracking-wider outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors shadow-sm border border-slate-200/20"
-                  >
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#332151]">
-                      <Calendar className="h-3.5 w-3.5" />
-                    </div>
-                    <span>{dateFilter === "toutes" ? "Toutes les dates" : dateFilter === "aujourdhui" ? "Aujourd'hui" : "Cette semaine"}</span>
-                    <ChevronDown className={`h-3.5 w-3.5 text-[#332151] transition-transform duration-200 ${isDateDropdownOpen ? "rotate-180" : ""}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isDateDropdownOpen && (
-                      <motion.div
-                        key="date-dropdown-menu"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute z-30 top-full mt-2 left-0 right-0 bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5"
-                      >
-                        {[
-                          { key: "toutes", label: "Toutes les dates" },
-                          { key: "aujourdhui", label: "Aujourd'hui" },
-                          { key: "semaine", label: "Cette semaine" }
-                        ].map((option) => (
-                          <button
-                            key={option.key}
-                            type="button"
-                            onClick={() => {
-                              setDateFilter(option.key);
-                              setIsDateDropdownOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer rounded-lg mb-0.5 last:mb-0 ${
-                              dateFilter === option.key
-                                ? "bg-[#E34F2D]/10 text-[#E34F2D]"
-                                : "text-slate-600 hover:bg-slate-50 hover:text-[#332151]"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Category Filter Chips & IA Confidence tags */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-4 border-t border-slate-100/60">
-              {/* Left filter tabs */}
-              <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                <TabsList className="flex-wrap">
-                  {[
-                    { key: "tout", label: "Tous" },
-                    { key: "À identifier", label: "À identifier" },
-                    { key: "À valider", label: "À valider" },
-                    { key: "Validé", label: "Validés" },
-                    { key: "Rejeté", label: "Rejetés" },
-                  ].map((tab) => (
-                    <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-
-              {/* Right IA Confidence chips */}
-              <div className="flex items-center gap-1.5 bg-slate-100/60 p-1.5 rounded-xl w-fit shrink-0">
-                <button
-                  onClick={() => setSelectedConfFilter(selectedConfFilter === "high" ? "all" : "high")}
-                  className={`px-3.5 py-1.5 text-[10px] font-extrabold rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
-                    selectedConfFilter === "high"
-                      ? "bg-white text-[#332151] shadow-sm"
-                      : "text-[#5A5A7A] hover:text-[#332151] hover:bg-white/50"
-                  }`}
-                >
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>Conf. &gt; 90%</span>
-                </button>
-                <button
-                  onClick={() => setSelectedConfFilter(selectedConfFilter === "low" ? "all" : "low")}
-                  className={`px-3.5 py-1.5 text-[10px] font-extrabold rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5 ${
-                    selectedConfFilter === "low"
-                      ? "bg-white text-[#332151] shadow-sm"
-                      : "text-[#5A5A7A] hover:text-[#332151] hover:bg-white/50"
-                  }`}
-                >
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  <span>Conf. &lt; 70%</span>
-                </button>
-              </div>
+            <div className="flex w-fit shrink-0 items-center gap-1.5 rounded-xl bg-slate-100/60 p-1.5">
+              <button
+                onClick={() => setSelectedConfFilter(selectedConfFilter === "high" ? "all" : "high")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[10px] font-extrabold transition-all duration-150 ${
+                  selectedConfFilter === "high" ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:bg-white/50 hover:text-[#332151]"
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" /> <span>Conf. &gt; 90%</span>
+              </button>
+              <button
+                onClick={() => setSelectedConfFilter(selectedConfFilter === "low" ? "all" : "low")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[10px] font-extrabold transition-all duration-150 ${
+                  selectedConfFilter === "low" ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:bg-white/50 hover:text-[#332151]"
+                }`}
+              >
+                <AlertCircle className="h-3.5 w-3.5" /> <span>Conf. &lt; 70%</span>
+              </button>
             </div>
           </div>
 
@@ -477,6 +386,17 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   className="pl-9"
                 />
               </div>
+              <div className="flex items-center gap-2">
+                {highConfidencePending.length > 0 && (
+                  <Button
+                    size="sm"
+                    onClick={handleBulkValidate}
+                    className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
+                    title="Valider toutes les pièces fiables en attente"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables ({highConfidencePending.length})
+                  </Button>
+                )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#332151]">
@@ -497,6 +417,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </div>
             </div>
 
             {isLoading && validationsList.length === 0 ? (
@@ -506,9 +427,9 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                 <TableHeader className="bg-slate-50/70">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="px-5">Pièce</TableHead>
-                    <TableHead className="w-[96px] px-3 text-center">Confiance</TableHead>
-                    <TableHead className="w-[140px] px-3">Reçu le</TableHead>
                     <TableHead className="w-[120px] px-3">Statut</TableHead>
+                    <TableHead className="w-[100px] px-3 text-center">Confiance IA</TableHead>
+                    <TableHead className="w-[140px] px-3">Reçu le</TableHead>
                     <TableHead className="w-[150px] px-5 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -517,7 +438,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                     const ville = item.detail.includes("—") ? item.detail.split("—").pop()?.trim() : "";
                     return (
                     <TableRow key={item.id} className="cursor-pointer group" onClick={() => { if (item.centreId) onOpenDossier?.(item.centreId); }}>
-                      {/* Primary: centre (title) + merged metadata (type · code · ville) */}
+                      {/* Primary: centre + type · code · ville + linked file */}
                       <TableCell className="px-5">
                         <p className="text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{item.nom}</p>
                         <p className="mt-0.5 text-[11px] text-slate-500">
@@ -526,45 +447,63 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                           <span className="font-mono">{item.code}</span>
                           {ville && <><span className="text-slate-300"> · </span>{ville}</>}
                         </p>
+                        {item.fileName && (item.hasDrive && item.driveLink ? (
+                          <a
+                            href={item.driveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            title="Ouvrir le fichier lié dans le Drive"
+                            className="mt-1 inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-[#5A5A7A] hover:text-[#E34F2D]"
+                          >
+                            <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{item.fileName}</span>
+                          </a>
+                        ) : (
+                          <span className="mt-1 block truncate font-mono text-[11px] text-slate-400">{item.fileName}</span>
+                        ))}
                         {item.status === "Rejeté" && item.rejetRaison && (
                           <p className="mt-0.5 text-[11px] italic text-rose-500/90">Rejet : {item.rejetRaison}</p>
                         )}
                       </TableCell>
 
-                      {/* Confidence — small, de-emphasised */}
-                      <TableCell className="w-[96px] px-3 text-center">
-                        <span className="text-xs font-semibold tabular-nums text-slate-500">{item.confIA}%</span>
-                      </TableCell>
-
-                      {/* Date — consistent alignment */}
-                      <TableCell className="w-[140px] px-3 whitespace-nowrap text-xs text-slate-500 tabular-nums">{item.recuLe}</TableCell>
-
-                      {/* Status — the visual anchor */}
+                      {/* Status — moved up (the visual anchor) */}
                       <TableCell className="w-[120px] px-3">
                         <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold ${STATUS_TONE[item.status] ?? "bg-slate-500 text-white"}`}>{item.status}</span>
                       </TableCell>
 
-                      {/* Actions — 2 decisions + overflow menu */}
+                      {/* Confidence — AI score (kept) */}
+                      <TableCell className="w-[100px] px-3 text-center">
+                        <span className="text-xs font-semibold tabular-nums text-slate-500">{item.confIA}%</span>
+                      </TableCell>
+
+                      {/* Date */}
+                      <TableCell className="w-[140px] px-3 whitespace-nowrap text-xs text-slate-500 tabular-nums">{item.recuLe}</TableCell>
+
+                      {/* Actions — validate/reject only when pending + overflow menu */}
                       <TableCell className="w-[150px] px-5">
                         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            title="Valider la pièce"
-                            onClick={() => handleValidateItem(item.id, item.code)}
-                            className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-emerald-600"
-                          >
-                            <ShieldCheck className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            title="Rejeter la pièce"
-                            onClick={() => setRejectingItem(item)}
-                            className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-rose-600"
-                          >
-                            <XCircle className="h-4 w-4" />
-                          </Button>
+                          {(item.status === "À valider" || item.status === "À identifier") && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                title="Valider la pièce"
+                                onClick={() => handleValidateItem(item.id, item.code)}
+                                className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-emerald-600"
+                              >
+                                <ShieldCheck className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                title="Rejeter la pièce"
+                                onClick={() => setRejectingItem(item)}
+                                className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-rose-600"
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5A5A7A]">

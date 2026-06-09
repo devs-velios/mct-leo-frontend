@@ -53,18 +53,18 @@
 - [x] Reduce font weight in tables. 💬 Rows lightened (extrabold/bold → semibold/medium/normal); phase badge is now a single neutral pill (no emerald/amber).
 - [x] Keep Kanban view here. 💬 Tableau ⇄ Kanban toggle retained; Kanban cards also open the centre profile.
 
-### File Details
+### File Details  🚧 in progress
 
-- [ ] Remove the "MCT Partner" badge.
-- [ ] Allow editing of all center fields. 💬 Will need backend PATCH for center fields.
-- [ ] Update layout.
-- [ ] Display center files list.
-- [ ] Only one pipeline visualization.
-- [ ] Conditional document checklist.
-- [ ] Drive link and document history per document.
-- [ ] Display stakeholders.
-- [ ] Actions panel.
-- [ ] Remove dead code `toggleDocStatus`.
+- [x] Remove the "MCT Partner" badge. 💬 None existed anywhere in the repo — already clean (the only "Partenaire" hit is an R/P contract label).
+- [ ] Allow editing of all center fields. 💬 **Blocked — backend.** Needs a PATCH route for centre fields; no backend changes per project constraint. UI deferred until route exists.
+- [x] Update layout. 💬 Left column now holds **Parcours** (vertical timeline) + **Intervenants** + **Fichiers du centre**; draggable kanban + WhatsApp feed + documents below.
+- [x] Display center files list. 💬 New "Fichiers du centre" panel renders `raw.dossiers` (type + current stage + Bloqué badge); clicking a file re-focuses the detail (`focusOverride`) without leaving the page.
+- [ ] Only one pipeline visualization. 💬 **Per user request, both are kept:** the vertical **Parcours** timeline (visual journey, degrades gracefully when no stage) + the draggable **kanban** (`PipelineBoards`, used to change the stage). Both now show a hint instead of looking empty when a dossier hasn't entered the pipeline. Revisit if the "single viz" rule must win.
+- [x] Conditional document checklist. 💬 Checklist now data-driven from backend `pieces` (received) + computed `missingPieces` — received vs missing rendered distinctly; missing items show an upload action.
+- [x] Drive link and document history per document. 💬 Each received piece shows its **Drive** link (`drive_link`), validation status + date (`valide_par_humain`/`validated_at`), rejection reason, and AI confidence (`confiance_classification`). 💬 A full per-doc audit timeline (`raw.audit`) is not yet surfaced.
+- [x] Display stakeholders. 💬 New "Intervenants" panel renders the centre's `contacts_clients` as labelled rows.
+- [ ] Actions panel. 💬 Not yet — alert-resolve, stage-move and upload still live inline; to be consolidated into a dedicated panel.
+- [x] Remove dead code `toggleDocStatus`. 💬 No occurrence anywhere in the repo — already clean.
 
 ### Validations
 

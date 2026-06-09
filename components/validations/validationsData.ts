@@ -11,6 +11,7 @@ export interface ValidationItem {
   nom: string;
   detail: string;
   docType: string;
+  fileName?: string | null; // the linked uploaded file name
   status: "À identifier" | "À valider" | "Validé" | "Rejeté";
   confIA: number;
   recuLe: string;
@@ -65,6 +66,7 @@ export function queueItemToValidation(q: QueueItem, index: number): ValidationIt
     nom: q.enseigne ?? q.code_centre ?? "—",
     detail: [q.enseigne, q.ville].filter(Boolean).join(" — "),
     docType: q.type_piece,
+    fileName: q.nom_fichier,
     status: resolveStatus(q),
     confIA: Math.round((q.confiance ?? 0) * 100),
     recuLe: new Date(q.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }),
@@ -104,6 +106,7 @@ export function pieceToValidation(p: Piece, index: number, centre?: PieceCentreR
     nom: centre?.enseigne ?? centre?.code_centre ?? "—",
     detail: [centre?.enseigne, centre?.ville].filter(Boolean).join(" — "),
     docType: p.type_piece,
+    fileName: p.nom_fichier_origine ?? p.nom_fichier_canonique,
     status,
     confIA: Math.round(conf * 100),
     recuLe: new Date(p.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }),

@@ -49,5 +49,23 @@ with the real call (and then refresh the context list instead of local filtering
 
 ## 2. (placeholder for next phases)
 
+## 2. Bulk validation (Validations page — high-confidence clusters)
+
+The Validations page has a **"Valider fiables (N)"** button that validates all pending
+pieces with AI confidence ≥ 90% in the current filter.
+
+- UI: [components/ValidationsView.tsx](components/ValidationsView.tsx) → `handleBulkValidate`.
+- **Current behaviour:** loops the existing per-piece verify (`POST /pieces/{id}/verify`)
+  — one request per piece. It works, but is N requests.
+- **Preferred backend route** (one call, atomic, single client notification batch):
+
+```
+POST /pieces/bulk-verify   body: { ids: string[] }   → { verified: string[] }
+```
+
+Once available, replace the loop in `handleBulkValidate` with a single `api.post("pieces/bulk-verify", { ids })`.
+
+---
+
 Add further route needs here as the per-page redesign proceeds
-(e.g. center field editing, validation bulk-approve, audit log feed).
+(e.g. center field editing, audit log feed).

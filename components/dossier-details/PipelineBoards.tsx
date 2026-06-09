@@ -5,24 +5,30 @@ import { Check, GripVertical } from "lucide-react";
 
 export interface StageDef { key: string; label: string; }
 
-// Canonical micro pipeline — mirrors the backend (pipeline.service.ts).
+// Canonical pipeline (etape_pipeline) — the 6 business phases, in backend step_order.
+// Source of truth: backend dossier_steps (step_order) / advance-stage targets.
 export const MICRO_STAGES: StageDef[] = [
-  { key: "signature_validee", label: "Signature validée" },
-  { key: "plans_valides", label: "Plans validés" },
-  { key: "installation_qualite", label: "Installation & Qualité" },
-  { key: "audit", label: "Audit initial" },
-  { key: "depot_agrement", label: "Dépôt d'agrément" },
-  { key: "agrement_recu", label: "Agrément reçu" },
-  { key: "ouverture", label: "Ouvert" },
+  { key: "onboarding", label: "Onboarding" },
+  { key: "recuperation_documents", label: "Récupération des documents" },
+  { key: "activation_outils", label: "Activation des outils" },
+  { key: "suivi_projet", label: "Suivi de projet" },
+  { key: "qualite_audit", label: "Qualité & audit" },
+  { key: "demande_agrement", label: "Demande d'agrément" },
 ];
 export const MICRO_KEYS = MICRO_STAGES.map((s) => s.key);
+
+/** Human label for a stage key (humanized fallback for any unexpected value). */
+export const stageLabel = (key: string | null | undefined): string => {
+  if (!key) return "—";
+  const known = MICRO_STAGES.find((s) => s.key === key);
+  return known ? known.label : key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+};
 
 export const microNext = (k: string) => { const i = MICRO_KEYS.indexOf(k); return i >= 0 && i < MICRO_KEYS.length - 1 ? MICRO_KEYS[i + 1] : null; };
 export const microPrev = (k: string) => { const i = MICRO_KEYS.indexOf(k); return i > 0 ? MICRO_KEYS[i - 1] : null; };
 export const microToMacro = (k: string): string => {
-  if (k === "audit") return "audit";
-  if (k === "depot_agrement" || k === "agrement_recu") return "agrement_en_cours";
-  if (k === "ouverture") return "ouvert";
+  if (k === "qualite_audit") return "audit";
+  if (k === "demande_agrement") return "agrement_en_cours";
   return "onboarding";
 };
 
@@ -40,7 +46,12 @@ interface PipelineBoardsProps {
  * Single pipeline visualization for a dossier — the micro (draggable, fine-grained) board.
  */
 export default function PipelineBoards({ etape, nextStage, prevStage, code, centre, onMove }: PipelineBoardsProps) {
-  const movableKeys = new Set([nextStage, prevStage].filter(Boolean) as string[]);
+  // Adjacent (droppable) stages. Prefer the backend's next/prev; fall back to the
+  // canonical local order so drag-to-advance works even when the backend doesn't
+  // return adjacency for the current pipeline.
+  const adjacent = [nextStage, prevStage].filter(Boolean) as string[];
+  const localAdjacent = [microNext(etape ?? ""), microPrev(etape ?? "")].filter(Boolean) as string[];
+  const movableKeys = new Set(adjacent.length ? adjacent : localAdjacent);
 
   return (
     <div className="lg:col-span-3">
@@ -64,7 +75,8 @@ function MicroBoard({
   cardCode: string;
   cardName: string;
 }) {
-  const currentIdx = MICRO_STAGES.findIndex((s) => s.key === currentKey);
+  const stages = MICRO_STAGES;
+  const currentIdx = stages.findIndex((s) => s.key === currentKey);
   const [dragging, setDragging] = useState(false);
   const [overKey, setOverKey] = useState<string | null>(null);
 
@@ -75,7 +87,7 @@ function MicroBoard({
         <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Glissez la fiche vers une étape adjacente</span>
       </div>
       <div className="flex gap-4 overflow-x-auto pb-3 custom-scrollbar">
-        {MICRO_STAGES.map((s, idx) => {
+        {stages.map((s, idx) => {
           const isCurrent = s.key === currentKey;
           const isDone = currentIdx >= 0 && idx < currentIdx;
           const movable = movableKeys.has(s.key);

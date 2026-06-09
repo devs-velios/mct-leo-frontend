@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ChevronRight, Compass, Menu, Plus, Minus, RotateCcw, Folder, CheckCircle, Map, Zap, Layers, PenTool, UserCheck, FolderPlus, Activity, Phone, Mail } from "lucide-react";
+import { MapPin, ChevronRight, Compass, Menu, Plus, Minus, RotateCcw, CheckCircle, Map, Layers, PenTool, UserCheck, FolderPlus, Activity, Phone, Mail } from "lucide-react";
 import { type Center, REGIONS, getRegionIdOfCenter } from "./carteData";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { na } from "@/lib/utils";
@@ -19,6 +19,7 @@ interface Counts {
 
 interface CarteListingViewProps {
   filteredCenters: Center[];
+  centers: Center[];
   counts: Counts;
   selectedFilter: string;
   setSelectedFilter: (value: string) => void;
@@ -39,45 +40,6 @@ interface Cluster {
 }
 
 // Group points that are closer than a threshold distance
-function clusterCenters(centers: Center[], zoom: number): (Center | Cluster)[] {
-  const threshold = 35 / zoom; // Adjust threshold based on zoom
-  const result: (Center | Cluster)[] = [];
-  const visited = new Set<string>();
-
-  for (let i = 0; i < centers.length; i++) {
-    const center = centers[i];
-    if (visited.has(center.id)) continue;
-
-    const group = [center];
-    visited.add(center.id);
-
-    for (let j = i + 1; j < centers.length; j++) {
-      const other = centers[j];
-      if (visited.has(other.id)) continue;
-
-      const dist = Math.hypot(center.x - other.x, center.y - other.y);
-      if (dist < threshold) {
-        group.push(other);
-        visited.add(other.id);
-      }
-    }
-
-    if (group.length > 1) {
-      const sumX = group.reduce((sum, c) => sum + c.x, 0);
-      const sumY = group.reduce((sum, c) => sum + c.y, 0);
-      result.push({
-        id: `cluster-${center.id}`,
-        centroid: { x: sumX / group.length, y: sumY / group.length },
-        centers: group
-      });
-    } else {
-      result.push(center);
-    }
-  }
-
-  return result;
-}
-
 const FILTER_TABS = [
   {
     key: "Toutes phases",
@@ -137,6 +99,7 @@ const FILTER_TABS = [
 
 export default function CarteListingView({
   filteredCenters,
+  centers,
   counts,
   selectedFilter,
   setSelectedFilter,
@@ -238,10 +201,8 @@ export default function CarteListingView({
     setPan({ x: 0, y: 0 });
   };
 
-  // Clustering calculation
-  const clusteredItems = useMemo(() => {
-    return clusterCenters(filteredCenters, zoom);
-  }, [filteredCenters, zoom]);
+  // One point = one center — clustering disabled (each centre renders its own marker).
+  const clusteredItems = useMemo<(Center | Cluster)[]>(() => filteredCenters, [filteredCenters]);
 
   // Handle cluster click
   const handleClusterClick = (cluster: Cluster) => {
@@ -308,18 +269,16 @@ export default function CarteListingView({
 
       {/* Statistics Header Cards (minimal) */}
       <div className="p-4 sm:p-6 pb-2 shrink-0">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { title: "Total localisations", value: String(counts.total), icon: Map },
             { title: "Sites actifs", value: String(stats.activeSites), icon: CheckCircle },
             { title: "Régions couvertes", value: String(stats.coverageRegions), icon: Compass },
-            { title: "Activité récente", value: String(stats.recentActivity), icon: Zap, hint: "actifs <24h" },
-          ].map(({ title, value, icon: Icon, hint }) => (
+          ].map(({ title, value, icon: Icon }) => (
             <div key={title} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{title}</p>
                 <h3 className="mt-1 text-2xl font-bold text-[#332151]">{value}</h3>
-                {hint && <p className="mt-0.5 text-[10px] text-slate-400">{hint}</p>}
               </div>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#332151]">
                 <Icon className="h-5 w-5" />
@@ -369,14 +328,10 @@ export default function CarteListingView({
             `}</style>
 
             {/* Legend / Info layer overlay */}
-            <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-100 text-[10px] space-y-1.5 text-slate-600 font-semibold shadow-md">
+            <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-100 text-[10px] text-slate-600 font-semibold shadow-md">
               <div className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#E34F2D] shadow-sm"></span>
-                <span>Active Onboarding ({counts.onboarding})</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#332151] shadow-sm"></span>
-                <span>Autres phases ({counts.total - counts.onboarding})</span>
+                <span>Centres ({counts.total})</span>
               </div>
             </div>
 
@@ -488,21 +443,21 @@ export default function CarteListingView({
                     const isHovered = hoveredCenter?.id === center.id;
                     const isSelected = selectedCenterId === center.id;
                     const isActive = center.phase === "Onboarding" || center.phase === "Ouvert";
-                    const markerColor = center.phase === "Onboarding" ? "#E34F2D" : "#332151";
-                    
-                    // Determine radius based on importance/activity level
-                    const radius = isHovered || isSelected ? 7 : (center.joursInactif === 0 ? 5.5 : 4.5);
+                    const markerColor = "#E34F2D"; // single brand colour for all dots
+
+                    // Radius: gentle growth on hover/selection (no big jump).
+                    const radius = isHovered || isSelected ? 6 : (center.joursInactif === 0 ? 5.5 : 4.5);
 
                     return (
                       <g key={center.id} className="cursor-pointer">
-                        {/* Pulse animation for active onboarding sites */}
+                        {/* Subtle halo for active onboarding sites (reduced glow) */}
                         {isActive && (
                           <circle
                             cx={center.x}
                             cy={center.y}
-                            r={radius * 2.5}
+                            r={radius * 1.5}
                             fill={markerColor}
-                            className="map-pulse opacity-40 pointer-events-none"
+                            className="opacity-15 pointer-events-none"
                             style={{ transformOrigin: `${center.x}px ${center.y}px` }}
                           />
                         )}
@@ -525,7 +480,7 @@ export default function CarteListingView({
                           fill={markerColor}
                           stroke="#FFFFFF"
                           strokeWidth={1.5}
-                          className="transition-all duration-200 hover:scale-125 hover:stroke-[#E34F2D] shadow-md"
+                          className="transition-all duration-150"
                           onMouseEnter={() => setHoveredCenter(center)}
                           onClick={() => onOpenDossier?.(center.id)}
                         />
@@ -657,6 +612,55 @@ export default function CarteListingView({
               )}
             </AnimatePresence>
           </div>
+        </div>
+
+        {/* Onboarding centres — full list below the map */}
+        <div className="max-w-[1400px] mx-auto mt-6">
+          {(() => {
+            const onboardingCenters = centers.filter((c) => c.phase === "Onboarding");
+            return (
+              <div className="rounded-3xl border border-slate-100 bg-white p-5 sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#E34F2D]">Onboarding</p>
+                    <h3 className="font-serif-mct text-base font-bold text-[#332151]">
+                      Centres en onboarding ({onboardingCenters.length})
+                    </h3>
+                  </div>
+                </div>
+                {onboardingCenters.length === 0 ? (
+                  <p className="text-sm font-medium text-[#5A5A7A]">Aucun centre en onboarding.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {onboardingCenters.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => onOpenDossier?.(c.id)}
+                        className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-left transition-colors hover:border-[#E34F2D]/30 hover:bg-white"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-[#332151] group-hover:text-[#E34F2D]">
+                            {c.enseigne || c.code || c.id}
+                          </p>
+                          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#5A5A7A]">
+                            {c.code && <span className="font-mono">{c.code}</span>}
+                            {c.code && c.ville && <span className="text-slate-300">·</span>}
+                            {c.ville && (
+                              <span className="inline-flex items-center gap-0.5">
+                                <MapPin className="h-3 w-3 opacity-60" /> {c.ville}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#E34F2D]" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </motion.div>
