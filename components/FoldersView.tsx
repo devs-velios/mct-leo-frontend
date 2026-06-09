@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, FolderPlus, Save, Pencil } from "lucide-react";
+import { toast } from "sonner";
+import { Menu, FolderPlus, Save, Pencil, RefreshCw } from "lucide-react";
 import { useFoldersContext, type Folder } from "@/lib/features/folders";
 import { useDialog } from "@/components/ui/DialogProvider";
 import Select from "@/components/ui/Select";
@@ -16,24 +17,24 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
     addFolder: createFolder,
     renameFolder: updateFolder,
     repoint: repointRouting,
+    refresh,
   } = useFoldersContext();
   const { prompt } = useDialog();
   const [newName, setNewName] = useState("");
   const [newLabel, setNewLabel] = useState("");
-  const [msg, setMsg] = useState("");
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
 
   const addFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    setMsg("");
     try {
       await createFolder({ name: newName.trim(), label: newLabel.trim() || undefined });
       setNewName("");
       setNewLabel("");
+      toast.success("Dossier ajouté.");
     } catch {
-      setMsg("Impossible d'ajouter ce dossier (nom déjà existant ?).");
+      toast.error("Impossible d'ajouter ce dossier (nom déjà existant ?).");
     }
   };
 
@@ -46,8 +47,9 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
     if (!res) return;
     try {
       await updateFolder(f.id, { label: res.label });
+      toast.success("Dossier renommé.");
     } catch {
-      setMsg("Échec du renommage.");
+      toast.error("Échec du renommage.");
     }
   };
 
@@ -64,9 +66,20 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
             <Menu className="h-5 w-5" />
           </button>
         </div>
-        <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Dossiers Drive</h1>
-          <p className="text-xs text-[#5A5A7A]">Catalogue des dossiers et routage des documents</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Dossiers Drive</h1>
+            <p className="text-xs text-[#5A5A7A]">Catalogue des dossiers et routage des documents</p>
+          </div>
+          <button
+            onClick={() => refresh()}
+            disabled={loading}
+            title="Actualiser"
+            aria-label="Actualiser"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#5A5A7A] transition-colors hover:border-[#E34F2D]/40 hover:text-[#E34F2D] disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
         </div>
       </header>
 
@@ -152,8 +165,6 @@ export default function FoldersView({ setMobileMenuOpen }: { setMobileMenuOpen?:
                 >
                   <FolderPlus className="h-4 w-4 text-[#E34F2D]" /> Ajouter
                 </button>
-                
-                {msg && <p className="text-[11px] font-bold text-red-600 animate-pulse">{msg}</p>}
               </form>
             </div>
 

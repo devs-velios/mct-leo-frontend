@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, MapPin, FolderOpen, Pencil, Trash2 } from "lucide-react";
 import { useCentresContext, type UpdateCentrePayload } from "@/lib/features/centres";
 import { useDialog } from "@/components/ui/DialogProvider";
@@ -71,7 +72,6 @@ export default function CentreDetailView({
 
   const [editOpen, setEditOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   // Cache-guarded load via the shared context — instant on revisit, no refetch.
   useEffect(() => { ensureDetail(centreId); }, [centreId, ensureDetail]);
@@ -83,7 +83,6 @@ export default function CentreDetailView({
   // Persist edits via PATCH /centres/:id, then refresh the local detail.
   const handleEditSubmit = async (v: CentreFormValues) => {
     setSubmitting(true);
-    setFormError(null);
     const existingContacts = (detail?.centre.contacts_clients ?? {}) as Record<string, unknown>;
     const contacts: Record<string, unknown> = { ...existingContacts };
     if (v.responsable.trim()) contacts.responsable = v.responsable.trim();
@@ -107,8 +106,9 @@ export default function CentreDetailView({
     try {
       await update(centreId, payload); // context re-pulls detail + list slice
       setEditOpen(false);
+      toast.success("Centre mis à jour.");
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Échec de la mise à jour.");
+      toast.error(err instanceof Error ? err.message : "Échec de la mise à jour.");
     } finally {
       setSubmitting(false);
     }
@@ -179,7 +179,7 @@ export default function CentreDetailView({
               {STATUT_LABEL[c.statut_ouverture] ?? na(c.statut_ouverture)}
             </span>
             <button
-              onClick={() => { setFormError(null); setEditOpen(true); }}
+              onClick={() => setEditOpen(true)}
               className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#332151] transition-colors hover:bg-slate-50"
             >
               <Pencil className="h-3 w-3" /> Modifier
@@ -293,7 +293,6 @@ export default function CentreDetailView({
         open={editOpen}
         mode="edit"
         submitting={submitting}
-        error={formError}
         onClose={() => setEditOpen(false)}
         onSubmit={handleEditSubmit}
         initial={{

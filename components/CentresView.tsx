@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Menu, Plus, Search, ArrowRight } from "lucide-react";
 import {
   useCentresContext,
@@ -52,7 +53,6 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
 
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
 
@@ -74,13 +74,11 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
 
   // ── Create only — all editing/deletion lives on the dossier page ──────────────
   const openCreate = () => {
-    setFormError(null);
     setModalOpen(true);
   };
 
   const handleSubmit = async (v: CentreFormValues) => {
     setSubmitting(true);
-    setFormError(null);
     const payload = {
       code_centre: v.code_centre.trim(),
       enseigne: v.enseigne.trim() || undefined,
@@ -97,8 +95,9 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
     try {
       await create(payload as CreateCentrePayload);
       setModalOpen(false);
+      toast.success(`Centre « ${payload.code_centre} » créé.`);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Échec de l'enregistrement.");
+      toast.error(err instanceof Error ? err.message : "Échec de l'enregistrement.");
     } finally {
       setSubmitting(false);
     }
@@ -213,7 +212,6 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
         open={modalOpen}
         mode="create"
         submitting={submitting}
-        error={formError}
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
       />

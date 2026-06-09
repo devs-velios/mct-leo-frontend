@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, UserPlus, Check, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Menu, UserPlus, AlertCircle, Check } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { useUsersContext } from "@/lib/features/users";
 import { useRole } from "@/lib/features/auth/RoleProvider";
@@ -20,29 +21,27 @@ export default function UsersView({ setMobileMenuOpen }: UsersViewProps) {
   const { canWrite } = useRole(); // inviting users is operateur-only on the backend
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<string>("operateur");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setStatus("loading");
-    setMessage("");
     try {
       const res = await invite({ email: email.trim(), role });
-      setStatus("success");
-      setMessage(`Invitation envoyée à ${res.email} — rôle : ${role}.`);
+      toast.success(`Invitation envoyée à ${res.email} — rôle : ${role}.`);
       setEmail("");
     } catch (err) {
       const e = err as ApiError;
-      setStatus("error");
-      setMessage(
+      toast.error(
         e.status === 409
           ? "Cet email possède déjà un compte."
           : e.status === 502
             ? "Invitation impossible : l'envoi d'email (SMTP) n'est pas configuré dans Supabase."
             : e.message || "Échec de la création de l'utilisateur."
       );
+    } finally {
+      setStatus("idle");
     }
   };
 
@@ -125,24 +124,6 @@ export default function UsersView({ setMobileMenuOpen }: UsersViewProps) {
               </div>
             </div>
 
-            {/* Feedback */}
-            {message && (
-              <div
-                className={`mb-5 flex items-start gap-2.5 rounded-xl px-4 py-3 text-xs font-bold leading-relaxed ${
-                  status === "success"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-red-50 text-red-700"
-                }`}
-              >
-                {status === "success" ? (
-                  <Check className="mt-0.5 h-4 w-4 shrink-0" />
-                ) : (
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                )}
-                <span>{message}</span>
-              </div>
-            )}
-
             {!canWrite && (
               <div className="mb-5 flex items-start gap-2.5 rounded-xl bg-slate-100 px-4 py-3 text-xs font-bold leading-relaxed text-[#5A5A7A]">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -155,12 +136,10 @@ export default function UsersView({ setMobileMenuOpen }: UsersViewProps) {
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] px-4 py-3 text-sm font-bold text-white transition-all cursor-pointer shadow-[0_4px_12px_rgba(234,91,45,0.15)] active:scale-95 disabled:opacity-60"
             >
               {status === "loading" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Création…
-                </>
+                <span>Création…</span>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4" /> Inviter l&apos;utilisateur
+                  <UserPlus className="h-4 w-4" /> <span>Inviter l&apos;utilisateur</span>
                 </>
               )}
             </button>

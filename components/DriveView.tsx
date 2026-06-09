@@ -1,16 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, Folder, FileText, ChevronRight, Home } from "lucide-react";
+import { Menu, Folder, FileText, ChevronRight, Home, RefreshCw } from "lucide-react";
 import { useDriveContext } from "@/lib/features/drive";
 import { SkeletonGrid } from "@/components/ui/Skeleton";
 
 export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (o: boolean) => void }) {
   const { byPath, statusByPath, browse } = useDriveContext();
   const [path, setPath] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   // Cache-guarded browse: revisiting a directory reuses the cached listing.
   useEffect(() => { browse(path); }, [path, browse]);
+
+  // Force-refetch the current directory (bypasses the per-path cache).
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try { await browse(path, true); } finally { setRefreshing(false); }
+  };
 
   const current = byPath[path];
   const folders = current?.folders ?? [];
@@ -26,9 +33,20 @@ export default function DriveView({ setMobileMenuOpen }: { setMobileMenuOpen?: (
           <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
           <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100"><Menu className="h-5 w-5" /></button>
         </div>
-        <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Drive</h1>
-          <p className="text-xs text-[#5A5A7A]">Arborescence des documents (lecture seule)</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Drive</h1>
+            <p className="text-xs text-[#5A5A7A]">Arborescence des documents (lecture seule)</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            title="Actualiser"
+            aria-label="Actualiser"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#5A5A7A] transition-colors hover:border-[#E34F2D]/40 hover:text-[#E34F2D] disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading || refreshing ? "animate-spin" : ""}`} />
+          </button>
         </div>
       </header>
 

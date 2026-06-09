@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Search,
@@ -12,7 +12,6 @@ import {
   Pencil,
   XCircle,
   ExternalLink,
-  X,
   Menu,
   ArrowUpDown,
   MoreHorizontal
@@ -24,6 +23,7 @@ import MoveModal from "./validations/MoveModal";
 import { type SelectOption } from "@/components/ui/Select";
 import { usePiecesContext } from "@/lib/features/pieces";
 import { useFoldersContext } from "@/lib/features/folders";
+import { useDriveContext } from "@/lib/features/drive";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -112,11 +112,14 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   // Backend validation queue: already joined with centre info + a real workflow statut.
   const { queue, isQueueLoading: isLoading, ensureQueue, verify, move, rename, reject } = usePiecesContext();
   const { folders, ensureLoaded: ensureFolders } = useFoldersContext();
+  // Live Drive root listing — the actual folders a piece can be moved into.
+  const { byPath: driveByPath, browse: driveBrowse } = useDriveContext();
   const { prompt, confirm } = useDialog();
   const [validationsList, setValidationsList] = useState<ValidationItem[]>([]);
 
   useEffect(() => { ensureQueue(); }, [ensureQueue]);
   useEffect(() => { ensureFolders(); }, [ensureFolders]);
+  useEffect(() => { driveBrowse(""); }, [driveBrowse]); // load Drive root for destinations
   useEffect(() => {
     setValidationsList(queue.map(queueItemToValidation));
   }, [queue]);
@@ -124,7 +127,9 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   const [selectedConfFilter, setSelectedConfFilter] = useState<"all" | "high" | "low">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<{ key: "recuLe" | "confIA" | "status"; order: "asc" | "desc" }>({ key: "recuLe", order: "desc" });
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Route a message to a success or error toast based on its wording.
+  const notify = (msg: string) => (/échec|erreur/i.test(msg) ? toast.error(msg) : toast.success(msg));
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -137,23 +142,22 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   // Move (reclassify) modal state
   const [movingItem, setMovingItem] = useState<ValidationItem | null>(null);
 
-  // Destination folder options (configured folders, else canonical fallback) — friendly labels.
+  // Destination folder options — dynamic, with friendly labels. Priority:
+  //  1. Configured routing folders (Dossiers & Routage), when any are set up.
+  //  2. The live Drive root folders (the real directories that exist).
+  //  3. Canonical hardcoded list — last-resort fallback only.
   const folderOptions = useMemo<SelectOption[]>(() => {
     const configured = [...folders]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((f) => ({ value: f.name, label: friendlyFolder(f.name, f.label) }));
-    return configured.length > 0
-      ? configured
-      : DEFAULT_FOLDERS.map((n) => ({ value: n, label: friendlyFolder(n) }));
-  }, [folders]);
+    if (configured.length > 0) return configured;
 
-  // Auto-dismiss toast
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
+    const driveFolders = (driveByPath[""]?.folders ?? [])
+      .map((f) => ({ value: f.name, label: friendlyFolder(f.name) }));
+    if (driveFolders.length > 0) return driveFolders;
+
+    return DEFAULT_FOLDERS.map((n) => ({ value: n, label: friendlyFolder(n) }));
+  }, [folders, driveByPath]);
 
   // Reset page when tab/filters change
   useEffect(() => {
@@ -197,9 +201,9 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     if (!ok) return;
     try {
       await verify(item.pieceId); // context flips the piece to validated → row re-derives
-      setToastMessage(`Pièce « ${item.docType} » (${code}) validée avec succès.`);
+      notify(`Pièce « ${item.docType} » (${code}) validée avec succès.`);
     } catch {
-      setToastMessage(`Échec de la validation de ${code}.`);
+      notify(`Échec de la validation de ${code}.`);
     }
   };
 
@@ -207,12 +211,12 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     if (!rejectingItem) return;
     const item = rejectingItem;
     setRejectingItem(null);
-    setToastMessage(`Dossier ${item.code} rejeté (${reason}).`);
+    notify(`Dossier ${item.code} rejeté (${reason}).`);
     if (item.pieceId) {
       try {
         await reject(item.pieceId, reason); // persisted on the backend (rejet_raison + statut)
       } catch {
-        setToastMessage(`Échec du rejet de ${item.code}.`);
+        notify(`Échec du rejet de ${item.code}.`);
       }
     }
   };
@@ -228,9 +232,9 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     if (!item?.pieceId) return;
     try {
       await move(item.pieceId, folder);
-      setToastMessage(`« ${item.docType} » déplacé vers ${friendlyFolder(folder)}.`);
+      notify(`« ${item.docType} » déplacé vers ${friendlyFolder(folder)}.`);
     } catch {
-      setToastMessage("Échec du déplacement.");
+      notify("Échec du déplacement.");
     }
   };
 
@@ -245,9 +249,9 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     if (!res) return;
     try {
       await rename(item.pieceId, res.newName);
-      setToastMessage(`Renommé en ${res.newName}.`);
+      notify(`Renommé en ${res.newName}.`);
     } catch {
-      setToastMessage("Échec du renommage.");
+      notify("Échec du renommage.");
     }
   };
 
@@ -269,7 +273,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     for (const it of highConfidencePending) {
       try { await verify(it.pieceId!); done++; } catch { /* keep going */ }
     }
-    setToastMessage(`${done} pièce${done > 1 ? "s" : ""} validée${done > 1 ? "s" : ""}.`);
+    notify(`${done} pièce${done > 1 ? "s" : ""} validée${done > 1 ? "s" : ""}.`);
   };
 
   // Sort, then paginate.
@@ -317,24 +321,6 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 w-full min-w-0">
         <div className="max-w-[1400px] mx-auto space-y-6">
 
-
-          {/* Toast Notification */}
-          <AnimatePresence>
-            {toastMessage && (
-              <motion.div
-                key="toast-notification"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-emerald-600 text-white px-4 py-3 rounded-xl text-xs font-bold shadow-lg flex items-center justify-between"
-              >
-                <span>{toastMessage}</span>
-                <button onClick={() => setToastMessage(null)} className="cursor-pointer">
-                  <X className="h-4 w-4" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Filter bar — status tabs + AI confidence chips (no Advanced Filters block) */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

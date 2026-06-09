@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Send,
-  Zap,
   ChevronRight,
   ChevronDown,
   Check,
@@ -13,16 +13,14 @@ import {
   AlertTriangle,
   Building2,
   Paperclip,
-  Loader2,
-  FileText,
   ExternalLink,
-  Users,
   ShieldCheck,
   Clock
 } from "lucide-react";
 
 import { type Message, type DossierDetail, centreDetailToDossier } from "./dossier-details/dossierData";
-import PipelineBoards, { microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS, stageLabel } from "./dossier-details/PipelineBoards";
+import PipelineBoards, { microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS } from "./dossier-details/PipelineBoards";
+import CentreInfoModal from "./dossier-details/CentreInfoModal";
 import { Timeline, TimelineItem, TimelineDot, TimelineLine, TimelineHeading, TimelineContent } from "@/components/ui/timeline";
 import { api } from "@/lib/api";
 import { useCentresContext, type CentreDetail as CentreFullDetail } from "@/lib/features/centres";
@@ -42,7 +40,7 @@ interface DossierDetailsViewProps {
 
 export default function DossierDetailsView({ dossierId, focusDossierId, onClose, onNavigateToTab, onSwitch }: DossierDetailsViewProps) {
   // Centre cache: upload re-pulls detail; getDetail serves the cached centre payload.
-  const { upload: uploadDoc, getDetail, centres, ensureList, revalidateList } = useCentresContext();
+  const { getDetail, centres, ensureList, revalidateList } = useCentresContext();
   // WhatsApp chat: send a message / document through the real pipeline (Léo replies).
   const { upload: uploadWhatsappDoc, send: sendWhatsappMessage } = useConversationsContext();
   // Pipeline advance/revert goes through the shared dossiers context (feature pattern).
@@ -52,17 +50,15 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   // Full backend payload (GET /api/centres/:id) — holds dossiers (micro+macro+nav) and alerts.
   const [raw, setRaw] = useState<CentreFullDetail | null>(null);
   const [whatsAppInput, setWhatsAppInput] = useState("");
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [centreInfoOpen, setCentreInfoOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [chatUploading, setChatUploading] = useState(false);
   const [chatTyping, setChatTyping] = useState(false);
   const chatFileRef = useRef<HTMLInputElement>(null);
   // WhatsApp feed: auto-scroll the chat box (not the page) to the latest message.
   const messagesScrollRef = useRef<HTMLDivElement>(null);
-  // Which of the centre's files (dossiers) is in focus. Defaults to the route's focus
-  // dossier; a click in the "Fichiers du centre" list overrides it without leaving the page.
-  const [focusOverride, setFocusOverride] = useState<string | undefined>(undefined);
-  const focusId = focusOverride ?? focusDossierId;
+  // Which of the centre's files (dossiers) is in focus — taken from the route.
+  const focusId = focusDossierId;
 
   // Centre-switcher needs the full list (the dashboard layout loads it, but be defensive).
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
@@ -104,22 +100,6 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     : null;
   const openAlerts = (raw?.alerts ?? []).filter((a) => a.status === "open");
 
-  // Centre files (dossiers) + stakeholders + validated pieces — surfaced straight from the
-  // backend detail payload (no extra calls). Used by the left-column panels below.
-  const centreDossiers = raw?.dossiers ?? [];
-  const TYPE_DOSSIER_LABEL: Record<string, string> = {
-    acquisition: "Acquisition", transfert: "Transfert", ouverture: "Ouverture",
-    renouvellement: "Renouvellement", controleur: "Contrôleur",
-  };
-  const fileTypeLabel = (t: string) => TYPE_DOSSIER_LABEL[t] ?? (t ? t.charAt(0).toUpperCase() + t.slice(1) : "Dossier");
-  // Stakeholders: the centre's contacts_clients map → labelled rows (strings only).
-  const STAKEHOLDER_LABEL: Record<string, string> = {
-    gerant: "Gérant", exploitant: "Exploitant", contact: "Contact",
-    telephone: "Téléphone", phone: "Téléphone", email: "E-mail", nom: "Nom",
-  };
-  const stakeholders = Object.entries((raw?.centre?.contacts_clients ?? {}) as Record<string, unknown>)
-    .filter((e): e is [string, string] => typeof e[1] === "string" && e[1].trim().length > 0)
-    .map(([k, v]) => ({ label: STAKEHOLDER_LABEL[k.toLowerCase()] ?? (k.charAt(0).toUpperCase() + k.slice(1)), value: v }));
   // Received documents with their real metadata (drive link, validation, confidence).
   const receivedPieces = raw?.pieces ?? [];
   const PIECE_LABEL: Record<string, string> = {
@@ -181,19 +161,21 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   // then refreshes the dossier (new message + pieces checklist).
   const onChatFilePicked = async (file: File) => {
     setChatUploading(true);
-    triggerToast(`Envoi de « ${file.name} »…`);
+    const id = toast.loading(`Envoi de « ${file.name} »…`);
     try {
       await uploadWhatsappDoc(dossierId, file);
       await load(true);
-      triggerToast("Document envoyé et analysé.");
+      toast.success("Document envoyé et analysé.", { id });
     } catch {
-      triggerToast("Échec de l'envoi du document.");
+      toast.error("Échec de l'envoi du document.", { id });
     } finally {
       setChatUploading(false);
     }
   };
 
-  // Operator upload for a (missing) document type → POST /api/centres/:id/documents → refresh.
+  // Operator upload for a (missing) document type. Routes through the WhatsApp client-document
+  // pipeline (uploadWhatsappDoc) so the file gets OCR + auto-classification — the direct
+  // /centres/:id/documents upload skips OCR, so we deliberately don't use it here.
   const uploadRef = useRef<{ type: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pickFileFor = (type: string) => {
@@ -202,21 +184,19 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   };
   const onFilePicked = async (file: File) => {
     const type = uploadRef.current?.type ?? "autre";
-    setToastMessage(`Téléversement de « ${type} »…`);
+    const id = toast.loading(`Téléversement de « ${type} »…`);
     try {
-      await uploadDoc(dossierId, file, type); // context re-pulls detail + list slice
-      setToastMessage(`Document « ${type} » téléversé.`);
-      load(true);
+      await uploadWhatsappDoc(dossierId, file); // WhatsApp pipeline → OCR + classify
+      await load(true);
+      toast.success(`Document « ${type} » envoyé et analysé.`, { id });
     } catch {
-      setToastMessage("Échec du téléversement.");
+      toast.error("Échec du téléversement.", { id });
     }
   };
 
-  // Toast trigger
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  // Route a message to a success or error toast based on its wording.
+  const triggerToast = (msg: string) =>
+    /échec|non autoris|n'a pas|erreur|bloqu/i.test(msg) ? toast.error(msg) : toast.success(msg);
 
   // WhatsApp send simulator
   const handleSendWhatsApp = async (e: React.FormEvent) => {
@@ -281,22 +261,6 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">
-      {/* Toast popup */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            key="dossier-details-toast"
-            initial={{ opacity: 0, y: -50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-[#332151] text-white px-4 py-3.5 rounded-xl shadow-xl border border-white/10 text-xs font-bold"
-          >
-            <Zap className="h-4.5 w-4.5 text-[#E34F2D]" />
-            <span>{toastMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Modern, extremely spacious and clean top bar header */}
       <header className="px-4 sm:px-6 py-4 bg-white border-b border-slate-100 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10 w-full min-w-0">
         <div className="flex items-center gap-3 min-w-0">
@@ -397,8 +361,18 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-8">
 
-          {/* LEFT COLUMN: pipeline + stakeholders + the centre's files (aligns with the WhatsApp feed) */}
+          {/* LEFT COLUMN: centre-details button + pipeline (aligns with the WhatsApp feed) */}
           <div className="lg:col-span-1 space-y-8">
+
+            {/* Opens a read-only modal with the full centre information. */}
+            <button
+              type="button"
+              onClick={() => setCentreInfoOpen(true)}
+              disabled={!raw?.centre}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#332151] px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#E34F2D] disabled:opacity-50 cursor-pointer"
+            >
+              <Building2 className="h-4 w-4" /> <span>Détails du centre</span>
+            </button>
 
             {/* PARCOURS — single pipeline visualization (vertical timeline + adjacent-step controls) */}
             <div className="bg-white p-6 rounded-2xl border border-slate-100">
@@ -438,63 +412,6 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   </>
                 );
               })()}
-            </div>
-
-            {/* INTERVENANTS — stakeholders (centre contacts) */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-100">
-              <span className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">
-                <Users className="h-3.5 w-3.5 text-[#E34F2D]" /> Intervenants
-              </span>
-              {stakeholders.length > 0 ? (
-                <dl className="space-y-3">
-                  {stakeholders.map((s, i) => (
-                    <div key={`${s.label}-${i}`} className="flex items-baseline justify-between gap-3">
-                      <dt className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{s.label}</dt>
-                      <dd className="min-w-0 truncate text-right text-xs font-semibold text-[#332151]">{s.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : (
-                <p className="text-xs font-semibold italic text-slate-400">Aucun intervenant renseigné.</p>
-              )}
-            </div>
-
-            {/* FICHIERS DU CENTRE — one centre = multiple files; click to focus one */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-100">
-              <span className="mb-4 flex items-center justify-between gap-2 border-b border-slate-100 pb-3 text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">
-                <span className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-[#E34F2D]" /> Fichiers du centre</span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-extrabold text-slate-500">{centreDossiers.length}</span>
-              </span>
-              {centreDossiers.length > 0 ? (
-                <div className="space-y-2">
-                  {centreDossiers.map((d) => {
-                    const active = d.id === activeDossier?.id;
-                    const blocked = d.statut_ouverture === "bloque";
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => setFocusOverride(d.id)}
-                        className={`w-full rounded-xl border px-3.5 py-3 text-left transition-all cursor-pointer ${
-                          active ? "border-[#E34F2D]/40 bg-[#E34F2D]/5" : "border-slate-100 bg-slate-50/50 hover:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`truncate text-xs font-bold ${active ? "text-[#E34F2D]" : "text-[#332151]"}`}>
-                            {fileTypeLabel(d.type_dossier)}
-                          </span>
-                          {blocked
-                            ? <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wider text-red-600">Bloqué</span>
-                            : active && <Check className="h-3.5 w-3.5 shrink-0 text-[#E34F2D]" />}
-                        </div>
-                        <p className="mt-1 truncate text-[11px] font-semibold text-slate-500">{stageLabel(d.etape_pipeline)}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs font-semibold italic text-slate-400">Aucun fichier.</p>
-              )}
             </div>
 
             <input
@@ -581,8 +498,19 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
               {/* Message Composer area */}
               <form
                 onSubmit={handleSendWhatsApp}
-                className="p-3 border-t border-slate-100 bg-white flex items-center gap-2"
+                className="relative p-3 border-t border-slate-100 bg-white flex items-center gap-2"
               >
+                {/* Upload progress — orange bar sweeping left→right along the bottom border. */}
+                {chatUploading && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 overflow-hidden">
+                    <motion.div
+                      className="h-full w-1/3 rounded-full bg-[#E34F2D]"
+                      initial={{ x: "-100%" }}
+                      animate={{ x: "300%" }}
+                      transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
+                    />
+                  </div>
+                )}
                 {/* Attach a document (client document pipeline) */}
                 <input
                   ref={chatFileRef}
@@ -601,7 +529,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   title="Joindre un document"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-[#E34F2D] disabled:opacity-50 transition-colors cursor-pointer"
                 >
-                  {chatUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Paperclip className="h-5 w-5" />}
+                  <Paperclip className="h-5 w-5" />
                 </button>
                 <input
                   type="text"
@@ -680,7 +608,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                     )}
                     <div className="flex items-center justify-between gap-2 pl-7">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${validated ? "text-emerald-600" : p.rejet_raison ? "text-red-500" : "text-amber-600"}`}>
-                        {validated && <ShieldCheck className="h-3 w-3" />}{meta}
+                        {validated && <ShieldCheck className="h-3 w-3" />}<span>{meta}</span>
                       </span>
                       {typeof p.confiance_classification === "number" && (
                         <span className="shrink-0 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -723,6 +651,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
         </div>
       </div>
+
+      <CentreInfoModal open={centreInfoOpen} centre={raw?.centre ?? null} onClose={() => setCentreInfoOpen(false)} />
     </div>
   );
 }

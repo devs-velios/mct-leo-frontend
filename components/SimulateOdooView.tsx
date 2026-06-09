@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, Zap, Loader2, Check, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
+import { Menu, Zap, ArrowRight } from "lucide-react";
 import { useSimulateContext } from "@/lib/features/simulate";
 
 interface OdooPayload {
@@ -28,7 +29,7 @@ const PRESETS: { label: string; hint: string; payload: OdooPayload }[] = [
 const EMPTY: OdooPayload = { contract_id: "", code_centre: "", type: "R", activities: ["VL"], enseigne: "", phone: "", zip: "", city: "", region: "" };
 
 export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuOpen?: (o: boolean) => void }) {
-  const { status, result, error, runOdoo, reset } = useSimulateContext();
+  const { status, runOdoo, reset } = useSimulateContext();
   const [form, setForm] = useState<OdooPayload>(EMPTY);
 
   const set = (k: keyof OdooPayload, v: string | string[]) => setForm((f) => ({ ...f, [k]: v }));
@@ -38,7 +39,12 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.contract_id || !form.code_centre) return;
-    await runOdoo(form).catch(() => {}); // context tracks status/result/error
+    try {
+      await runOdoo(form);
+      toast.success("Centre créé ! Groupe WhatsApp + rappel programmés.", { description: form.code_centre });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Échec de la création.");
+    }
   };
 
   return (
@@ -127,30 +133,16 @@ export default function SimulateOdooView({ setMobileMenuOpen }: { setMobileMenuO
               </div>
             </div>
 
-            {status === "success" && (
-              <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-emerald-50 px-4 py-3.5 text-xs font-bold text-emerald-700 leading-relaxed">
-                <Check className="h-4.5 w-4.5 shrink-0" />
-                <span>
-                  Centre créé ! Groupe WhatsApp + rappel programmés. <span className="font-mono text-[11px] bg-emerald-100/50 px-1.5 py-0.5 rounded ml-1 text-emerald-800">{form.code_centre}</span>
-                </span>
-              </div>
-            )}
-            {status === "error" && (
-              <div className="mt-4 rounded-xl bg-red-50 px-4 py-3.5 text-xs font-bold text-red-700 leading-relaxed">{error ?? "Échec de la création."}</div>
-            )}
-
             <button
               type="submit"
               disabled={status === "loading"}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E34F2D] hover:bg-[#DF3714] px-4 py-3.5 text-sm font-bold text-white transition-all cursor-pointer shadow-[0_4px_12px_rgba(234,91,45,0.15)] active:scale-95 disabled:opacity-60"
             >
               {status === "loading" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Création…
-                </>
+                <span>Création…</span>
               ) : (
                 <>
-                  <Zap className="h-4 w-4" /> Créer le centre <ArrowRight className="h-4 w-4" />
+                  <Zap className="h-4 w-4" /> <span>Créer le centre</span> <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
