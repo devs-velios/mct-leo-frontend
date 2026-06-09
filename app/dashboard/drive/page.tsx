@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { HardDrive, FolderTree } from "lucide-react";
 import DriveView from "@/components/DriveView";
 import FoldersView from "@/components/FoldersView";
@@ -14,8 +13,9 @@ const TABS = [
 ] as const;
 
 export default function DrivePage() {
-  const { setMobileMenuOpen } = useDashboard();
-  const [tab, setTab] = useState<"explorer" | "config">("explorer");
+  // Tab is held in the dashboard context so the sidebar's Drive submenu and the
+  // in-page tabs stay in sync (both read/write the same state).
+  const { setMobileMenuOpen, driveTab: tab, setDriveTab: setTab } = useDashboard();
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">

@@ -314,3 +314,17 @@ h1, h2, h3, h4, h5, h6 {
   animation: sheet-overlay-out 0.25s ease;
 }
 
+/* Alert dialog (confirm) — brand spring pop-in, matching the app's modal feel.
+   (tw-animate utilities aren't installed, so the Radix animate-in classes are
+   no-ops; this keyframe drives the enter animation instead.) */
+/* Animate only scale/opacity via `transform`; centering stays on Tailwind's
+   separate `translate` property (translate-x/y-[-50%]) so the dialog never
+   drifts sideways during the animation. */
+@keyframes confirm-pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.confirm-dialog-content[data-state="open"] {
+  animation: confirm-pop-in 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+

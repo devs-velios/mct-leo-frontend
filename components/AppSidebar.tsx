@@ -33,6 +33,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { SidebarSubmenu, type SidebarSubmenuItem } from "@/components/ui/sidebar-with-submenu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,7 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface NavItem { name: string; icon: LucideIcon; }
+interface NavItem { name: string; icon: LucideIcon; children?: SidebarSubmenuItem[]; }
 interface NavGroup { label: string; items: NavItem[]; }
 
 // Grouped navigation — journey order: pilotage → réseau → files d'attente → outils.
@@ -67,7 +68,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Outils",
     items: [
       { name: "Assistant", icon: Sparkles },
-      { name: "Drive", icon: HardDrive },
+      {
+        name: "Drive",
+        icon: HardDrive,
+        children: [
+          { name: "Drive", label: "Explorateur" },
+          { name: "Dossiers Drive", label: "Dossiers & Routage" },
+        ],
+      },
       { name: "Utilisateurs", icon: Users },
       { name: "Simulateur", icon: Zap },
       { name: "Fonctionnement", icon: Settings },
@@ -77,12 +85,14 @@ const NAV_GROUPS: NavGroup[] = [
 
 interface AppSidebarProps {
   activeTab: string;
+  /** Active Drive sub-view, so the Drive submenu can highlight the right child. */
+  driveTab?: "explorer" | "config";
   onNavigate: (tab: string) => void;
   userEmail: string;
   onLogout: () => void;
 }
 
-export default function AppSidebar({ activeTab, onNavigate, userEmail, onLogout }: AppSidebarProps) {
+export default function AppSidebar({ activeTab, driveTab = "explorer", onNavigate, userEmail, onLogout }: AppSidebarProps) {
   const { toggleSidebar, setOpenMobile, isMobile } = useSidebar();
   // On mobile, close the sheet after navigating so the page is fully visible.
   const handleNav = (name: string) => {
@@ -125,6 +135,27 @@ export default function AppSidebar({ activeTab, onNavigate, userEmail, onLogout 
               <SidebarMenu className="group-data-[collapsible=icon]:items-center">
                 {group.items.map((item) => {
                   const Icon = item.icon;
+                  // Items with children render as an animated collapsible submenu.
+                  if (item.children) {
+                    // On the merged Drive page both children share one route, so resolve
+                    // the active child from driveTab instead of the path-based activeTab.
+                    const submenuActiveTab =
+                      item.name === "Drive" && activeTab === "Drive"
+                        ? driveTab === "config"
+                          ? "Dossiers Drive"
+                          : "Drive"
+                        : activeTab;
+                    return (
+                      <SidebarSubmenu
+                        key={item.name}
+                        label={item.name}
+                        icon={Icon}
+                        items={item.children}
+                        activeTab={submenuActiveTab}
+                        onNavigate={handleNav}
+                      />
+                    );
+                  }
                   const active = activeTab === item.name;
                   return (
                     <SidebarMenuItem key={item.name}>

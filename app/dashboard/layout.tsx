@@ -19,6 +19,9 @@ interface DashboardContextType {
   dossiersList: DashboardDossier[];
   setDossiersList: React.Dispatch<React.SetStateAction<DashboardDossier[]>>;
   activeTab: string;
+  // Which sub-view of the (merged) Drive page is showing — drives the sidebar submenu too.
+  driveTab: "explorer" | "config";
+  setDriveTab: (tab: "explorer" | "config") => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -39,6 +42,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dossiersList, setDossiersList] = useState<DashboardDossier[]>([]);
+  const [driveTab, setDriveTab] = useState<"explorer" | "config">("explorer");
 
   // Cache-guarded centres load via the shared provider; derive the dashboard rows.
   // The list now returns last_activity_at (most recent message) → real "jours inactif".
@@ -92,8 +96,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     else if (tab === "Alertes") router.push("/dashboard/alertes");
     else if (tab === "Rappels") router.push("/dashboard/rappels");
     else if (tab === "Assistant") router.push("/dashboard/assistant");
-    else if (tab === "Drive") router.push("/dashboard/drive");
-    else if (tab === "Dossiers Drive") router.push("/dashboard/drive-config");
+    else if (tab === "Drive") { setDriveTab("explorer"); router.push("/dashboard/drive"); }
+    else if (tab === "Dossiers Drive") { setDriveTab("config"); router.push("/dashboard/drive"); }
     else if (tab === "Utilisateurs") router.push("/dashboard/utilisateurs");
     else if (tab === "Simulateur") router.push("/dashboard/simulateur");
     else if (tab === "Fonctionnement") router.push("/dashboard/fonctionnement");
@@ -109,7 +113,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         setIsNewDossierModalOpen,
         dossiersList,
         setDossiersList,
-        activeTab
+        activeTab,
+        driveTab,
+        setDriveTab
       }}
     >
       <SidebarProvider
@@ -119,6 +125,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       >
         <AppSidebar
           activeTab={activeTab}
+          driveTab={driveTab}
           onNavigate={handleTabChange}
           userEmail={userEmail}
           onLogout={handleLogout}

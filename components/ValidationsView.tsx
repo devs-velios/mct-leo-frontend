@@ -27,7 +27,7 @@ import { useDriveContext } from "@/lib/features/drive";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -409,64 +409,83 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
             {isLoading && validationsList.length === 0 ? (
               <div className="p-6"><SkeletonCards count={6} /></div>
             ) : (
-              <Table className="min-w-[820px]">
-                <TableHeader className="bg-slate-50/70">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="px-5">Pièce</TableHead>
-                    <TableHead className="w-[120px] px-3">Statut</TableHead>
-                    <TableHead className="w-[100px] px-3 text-center">Confiance IA</TableHead>
-                    <TableHead className="w-[140px] px-3">Reçu le</TableHead>
-                    <TableHead className="w-[150px] px-5 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayedItems.map((item) => {
-                    const ville = item.detail.includes("—") ? item.detail.split("—").pop()?.trim() : "";
-                    return (
-                    <TableRow key={item.id} className="cursor-pointer group" onClick={() => { if (item.centreId) onOpenDossier?.(item.centreId); }}>
-                      {/* Primary: centre + type · code · ville + linked file */}
-                      <TableCell className="px-5">
-                        <p className="text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{item.nom}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
-                          <span className="font-medium text-[#5A5A7A]">{docLabel(item.docType)}</span>
-                          <span className="text-slate-300"> · </span>
-                          <span className="font-mono">{item.code}</span>
-                          {ville && <><span className="text-slate-300"> · </span>{ville}</>}
-                        </p>
-                        {item.fileName && (item.hasDrive && item.driveLink ? (
-                          <a
-                            href={item.driveLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            title="Ouvrir le fichier lié dans le Drive"
-                            className="mt-1 inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-[#5A5A7A] hover:text-[#E34F2D]"
-                          >
-                            <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{item.fileName}</span>
-                          </a>
-                        ) : (
-                          <span className="mt-1 block truncate font-mono text-[11px] text-slate-400">{item.fileName}</span>
-                        ))}
-                        {item.status === "Rejeté" && item.rejetRaison && (
-                          <p className="mt-0.5 text-[11px] italic text-rose-500/90">Rejet : {item.rejetRaison}</p>
-                        )}
-                      </TableCell>
-
-                      {/* Status — moved up (the visual anchor) */}
-                      <TableCell className="w-[120px] px-3">
+              <div className="px-4 sm:px-5 pt-2">
+                <DataTable<ValidationItem>
+                  data={displayedItems}
+                  getRowId={(item) => String(item.id)}
+                  minWidth="820px"
+                  hideToolbar
+                  bare
+                  onRowClick={(item) => { if (item.centreId) onOpenDossier?.(item.centreId); }}
+                  emptyMessage="Aucun document ne correspond à vos filtres."
+                  columns={[
+                    {
+                      id: "piece",
+                      header: "Pièce",
+                      width: "minmax(260px,1.6fr)",
+                      cell: (item) => {
+                        const ville = item.detail.includes("—") ? item.detail.split("—").pop()?.trim() : "";
+                        return (
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{item.nom}</p>
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                              <span className="font-medium text-[#5A5A7A]">{docLabel(item.docType)}</span>
+                              <span className="text-slate-300"> · </span>
+                              <span className="font-mono">{item.code}</span>
+                              {ville && <><span className="text-slate-300"> · </span>{ville}</>}
+                            </p>
+                            {item.fileName && (item.hasDrive && item.driveLink ? (
+                              <a
+                                href={item.driveLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Ouvrir le fichier lié dans le Drive"
+                                className="mt-1 inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-[#5A5A7A] hover:text-[#E34F2D]"
+                              >
+                                <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{item.fileName}</span>
+                              </a>
+                            ) : (
+                              <span className="mt-1 block truncate font-mono text-[11px] text-slate-400">{item.fileName}</span>
+                            ))}
+                            {item.status === "Rejeté" && item.rejetRaison && (
+                              <p className="mt-0.5 text-[11px] italic text-rose-500/90">Rejet : {item.rejetRaison}</p>
+                            )}
+                          </div>
+                        );
+                      },
+                    },
+                    {
+                      id: "statut",
+                      header: "Statut",
+                      width: "120px",
+                      cell: (item) => (
                         <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold ${STATUS_TONE[item.status] ?? "bg-slate-500 text-white"}`}>{item.status}</span>
-                      </TableCell>
-
-                      {/* Confidence — AI score (kept) */}
-                      <TableCell className="w-[100px] px-3 text-center">
+                      ),
+                    },
+                    {
+                      id: "confIA",
+                      header: "Confiance IA",
+                      width: "100px",
+                      align: "center",
+                      cell: (item) => (
                         <span className="text-xs font-semibold tabular-nums text-slate-500">{item.confIA}%</span>
-                      </TableCell>
-
-                      {/* Date */}
-                      <TableCell className="w-[140px] px-3 whitespace-nowrap text-xs text-slate-500 tabular-nums">{item.recuLe}</TableCell>
-
-                      {/* Actions — validate/reject only when pending + overflow menu */}
-                      <TableCell className="w-[150px] px-5">
+                      ),
+                    },
+                    {
+                      id: "recuLe",
+                      header: "Reçu le",
+                      width: "140px",
+                      cell: (item) => (
+                        <span className="whitespace-nowrap text-xs text-slate-500 tabular-nums">{item.recuLe}</span>
+                      ),
+                    },
+                    {
+                      id: "actions",
+                      header: "Actions",
+                      width: "150px",
+                      align: "right",
+                      cell: (item) => (
                         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                           {(item.status === "À valider" || item.status === "À identifier") && (
                             <>
@@ -517,19 +536,11 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })}
-                  {displayedItems.length === 0 && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5} className="py-12 text-center text-sm font-semibold text-slate-400">
-                        Aucun document ne correspond à vos filtres.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                      ),
+                    },
+                  ]}
+                />
+              </div>
             )}
 
             {/* Pagination Row */}

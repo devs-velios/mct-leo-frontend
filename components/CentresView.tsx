@@ -10,8 +10,8 @@ import {
 } from "@/lib/features/centres";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable } from "@/components/ui/data-table";
+import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
 import CreateCentreModal, { type CentreFormValues } from "./centres/CreateCentreModal";
 
 // statut_ouverture → display + tone.
@@ -23,14 +23,13 @@ const STATUT: Record<string, { label: string; cls: string }> = {
   bloque: { label: "Bloqué", cls: "bg-rose-50 text-rose-700" },
 };
 
-const FILTERS = [
-  { key: "tous", label: "Tous", match: () => true },
-  { key: "onboarding", label: "Onboarding", match: (s: string) => s === "onboarding" },
-  { key: "audit", label: "Audit initial", match: (s: string) => s === "audit" },
-  { key: "agrement", label: "Agrément", match: (s: string) => s === "agrement_en_cours" },
-  { key: "ouvert", label: "Ouvert", match: (s: string) => s === "ouvert" },
-  { key: "bloque", label: "Bloqué", match: (s: string) => s === "bloque" },
-] as const;
+// Multi-select filter options (statut + activités). No enseigne filter — MCT is a single network.
+const STATUT_OPTIONS: MultiSelectOption[] = Object.entries(STATUT).map(([value, { label }]) => ({ value, label }));
+const ACTIVITE_OPTIONS: MultiSelectOption[] = [
+  { value: "VL", label: "VL" },
+  { value: "PL", label: "PL" },
+  { value: "CL", label: "CL" },
+];
 
 interface CentresViewProps {
   setMobileMenuOpen?: (open: boolean) => void;
@@ -49,28 +48,25 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
   const { centres, isListLoading, ensureList, create } = useCentresContext();
 
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string>("tous");
+  const [statutSel, setStatutSel] = useState<string[]>([]);
+  const [activiteSel, setActiviteSel] = useState<string[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const f of FILTERS) c[f.key] = centres.filter((x) => f.match(x.statut_ouverture)).length;
-    return c;
-  }, [centres]);
-
   const rows = useMemo(() => {
-    const active = FILTERS.find((f) => f.key === filter) ?? FILTERS[0];
     const q = search.trim().toLowerCase();
     return centres.filter((c) => {
-      if (!active.match(c.statut_ouverture)) return false;
+      // Statut — match any selected (empty = all).
+      if (statutSel.length > 0 && !statutSel.includes(c.statut_ouverture)) return false;
+      // Activités — keep centres offering at least one selected activity (empty = all).
+      if (activiteSel.length > 0 && !(c.activites ?? []).some((a) => activiteSel.includes(a))) return false;
       if (!q) return true;
       return [c.code_centre, c.enseigne, c.ville].some((x) => (x ?? "").toLowerCase().includes(q));
     });
-  }, [centres, filter, search]);
+  }, [centres, statutSel, activiteSel, search]);
 
   // ── Create only — all editing/deletion lives on the dossier page ──────────────
   const openCreate = () => {
@@ -132,77 +128,95 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                 className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none focus:border-[#332151] focus:bg-white transition-all"
               />
             </div>
-            <Tabs value={filter} onValueChange={setFilter}>
-              <TabsList className="flex-wrap">
-                {FILTERS.map((f) => (
-                  <TabsTrigger key={f.key} value={f.key}>
-                    {f.label}
-                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{counts[f.key]}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap items-center gap-2">
+              <MultiSelect
+                options={STATUT_OPTIONS}
+                selected={statutSel}
+                onChange={setStatutSel}
+                placeholder="Statut"
+                searchPlaceholder="Rechercher un statut…"
+                emptyText="Aucun statut."
+              />
+              <MultiSelect
+                options={ACTIVITE_OPTIONS}
+                selected={activiteSel}
+                onChange={setActiviteSel}
+                placeholder="Activités"
+                searchPlaceholder="Rechercher une activité…"
+                emptyText="Aucune activité."
+              />
+            </div>
           </div>
 
           {/* Table — basic info + open-dossier launcher */}
           {isListLoading && centres.length === 0 ? (
             <SkeletonTable rows={6} cols={6} />
           ) : (
-            <div className="bg-white rounded-3xl border border-slate-100/80 shadow-sm overflow-hidden">
-              <Table className="min-w-[760px]">
-                <TableHeader className="bg-slate-50/70">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="px-5">Centre</TableHead>
-                    <TableHead className="w-[180px] px-3">Activités</TableHead>
-                    <TableHead className="w-[150px] px-3">Statut</TableHead>
-                    <TableHead className="w-[180px] px-5 text-right">Détail</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((c: CentreListItem) => {
-                    const st = STATUT[c.statut_ouverture] ?? { label: c.statut_ouverture, cls: "bg-slate-100 text-slate-500" };
-                    return (
-                      <TableRow key={c.id} className="cursor-pointer group" onClick={() => onOpenDossier?.(c.id)}>
-                        {/* Primary: enseigne (title) + merged code · ville */}
-                        <TableCell className="px-5">
-                          <p className="text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{c.enseigne ?? "—"}</p>
-                          <p className="mt-0.5 text-[11px] text-slate-500">
-                            <span className="font-mono">{c.code_centre}</span>
-                            {c.ville && <><span className="text-slate-300"> · </span>{c.ville}</>}
-                          </p>
-                        </TableCell>
-                        <TableCell className="w-[180px] px-3 text-[11px] font-semibold text-[#5A5A7A]">
-                          {(c.activites ?? []).join(" · ") || "Non disponible"}
-                        </TableCell>
-                        <TableCell className="w-[150px] px-3">
-                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>
-                            {st.label}
-                          </span>
-                        </TableCell>
-                        <TableCell className="w-[180px] px-5">
-                          <div className="flex items-center justify-end">
-                            <Button
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); onOpenDossier?.(c.id); }}
-                              className="gap-1.5 text-[11px] font-bold bg-[#E34F2D]/10 text-[#E34F2D] shadow-none hover:bg-[#E34F2D]/20 hover:text-[#E34F2D]"
-                            >
-                              Voir le détail
-                              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {rows.length === 0 && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={4} className="py-16 text-center text-sm font-semibold text-slate-400">
-                        Aucun centre ne correspond à votre recherche.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+            <div className="bg-white rounded-3xl border border-slate-100/80 shadow-sm overflow-hidden p-4 sm:p-5">
+              <DataTable<CentreListItem>
+                data={rows}
+                getRowId={(c) => c.id}
+                minWidth="760px"
+                hideToolbar
+                bare
+                onRowClick={(c) => onOpenDossier?.(c.id)}
+                emptyMessage="Aucun centre ne correspond à votre recherche."
+                columns={[
+                  {
+                    id: "centre",
+                    header: "Centre",
+                    width: "minmax(220px,1.6fr)",
+                    cell: (c) => (
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{c.enseigne ?? "—"}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          <span className="font-mono">{c.code_centre}</span>
+                          {c.ville && <><span className="text-slate-300"> · </span>{c.ville}</>}
+                        </p>
+                      </div>
+                    ),
+                  },
+                  {
+                    id: "activites",
+                    header: "Activités",
+                    width: "180px",
+                    cell: (c) => (
+                      <span className="text-[11px] font-semibold text-[#5A5A7A]">
+                        {(c.activites ?? []).join(" · ") || "Non disponible"}
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "statut",
+                    header: "Statut",
+                    width: "150px",
+                    cell: (c) => {
+                      const st = STATUT[c.statut_ouverture] ?? { label: c.statut_ouverture, cls: "bg-slate-100 text-slate-500" };
+                      return (
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>
+                          {st.label}
+                        </span>
+                      );
+                    },
+                  },
+                  {
+                    id: "detail",
+                    header: "Détail",
+                    width: "180px",
+                    align: "right",
+                    cell: (c) => (
+                      <Button
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); onOpenDossier?.(c.id); }}
+                        className="gap-1.5 text-[11px] font-bold bg-[#E34F2D]/10 text-[#E34F2D] shadow-none hover:bg-[#E34F2D]/20 hover:text-[#E34F2D]"
+                      >
+                        Voir le détail
+                        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </Button>
+                    ),
+                  },
+                ]}
+              />
             </div>
           )}
         </div>

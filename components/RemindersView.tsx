@@ -8,7 +8,18 @@ import { useDossiersContext } from "@/lib/features/dossiers";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,6 +97,8 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ dossier_id: "", piece: "", message: "", scheduled_at: "" });
+  // Reminder pending a destructive/irreversible action — drives the confirm AlertDialog.
+  const [confirmAction, setConfirmAction] = useState<{ reminder: Reminder; kind: "delete" | "stop" } | null>(null);
 
   const closeModal = () => {
     setShowCreate(false);
@@ -228,29 +241,25 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
             </div>
           </div>
         ) : (
-          <div className="max-w-[1400px] mx-auto rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-            <Table className="min-w-[820px]">
-              <TableHeader className="bg-slate-50/70">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="px-5">Centre</TableHead>
-                  <TableHead className="px-5">Détails</TableHead>
-                  <TableHead className="px-5">Programmé le</TableHead>
-                  <TableHead className="px-5">Statut</TableHead>
-                  <TableHead className="px-5 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((r) => {
-                  const centre = centreByDossier.get(r.dossier_id);
-                  const centreName = centre?.enseigne ?? centre?.code_centre ?? "Dossier";
-                  const tone = STATUS_TONE[r.status] ?? "bg-slate-500 text-white";
-                  return (
-                    <TableRow
-                      key={r.id}
-                      className={centre?.id ? "cursor-pointer group" : ""}
-                      onClick={() => { if (centre?.id) onOpenDossier?.(centre.id); }}
-                    >
-                      <TableCell className="px-5">
+          <div className="max-w-[1400px] mx-auto rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden p-4 sm:p-5">
+            <DataTable<Reminder>
+              data={items}
+              getRowId={(r) => r.id}
+              minWidth="820px"
+              hideToolbar
+              bare
+              onRowClick={(r) => { const centre = centreByDossier.get(r.dossier_id); if (centre?.id) onOpenDossier?.(centre.id); }}
+              rowClassName={(r) => (centreByDossier.get(r.dossier_id)?.id ? "cursor-pointer" : "cursor-default")}
+              columns={[
+                {
+                  id: "centre",
+                  header: "Centre",
+                  width: "minmax(220px,1.4fr)",
+                  cell: (r) => {
+                    const centre = centreByDossier.get(r.dossier_id);
+                    const centreName = centre?.enseigne ?? centre?.code_centre ?? "Dossier";
+                    return (
+                      <div className="min-w-0">
                         {centre?.code_centre && (
                           <span className="font-mono text-[10.5px] font-bold text-[#332151]">{centre.code_centre}</span>
                         )}
@@ -259,50 +268,81 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                           <span className="truncate">{centreName}</span>
                         </p>
                         {centre?.ville && <p className="text-[11px] font-semibold text-slate-400">{centre.ville}</p>}
-                      </TableCell>
-                      <TableCell className="px-5">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-[#5A5A7A]">{KIND_LABEL[r.kind] ?? r.kind}</span>
-                          {r.escalation > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#E34F2D]">
-                              <Repeat className="h-2.5 w-2.5" /> Relance n°{r.escalation}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-[11px] font-semibold text-slate-500">{r.piece_attendue ?? "Digest (toutes pièces)"}</p>
-                      </TableCell>
-                      <TableCell className="px-5 whitespace-nowrap text-[11px] font-bold text-[#332151]">{fmtDate(r.scheduled_at)}</TableCell>
-                      <TableCell className="px-5">
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{statusLabel(r.status)}</span>
-                      </TableCell>
-                      <TableCell className="px-5">
-                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          {centre?.id && (
-                            <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#332151]">
-                              Ouvrir <ArrowRight className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5A5A7A]"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[190px]">
-                              {r.status === "pending" && (
-                                <>
-                                  <DropdownMenuItem onClick={() => edit(r)}><Pencil /> Modifier</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => stop(r.id)}><XCircle /> Arrêter</DropdownMenuItem>
-                                </>
-                              )}
-                              <DropdownMenuItem onClick={() => del(r.id)} className="text-red-600 focus:bg-red-50"><Trash2 /> Supprimer</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  id: "details",
+                  header: "Détails",
+                  width: "minmax(200px,1.4fr)",
+                  cell: (r) => (
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-[#5A5A7A]">{KIND_LABEL[r.kind] ?? r.kind}</span>
+                        {r.escalation > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#E34F2D]">
+                            <Repeat className="h-2.5 w-2.5" /> Relance n°{r.escalation}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[11px] font-semibold text-slate-500">{r.piece_attendue ?? "Digest (toutes pièces)"}</p>
+                    </div>
+                  ),
+                },
+                {
+                  id: "scheduled",
+                  header: "Programmé le",
+                  width: "150px",
+                  cell: (r) => (
+                    <span className="whitespace-nowrap text-[11px] font-bold text-[#332151]">{fmtDate(r.scheduled_at)}</span>
+                  ),
+                },
+                {
+                  id: "statut",
+                  header: "Statut",
+                  width: "130px",
+                  cell: (r) => {
+                    const tone = STATUS_TONE[r.status] ?? "bg-slate-500 text-white";
+                    return (
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{statusLabel(r.status)}</span>
+                    );
+                  },
+                },
+                {
+                  id: "actions",
+                  header: "Actions",
+                  width: "170px",
+                  align: "right",
+                  cell: (r) => {
+                    const centre = centreByDossier.get(r.dossier_id);
+                    return (
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {centre?.id && (
+                          <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#332151]">
+                            Ouvrir <ArrowRight className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5A5A7A]"><MoreHorizontal className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[190px]">
+                            {r.status === "pending" && (
+                              <>
+                                <DropdownMenuItem onClick={() => edit(r)}><Pencil /> Modifier</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "stop" })}><XCircle /> Arrêter</DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "delete" })} className="text-red-600 focus:bg-red-50"><Trash2 /> Supprimer</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    );
+                  },
+                },
+              ]}
+            />
           </div>
         )}
       </div>
@@ -481,6 +521,51 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Destructive-action confirmation — icon AlertDialog (delete + stop). */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
+        <AlertDialogContent className="max-w-md rounded-3xl border-slate-100">
+          {(() => {
+            const isDelete = confirmAction?.kind === "delete";
+            const Icon = isDelete ? Trash2 : XCircle;
+            return (
+              <>
+                <AlertDialogHeader className="mb-2 items-center gap-3 sm:flex-row sm:items-start sm:gap-4">
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${isDelete ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-600"}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    <AlertDialogTitle className="font-serif-mct text-lg font-extrabold text-[#332151]">
+                      {isDelete ? "Supprimer cette relance ?" : "Arrêter cette relance ?"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-xs leading-relaxed text-[#5A5A7A]">
+                      {isDelete
+                        ? "La relance sera définitivement supprimée. Cette action est irréversible."
+                        : "La relance programmée ne sera plus envoyée. Vous pourrez en créer une nouvelle si besoin."}
+                    </AlertDialogDescription>
+                  </div>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    className={`${buttonVariants({ variant: isDelete ? "destructive" : "default" })} rounded-xl`}
+                    onClick={() => {
+                      if (!confirmAction) return;
+                      if (confirmAction.kind === "delete") del(confirmAction.reminder.id);
+                      else stop(confirmAction.reminder.id);
+                    }}
+                  >
+                    {isDelete ? "Supprimer" : "Arrêter"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
