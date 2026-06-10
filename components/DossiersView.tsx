@@ -19,8 +19,10 @@ import {
   filterDossiers,
   dossierStats,
 } from "@/lib/features/dossiers";
+import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import Select from "@/components/ui/Select";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { BulkActionBar } from "@/components/ui/bulk-action-bar";
@@ -41,6 +43,9 @@ interface DossiersViewProps {
 
 export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: DossiersViewProps) {
   const { dossiers, isLoading, ensureLoaded, advance } = useDossiersContext();
+  // A dossier can't be deleted on its own — it belongs to a centre. Deleting the centre
+  // (via the centres route) removes the centre AND its dossier, and refreshes both caches.
+  const deleteCentre = useDeleteCentre();
   const [dossiersList, setDossiersList] = useState<Dossier[]>([]);
   const [selectedSubFilter, setSelectedSubFilter] = useState<DossierSubFilter>("tout");
 
@@ -97,9 +102,11 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
   // UI-only sample that removes the rows from the local list. Wire it to the real
   // endpoint once available (see BACKEND_NOTES.md → "Bulk delete").
   const handleBulkDelete = async () => {
-    const ids = new Set(selection.selectedIds);
-    // TODO(backend): await Promise.all([...ids].map((id) => api.del(`dossiers/${id}`)));
-    setDossiersList((prev) => prev.filter((d) => !ids.has(d.id)));
+    // Row ids ARE the centre ids (dossierToRow maps id → centre id). Delete each centre
+    // via the centres route → its connected dossier is removed too.
+    const ids = [...new Set(selection.selectedIds)];
+    setDossiersList((prev) => prev.filter((d) => !ids.includes(d.id))); // optimistic
+    await Promise.all(ids.map((id) => deleteCentre(id).catch(() => {}))); // refreshes both caches
   };
 
   // Drag and drop HTML5 handlers
@@ -152,7 +159,7 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
               </button>
             </div>
           )}
-          <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
+          <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
             Tous les dossiers
           </h2>
           <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -168,22 +175,18 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
           {/* FILTERS ROW */}
           <div className="relative z-20 bg-white p-5 rounded-3xl border border-slate-100/80 shadow-[0_8px_30px_rgba(45,42,86,0.015)] flex flex-col xl:flex-row xl:items-center justify-between gap-5">
 
-            {/* Left filter status tabs */}
-            <Tabs value={selectedSubFilter} onValueChange={(v) => setSelectedSubFilter(v as typeof selectedSubFilter)}>
-              <TabsList className="flex-wrap">
-                {[
-                  { key: "tout", label: "Tous", count: statTotal },
-                  { key: "relancer", label: "À relancer", count: statRelancer },
-                  { key: "bloques", label: "Bloqués", count: statBloques },
-                  { key: "ouverts", label: "Ouverts", count: statOuverts },
-                ].map((tab) => (
-                  <TabsTrigger key={tab.key} value={tab.key}>
-                    {tab.label}
-                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{tab.count}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            {/* Left filter status tabs (dropdown on mobile) */}
+            <ResponsiveTabs
+              value={selectedSubFilter}
+              onValueChange={(v) => setSelectedSubFilter(v as DossierSubFilter)}
+              className="w-full xl:w-auto"
+              options={[
+                { value: "tout", label: "Tous", count: statTotal },
+                { value: "relancer", label: "À relancer", count: statRelancer },
+                { value: "bloques", label: "Bloqués", count: statBloques },
+                { value: "ouverts", label: "Ouverts", count: statOuverts },
+              ]}
+            />
 
             {/* Right Tools Row */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">

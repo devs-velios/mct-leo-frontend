@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, MapPin, FolderOpen, Pencil, Trash2 } from "lucide-react";
 import { useCentresContext, type UpdateCentrePayload } from "@/lib/features/centres";
+import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
 import { useDialog } from "@/components/ui/DialogProvider";
 import CreateCentreModal, { type CentreFormValues } from "@/components/centres/CreateCentreModal";
 import { na } from "@/lib/utils";
@@ -45,10 +46,13 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 /** Simple white panel with a title. */
-function Section({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+function Section({ title, action, children, className }: { title: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
     <section className={`rounded-2xl border border-slate-100 bg-white p-5 ${className ?? ""}`}>
-      <h3 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#332151]">{title}</h3>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#332151]">{title}</h3>
+        {action}
+      </div>
       {children}
     </section>
   );
@@ -67,7 +71,8 @@ export default function CentreDetailView({
   /** Navigate to the MCT map (optionally focused on this centre). */
   onViewOnMap?: () => void;
 }) {
-  const { detail: ctxDetail, detailStatus, ensureDetail, update, remove } = useCentresContext();
+  const { detail: ctxDetail, detailStatus, ensureDetail, update } = useCentresContext();
+  const deleteCentre = useDeleteCentre(); // deletes the centre + refreshes both caches
   const { confirm } = useDialog();
 
   const [editOpen, setEditOpen] = useState(false);
@@ -125,7 +130,7 @@ export default function CentreDetailView({
     });
     if (!ok) return;
     try {
-      await remove(centreId);
+      await deleteCentre(centreId);
       onBack();
     } catch {
       /* keep the user on the page if deletion fails */
@@ -178,23 +183,33 @@ export default function CentreDetailView({
             <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-[#332151]">
               {STATUT_LABEL[c.statut_ouverture] ?? na(c.statut_ouverture)}
             </span>
-            <button
-              onClick={() => setEditOpen(true)}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#332151] transition-colors hover:bg-slate-50"
-            >
-              <Pencil className="h-3 w-3" /> Modifier
-            </button>
-            <button
-              onClick={handleDelete}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#DF3714] transition-colors hover:border-[#DF3714]/30 hover:bg-[#DF3714]/5"
-            >
-              <Trash2 className="h-3 w-3" /> Supprimer
-            </button>
           </div>
         </div>
 
         {/* Informations (address folded in as the last row) */}
-        <Section title="Informations">
+        <Section
+          title="Informations"
+          action={
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setEditOpen(true)}
+                title="Modifier"
+                aria-label="Modifier le centre"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#332151] transition-colors hover:border-[#E34F2D]/40 hover:text-[#E34F2D] cursor-pointer"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={handleDelete}
+                title="Supprimer"
+                aria-label="Supprimer le centre"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#DF3714] transition-colors hover:border-[#DF3714]/30 hover:bg-[#DF3714]/5 cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          }
+        >
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
             <Field label="Code centre" value={<span className="font-mono">{na(c.code_centre)}</span>} />
             <Field label="Enseigne" value={na(c.enseigne)} />

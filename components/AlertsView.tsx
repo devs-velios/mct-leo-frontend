@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Menu, AlertTriangle, Check, ShieldCheck, Info, ChevronRight } from "lucide-react";
 import { useAlertsContext } from "@/lib/features/alerts";
 import { SkeletonCards } from "@/components/ui/Skeleton";
+import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 
 interface AlertsViewProps {
   setMobileMenuOpen?: (open: boolean) => void;
@@ -28,35 +29,29 @@ export default function AlertsView({ setMobileMenuOpen, onOpenDossier }: AlertsV
   return (
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
-        <div className="mb-2 flex items-center justify-between md:hidden">
+        <div className="mb-3 flex items-center justify-between md:hidden">
           <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
           <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Alertes</h1>
+          <h1 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Alertes</h1>
           <p className="text-xs text-[#5A5A7A]">Blocages signalés nécessitant une intervention</p>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50/30">
         <div className="mx-auto max-w-3xl mb-6">
-          <div className="inline-flex gap-1.5 bg-slate-100/60 p-1.5 rounded-xl">
-            {(["open", "resolved"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all duration-150 cursor-pointer ${
-                  tab === t
-                    ? "bg-[#E34F2D] text-white shadow-sm"
-                    : "text-[#5A5A7A] hover:text-[#332151] hover:bg-white/50"
-                }`}
-              >
-                {t === "open" ? "Ouvertes" : "Résolues"}
-              </button>
-            ))}
-          </div>
+          <ResponsiveTabs
+            value={tab}
+            onValueChange={(v) => setTab(v as "open" | "resolved")}
+            className="w-full sm:w-auto"
+            options={[
+              { value: "open", label: "Ouvertes" },
+              { value: "resolved", label: "Résolues" },
+            ]}
+          />
         </div>
 
         {loading ? (

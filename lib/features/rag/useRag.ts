@@ -34,7 +34,7 @@ export function useRag() {
       if (mountedRef.current) dispatch({ type: "FETCH_SUCCESS", suggestions: data.suggestions, count: data.count });
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Failed to load suggestions" });
+        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des réponses" });
       }
     }
   }, []);

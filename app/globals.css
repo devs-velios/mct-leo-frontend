@@ -328,3 +328,19 @@ h1, h2, h3, h4, h5, h6 {
   animation: confirm-pop-in 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+
+/* Pointer cursor on every interactive control (browsers default <button> to the
+   arrow). Disabled controls keep the not-allowed cursor. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+summary,
+[role="tab"],
+[role="option"] {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}

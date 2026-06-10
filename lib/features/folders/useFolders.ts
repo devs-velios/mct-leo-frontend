@@ -25,7 +25,7 @@ export function useFolders() {
       if (mountedRef.current) dispatch({ type: "FETCH_SUCCESS", folders: data.folders, routing: data.routing });
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Failed to load folders" });
+        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des dossiers Drive" });
       }
     }
   }, []);

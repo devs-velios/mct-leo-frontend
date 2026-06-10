@@ -1,6 +1,6 @@
 "use client";
 
-import { HardDrive, FolderTree } from "lucide-react";
+import { HardDrive, FolderTree, Menu } from "lucide-react";
 import DriveView from "@/components/DriveView";
 import FoldersView from "@/components/FoldersView";
 import { useDashboard } from "../layout";
@@ -19,6 +19,14 @@ export default function DrivePage() {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">
+      {/* Mobile header — MCT Léo + menu, above the tabs */}
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3 md:hidden">
+        <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+        <button onClick={() => setMobileMenuOpen(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
       {/* Tab switch */}
       <div className="flex items-center gap-1.5 border-b border-slate-100 bg-white px-4 lg:px-6 pt-3">
         {TABS.map((t) => {

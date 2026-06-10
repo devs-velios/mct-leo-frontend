@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 
 interface Dossier {
@@ -130,15 +130,18 @@ export default function Table({
           <p className="text-[10px] text-[#5A5A7A] mt-0.5">Top des dossiers inactifs en onboarding ou dépôt agrément</p>
         </div>
 
-        {/* Category filter tabs */}
-        <Tabs value={selectedFilter} onValueChange={setSelectedFilter} className="w-full sm:w-auto">
-          <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
-            <TabsTrigger value="tous">Tout <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countTous}</span></TabsTrigger>
-            <TabsTrigger value="critiques">Critique ≥ 5j <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countCritiques}</span></TabsTrigger>
-            <TabsTrigger value="onboarding">Onboarding <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countOnboarding}</span></TabsTrigger>
-            <TabsTrigger value="agrement">Dépôt agrément <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countAgrement}</span></TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Category filter tabs (dropdown on mobile) */}
+        <ResponsiveTabs
+          value={selectedFilter}
+          onValueChange={setSelectedFilter}
+          className="w-full sm:w-auto"
+          options={[
+            { value: "tous", label: "Tout", count: countTous },
+            { value: "critiques", label: "Critique ≥ 5j", count: countCritiques },
+            { value: "onboarding", label: "Onboarding", count: countOnboarding },
+            { value: "agrement", label: "Dépôt agrément", count: countAgrement },
+          ]}
+        />
       </div>
 
       <DataTable<Dossier>

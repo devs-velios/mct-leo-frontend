@@ -65,14 +65,14 @@ export default function AssistantView({ setMobileMenuOpen }: AssistantViewProps)
   return (
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
-        <div className="mb-2 flex items-center justify-between md:hidden">
+        <div className="mb-3 flex items-center justify-between md:hidden">
           <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
           <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </button>
         </div>
         <div>
-          <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Assistant Léo</h1>
+          <h1 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Assistant Léo</h1>
           <p className="text-xs text-[#5A5A7A]">Questions réglementaires — réponses sourcées</p>
         </div>
       </header>

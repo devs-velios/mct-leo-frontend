@@ -33,8 +33,9 @@ export function Stats({
     <div
       role="list"
       aria-label="Indicateurs clés"
-      className={cn("grid w-full gap-3 sm:gap-4", className)}
-      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      // auto-fit so the cards wrap to 2–3 per row on small screens instead of being
+      // squeezed into one row, and fill out evenly on wide screens.
+      className={cn("grid w-full gap-3 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]", className)}
     >
       {items.map((s, i) => {
         const Icon = s.icon;

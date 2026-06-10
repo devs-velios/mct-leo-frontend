@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ChevronRight, Compass, Menu, Plus, Minus, RotateCcw, CheckCircle, Map, Layers, PenTool, UserCheck, FolderPlus, Activity, Phone, Mail } from "lucide-react";
 import { REGIONS } from "./carteData";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import { na } from "@/lib/utils";
 import { type CentreDetail } from "@/lib/features/centres";
 import { type Center, hoveredCentreInfo, carteStats, centersInRegion } from "@/lib/features/carte";
@@ -225,7 +225,7 @@ export default function CarteListingView({
         )}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div>
-            <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
+            <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
               Carte interactive du réseau
             </h2>
             <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -259,20 +259,16 @@ export default function CarteListingView({
       {/* Filter Tab bar */}
       <div className="px-4 sm:px-6 pb-2 shrink-0">
         <div className="max-w-[1400px] mx-auto">
-          <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-            <TabsList className="flex-wrap">
-              {FILTER_TABS.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger key={tab.key} value={tab.key}>
-                    <Icon className="h-3.5 w-3.5" />
-                    {tab.label}
-                    <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{counts[tab.countKey]}</span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          </Tabs>
+          <ResponsiveTabs
+            value={selectedFilter}
+            onValueChange={setSelectedFilter}
+            options={FILTER_TABS.map((tab) => ({
+              value: tab.key,
+              label: tab.label,
+              icon: tab.icon,
+              count: counts[tab.countKey],
+            }))}
+          />
         </div>
       </div>
 

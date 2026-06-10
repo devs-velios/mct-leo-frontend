@@ -37,7 +37,7 @@ export default function Charts({ onOpenDossier }: { onOpenDossier?: (id: string)
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#E34F2D]" />
           <span className="font-bold text-[#332151]">Analyses</span>
         </div>
-        <h3 className="font-serif-mct text-xl font-bold text-[#332151]">Analytics &amp; Insights</h3>
+        <h3 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Analytics &amp; Insights</h3>
       </div>
 
       {/* 1. Full-width trend chart with period selector */}

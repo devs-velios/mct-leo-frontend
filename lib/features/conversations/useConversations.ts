@@ -44,7 +44,7 @@ export function useConversations() {
       if (mountedRef.current) dispatch({ type: "INBOX_SUCCESS", inbox: data.conversations, count: data.count });
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "INBOX_ERROR", error: err instanceof Error ? err.message : "Failed to load inbox" });
+        dispatch({ type: "INBOX_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des conversations" });
       }
     }
   }, []);

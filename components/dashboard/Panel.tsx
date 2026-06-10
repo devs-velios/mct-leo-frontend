@@ -32,7 +32,7 @@ export function Panel({
         className,
       )}
     >
-      <div className="mb-5 flex items-start justify-between gap-3">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {eyebrow && (
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">
@@ -42,7 +42,7 @@ export function Panel({
           <h4 className="font-serif-mct text-base font-bold text-[#332151]">{title}</h4>
           {subtitle && <p className="mt-0.5 text-[10px] text-[#5A5A7A]">{subtitle}</p>}
         </div>
-        {actions && <div className="shrink-0">{actions}</div>}
+        {actions && <div className="shrink-0 overflow-x-auto no-scrollbar">{actions}</div>}
       </div>
       <div className={cn("flex-1", bodyClassName)}>{children}</div>
     </section>

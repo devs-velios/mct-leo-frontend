@@ -8,6 +8,7 @@ import { useCentresContext } from "@/lib/features/centres";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
 
 interface RagApprovalsViewProps {
@@ -188,7 +189,7 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
   return (
     <>
       <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
-        <div className="mb-2 flex items-center justify-between md:hidden">
+        <div className="mb-3 flex items-center justify-between md:hidden">
           <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
           <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
             <Menu className="h-5 w-5" />
@@ -199,7 +200,7 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="font-serif-mct text-xl font-bold text-[#332151]">Réponses Léo à valider</h1>
+            <h1 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Réponses Léo à valider</h1>
             <p className="text-xs text-[#5A5A7A]">Approuvez ou rejetez les réponses sensibles avant leur envoi au client</p>
           </div>
         </div>
@@ -207,20 +208,13 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
 
       <div className="flex-1 overflow-y-auto bg-[#F5F5F7] p-4 lg:p-6">
         <div className="mx-auto max-w-[1100px] space-y-5">
-          {/* Tabs */}
-          <div className="inline-flex gap-1.5 rounded-xl bg-slate-100/60 p-1.5">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => { setTab(t.key); selection.clear(); }}
-                className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs font-extrabold transition-all duration-150 ${
-                  tab === t.key ? "bg-[#E34F2D] text-white shadow-sm" : "text-[#5A5A7A] hover:bg-white/50 hover:text-[#332151]"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {/* Tabs (dropdown on mobile) */}
+          <ResponsiveTabs
+            value={tab}
+            onValueChange={(v) => { setTab(v as RagSuggestionFilter); selection.clear(); }}
+            className="w-full sm:w-auto"
+            options={TABS.map((t) => ({ value: t.key, label: t.label }))}
+          />
 
           {/* Table */}
           {loading && suggestions.length === 0 ? (

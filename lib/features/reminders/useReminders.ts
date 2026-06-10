@@ -36,7 +36,7 @@ export function useReminders() {
       if (mountedRef.current) dispatch({ type: "FETCH_SUCCESS", reminders: data.reminders, count: data.count });
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Failed to load reminders" });
+        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des rappels" });
       }
     }
   }, []);

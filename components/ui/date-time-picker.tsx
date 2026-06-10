@@ -76,7 +76,7 @@ export function DateTimePicker({
           </span>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto z-[120]">
+      <PopoverContent align="start" className="w-auto z-[120] max-h-[80vh] max-w-[calc(100vw-1.5rem)] overflow-y-auto">
         <div className="flex max-sm:flex-col">
           <Calendar
             mode="single"
@@ -90,7 +90,7 @@ export function DateTimePicker({
             <div className="flex items-center gap-1.5 px-3 pb-1 pt-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               <Clock className="h-3 w-3" /> Heure
             </div>
-            <div className="no-scrollbar grid w-36 gap-1 overflow-y-auto p-3 sm:max-h-[268px]">
+            <div className="no-scrollbar grid w-full grid-cols-3 gap-1 overflow-y-auto p-3 max-h-[160px] sm:w-36 sm:grid-cols-1 sm:max-h-[268px]">
               {TIME_SLOTS.map((t) => (
                 <button
                   key={t}

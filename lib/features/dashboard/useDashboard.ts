@@ -24,7 +24,7 @@ export function useDashboard({ poll = false }: { poll?: boolean } = {}) {
       if (mountedRef.current) {
         dispatch({
           type: "FETCH_ERROR",
-          error: err instanceof Error ? err.message : "Failed to load dashboard",
+          error: err instanceof Error ? err.message : "Échec du chargement du tableau de bord",
         });
       }
     }

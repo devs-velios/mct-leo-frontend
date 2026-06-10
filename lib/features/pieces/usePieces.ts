@@ -45,7 +45,7 @@ export function usePieces() {
       }
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Failed to load pieces" });
+        dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des pièces" });
       }
     }
   }, []);
@@ -69,7 +69,7 @@ export function usePieces() {
       if (mountedRef.current) dispatch({ type: "QUEUE_SUCCESS", queue: data.pieces });
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "QUEUE_ERROR", error: err instanceof Error ? err.message : "Failed to load queue" });
+        dispatch({ type: "QUEUE_ERROR", error: err instanceof Error ? err.message : "Échec du chargement de la file" });
       }
     }
   }, []);

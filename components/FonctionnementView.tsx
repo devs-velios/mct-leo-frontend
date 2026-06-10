@@ -175,7 +175,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
             </button>
           </div>
         )}
-        <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
+        <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
           Comment fonctionne Léo ?
         </h2>
         <p className="text-xs text-[#5A5A7A] mt-0.5">
@@ -628,7 +628,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     key={centresCount}
                     initial={{ scale: 0.95, opacity: 0.8 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="block text-xl md:text-2xl font-bold font-serif-mct text-[#E34F2D]"
+                    className="block text-xl md:text-lg sm:text-2xl font-bold font-serif-mct text-[#E34F2D]"
                   >
                     {new Intl.NumberFormat('fr-FR').format(centresCount * 12000)} € / an
                   </motion.span>
@@ -640,7 +640,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
                     key={centresCount}
                     initial={{ scale: 0.95, opacity: 0.8 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="block text-xl md:text-2xl font-bold font-serif-mct text-[#332151]"
+                    className="block text-xl md:text-lg sm:text-2xl font-bold font-serif-mct text-[#332151]"
                   >
                     {centresCount * 10} heures / sem
                   </motion.span>
@@ -701,7 +701,7 @@ export default function FonctionnementView({ setMobileMenuOpen }: Fonctionnement
               <span className="text-[#E34F2D] text-[10px] font-extrabold tracking-widest uppercase block">
                 TESTER LA DÉMO EN DIRECT
               </span>
-              <h3 className="text-xl md:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
+              <h3 className="text-xl md:text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
                 Un message, une démo instantanée
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed font-semibold max-w-md mx-auto">

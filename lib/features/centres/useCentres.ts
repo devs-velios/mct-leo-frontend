@@ -49,7 +49,7 @@ export function useCentres() {
       }
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "LIST_ERROR", error: err instanceof Error ? err.message : "Failed to load centres" });
+        dispatch({ type: "LIST_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des centres" });
       }
     }
   }, []);
@@ -84,7 +84,7 @@ export function useCentres() {
       }
     } catch (err) {
       if (mountedRef.current) {
-        dispatch({ type: "DETAIL_ERROR", error: err instanceof Error ? err.message : "Failed to load centre" });
+        dispatch({ type: "DETAIL_ERROR", error: err instanceof Error ? err.message : "Échec du chargement du centre" });
       }
     }
   }, []);

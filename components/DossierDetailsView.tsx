@@ -268,7 +268,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight leading-tight">
+            <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight leading-tight">
               {dossier.code ?? dossier.id}
             </h2>
             <p className="truncate text-xs text-[#5A5A7A] mt-0.5">
@@ -450,9 +450,16 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   </div>
                   <div className="min-w-0">
                     <h4 className="truncate text-sm font-bold text-[#332151]">{dossier.code ?? dossier.id}</h4>
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Actif
-                    </span>
+                    {chatTyping && (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600">
+                        <span className="flex items-center gap-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.3s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.15s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                        </span>
+                        <span translate="no">Léo est en train d&apos;écrire…</span>
+                      </span>
+                    )}
                   </div>
                 </div>
                 <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">WhatsApp</span>
@@ -637,10 +644,10 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                   <button
                     onClick={() => pickFileFor(p)}
                     title={`Téléverser « ${p} »`}
-                    className="group/up flex items-center gap-1.5 shrink-0 rounded-full border border-[#E34F2D]/25 bg-[#E34F2D]/5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#E34F2D] hover:bg-[#E34F2D] hover:text-white hover:border-[#E34F2D] transition-all duration-200 cursor-pointer"
+                    aria-label={`Téléverser ${p}`}
+                    className="group/up flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#E34F2D]/25 bg-[#E34F2D]/5 text-[#E34F2D] hover:bg-[#E34F2D] hover:text-white hover:border-[#E34F2D] transition-all duration-200 cursor-pointer"
                   >
-                    <Upload className="h-3 w-3 transition-transform group-hover/up:-translate-y-0.5" />
-                    <span>Téléverser</span>
+                    <Upload className="h-3.5 w-3.5 transition-transform group-hover/up:-translate-y-0.5" />
                   </button>
                 </div>
               ))}

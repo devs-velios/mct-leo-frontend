@@ -32,7 +32,7 @@ import { useFoldersContext, friendlyFolder, destinationFolderOptions } from "@/l
 import { useDriveContext } from "@/lib/features/drive";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -229,7 +229,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
             </button>
           </div>
 
-          <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
+          <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
             À traiter
           </h2>
           <p className="mt-0.5 text-xs text-[#5A5A7A]">
@@ -245,19 +245,18 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
 
           {/* Filter bar — status tabs + AI confidence chips (no Advanced Filters block) */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="flex-wrap">
-                {[
-                  { key: "tout", label: "Tous" },
-                  { key: "À identifier", label: "À identifier" },
-                  { key: "À valider", label: "À valider" },
-                  { key: "Validé", label: "Validés" },
-                  { key: "Rejeté", label: "Rejetés" },
-                ].map((tab) => (
-                  <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <ResponsiveTabs
+              value={selectedTab}
+              onValueChange={setSelectedTab}
+              className="w-full lg:w-auto"
+              options={[
+                { value: "tout", label: "Tous" },
+                { value: "À identifier", label: "À identifier" },
+                { value: "À valider", label: "À valider" },
+                { value: "Validé", label: "Validés" },
+                { value: "Rejeté", label: "Rejetés" },
+              ]}
+            />
 
             <div className="flex w-fit shrink-0 items-center gap-1.5 rounded-xl bg-slate-100/60 p-1.5">
               <button

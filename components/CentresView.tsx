@@ -13,6 +13,9 @@ import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
+import { useRowSelection } from "@/components/hooks/useRowSelection";
+import { BulkActionBar } from "@/components/ui/bulk-action-bar";
+import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
 import CreateCentreModal, { type CentreFormValues } from "./centres/CreateCentreModal";
 
 // statut_ouverture → display + tone.
@@ -47,6 +50,7 @@ function contactsOf(v: CentreFormValues): Record<string, string> {
 
 export default function CentresView({ setMobileMenuOpen, onOpenDossier }: CentresViewProps) {
   const { centres, isListLoading, ensureList, create } = useCentresContext();
+  const deleteCentre = useDeleteCentre();
 
   const [search, setSearch] = useState("");
   const [statutSel, setStatutSel] = useState<string[]>([]);
@@ -61,6 +65,13 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
     () => filterCentres(centres, { search, statut: statutSel, activites: activiteSel }),
     [centres, statutSel, activiteSel, search],
   );
+
+  // Multi-select + bulk delete (scoped to the filtered rows). Deleting a centre also
+  // removes its connected dossier(s) via the centres delete route.
+  const selection = useRowSelection(rows.map((c) => c.id));
+  const handleBulkDelete = async () => {
+    await Promise.all([...new Set(selection.selectedIds)].map((id) => deleteCentre(id).catch(() => {})));
+  };
 
   // ── Create only — all editing/deletion lives on the dossier page ──────────────
   const openCreate = () => {
@@ -99,7 +110,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
       <header className="px-4 sm:px-6 py-4 bg-white border-b border-slate-100 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">Centres Agréés</h2>
+            <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">Centres Agréés</h2>
             <p className="text-xs text-[#5A5A7A] mt-0.5">Sélectionnez un centre pour ouvrir son dossier — suivi, pièces, relances et conformité.</p>
           </div>
           <button onClick={() => setMobileMenuOpen?.(true)} className="shrink-0 rounded-lg p-2 text-[#332151] hover:bg-slate-100 md:hidden" aria-label="Ouvrir le menu"><Menu className="h-5 w-5" /></button>
@@ -153,6 +164,7 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                 minWidth="760px"
                 hideToolbar
                 bare
+                selection={selection}
                 onRowClick={(c) => onOpenDossier?.(c.id)}
                 emptyMessage="Aucun centre ne correspond à votre recherche."
                 columns={[
@@ -222,6 +234,13 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
         submitting={submitting}
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
+      />
+
+      <BulkActionBar
+        count={selection.count}
+        onClear={selection.clear}
+        onDelete={handleBulkDelete}
+        noun={["centre", "centres"]}
       />
     </div>
   );
