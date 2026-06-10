@@ -3,18 +3,22 @@
 import { FileStack } from "lucide-react";
 import { Panel, EmptyState } from "./Panel";
 import { useDashboardContext } from "@/lib/features/dashboard/DashboardProvider";
+import { dashboardMetrics } from "@/lib/features/dashboard";
+import { FunnelChart, type FunnelStage } from "@/components/ui/funnel-chart";
 
 export default function DocumentTracking() {
   const { stats } = useDashboardContext();
   const total = stats?.pieces.total ?? 0;
   const verified = stats?.pieces.verified ?? 0;
-  const pending = Math.max(0, total - verified);
-  const pctVerified = total > 0 ? Math.round((verified / total) * 100) : 0;
+  const { piecesPending: pending, pctVerified } = dashboardMetrics(stats);
 
-  const rows = [
-    { label: "Reçues", value: total },
-    { label: "À valider", value: pending },
-    { label: "Validées", value: verified },
+  // Pièces collection as a funnel: Reçues → À valider → Validées. Single cohesive
+  // brand-orange tonal funnel (the layered rings give depth; one hue reads as one
+  // flowing funnel and keeps the on-segment labels legible).
+  const funnelData: FunnelStage[] = [
+    { label: "Reçues", value: total, displayValue: String(total) },
+    { label: "À valider", value: pending, displayValue: String(pending) },
+    { label: "Validées", value: verified, displayValue: String(verified) },
   ];
 
   return (
@@ -43,14 +47,21 @@ export default function DocumentTracking() {
             </div>
           </div>
 
-          {/* Breakdown — plain divided stats */}
-          <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100 pt-4">
-            {rows.map((r) => (
-              <div key={r.label} className="px-2 text-center">
-                <p className="text-2xl font-bold leading-none text-[#332151] tabular-nums">{r.value}</p>
-                <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{r.label}</p>
-              </div>
-            ))}
+          {/* Breakdown — animated funnel (Reçues → À valider → Validées) */}
+          <div className="border-t border-slate-100 pt-2">
+            <FunnelChart
+              data={funnelData}
+              color="#E34F2D"
+              layers={3}
+              gap={6}
+              grid={false}
+              showPercentage={false}
+              labelLayout="grouped"
+              labelOrientation="vertical"
+              labelAlign="center"
+              valueClassName="text-white text-xl font-bold drop-shadow-sm"
+              labelClassName="text-white/90 text-[10px] font-bold uppercase tracking-wider"
+            />
           </div>
         </div>
       )}

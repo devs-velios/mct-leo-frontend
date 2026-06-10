@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown } from "lucide-react";
-import { type ValidationItem, REJECT_REASONS } from "./validationsData";
+import { type ValidationItem, REJECT_REASONS } from "@/lib/features/pieces";
 
 interface RejectModalProps {
   item: ValidationItem | null;

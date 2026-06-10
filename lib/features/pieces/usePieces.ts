@@ -95,6 +95,17 @@ export function usePieces() {
     }
   }, [revalidate, refreshQueue]);
 
+  // Validate many pieces in one go (no bulk-approve backend route yet, so this loops
+  // the per-piece verify and tolerates individual failures). Returns the number
+  // actually validated. See BACKEND_NOTES.md → "Bulk validation".
+  const bulkVerify = useCallback(async (ids: string[]) => {
+    let done = 0;
+    for (const id of ids) {
+      try { await verify(id); done++; } catch { /* keep going */ }
+    }
+    return done;
+  }, [verify]);
+
   const move = useCallback(async (id: string, folderPath: string) => {
     const piece = await movePiece(id, folderPath);
     if (mountedRef.current) dispatch({ type: "PIECE_UPDATED", piece });
@@ -140,6 +151,7 @@ export function usePieces() {
     ensureQueue,
     refreshQueue,
     verify,
+    bulkVerify,
     move,
     rename,
     reject,

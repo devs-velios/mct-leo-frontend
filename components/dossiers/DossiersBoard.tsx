@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { List, Kanban as KanbanIcon } from "lucide-react";
-import { type Dossier, dossierToRow } from "./dossiersData";
 import DossiersTable from "./DossiersTable";
 import DossiersKanban from "./DossiersKanban";
-import { useDossiersContext } from "@/lib/features/dossiers";
+import { useDossiersContext, type Dossier, dossierToRow } from "@/lib/features/dossiers";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 
 /**

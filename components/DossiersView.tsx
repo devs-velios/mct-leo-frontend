@@ -9,10 +9,16 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { type Dossier, dossierToRow } from "./dossiers/dossiersData";
 import DossiersTable from "./dossiers/DossiersTable";
 import DossiersKanban from "./dossiers/DossiersKanban";
-import { useDossiersContext } from "@/lib/features/dossiers";
+import {
+  useDossiersContext,
+  type Dossier,
+  type DossierSubFilter,
+  dossierToRow,
+  filterDossiers,
+  dossierStats,
+} from "@/lib/features/dossiers";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Select from "@/components/ui/Select";
@@ -36,7 +42,7 @@ interface DossiersViewProps {
 export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: DossiersViewProps) {
   const { dossiers, isLoading, ensureLoaded, advance } = useDossiersContext();
   const [dossiersList, setDossiersList] = useState<Dossier[]>([]);
-  const [selectedSubFilter, setSelectedSubFilter] = useState<"tout" | "relancer" | "bloques" | "ouverts">("tout");
+  const [selectedSubFilter, setSelectedSubFilter] = useState<DossierSubFilter>("tout");
 
   // Cache-guarded load via the shared dossiers context; map backend rows → view shape.
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
@@ -67,38 +73,14 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
     setCurrentPage(1);
   }, [selectedSubFilter, searchQuery, selectedPhase]);
 
-  // Filter dossiers logic
-  const filteredDossiers = dossiersList.filter((item) => {
-    // 1. Phase filter
-    if (selectedPhase !== "all" && item.phase !== selectedPhase) return false;
-
-    // 2. Search Query filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchId = item.id.toLowerCase().includes(query);
-      const matchCentre = item.centre.toLowerCase().includes(query);
-      const matchGerant = item.gerant.toLowerCase().includes(query);
-      const matchVille = item.ville.toLowerCase().includes(query);
-      if (!matchId && !matchCentre && !matchGerant && !matchVille) return false;
-    }
-
-    // 3. Sub-Filters tabs
-    if (selectedSubFilter === "relancer") {
-      if (item.joursInactif < 5 || item.phase === "Ouvert" || item.phase === "Suivi qualité") return false;
-    } else if (selectedSubFilter === "bloques") {
-      if (item.joursInactif < 14) return false;
-    } else if (selectedSubFilter === "ouverts") {
-      if (item.phase !== "Ouvert" && item.phase !== "Suivi qualité") return false;
-    }
-
-    return true;
+  // Filtering + stats rules live in the dossiers feature (single source of truth).
+  const filteredDossiers = filterDossiers(dossiersList, {
+    phase: selectedPhase,
+    search: searchQuery,
+    subFilter: selectedSubFilter,
   });
-
-  // Calculate dynamic stats based on FULL dossiers list
-  const statTotal = dossiersList.length;
-  const statRelancer = dossiersList.filter(d => d.joursInactif >= 5 && d.phase !== "Ouvert" && d.phase !== "Suivi qualité").length;
-  const statBloques = dossiersList.filter(d => d.joursInactif >= 14).length;
-  const statOuverts = dossiersList.filter(d => d.phase === "Ouvert" || d.phase === "Suivi qualité").length;
+  const { total: statTotal, relancer: statRelancer, bloques: statBloques, ouverts: statOuverts } =
+    dossierStats(dossiersList);
 
   // Pagination calculation
   const totalItems = filteredDossiers.length;

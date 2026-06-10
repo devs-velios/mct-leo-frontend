@@ -16,13 +16,19 @@ import {
   ArrowUpDown,
   MoreHorizontal
 } from "lucide-react";
-import { type ValidationItem, queueItemToValidation } from "./validations/validationsData";
 import RejectModal from "./validations/RejectModal";
 import PreviewModal, { type PreviewTarget } from "./validations/PreviewModal";
 import MoveModal from "./validations/MoveModal";
-import { type SelectOption } from "@/components/ui/Select";
-import { usePiecesContext } from "@/lib/features/pieces";
-import { useFoldersContext } from "@/lib/features/folders";
+import {
+  usePiecesContext,
+  type ValidationItem,
+  type ConfFilter,
+  queueItemToValidation,
+  pieceTypeLabel,
+  filterValidations,
+  highConfidencePending,
+} from "@/lib/features/pieces";
+import { useFoldersContext, friendlyFolder, destinationFolderOptions } from "@/lib/features/folders";
 import { useDriveContext } from "@/lib/features/drive";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
@@ -46,36 +52,6 @@ interface ValidationsViewProps {
   onOpenDossier?: (id: string) => void;
 }
 
-// Canonical Drive folders — fallback for the "Déplacer" picker when none are configured.
-const DEFAULT_FOLDERS = [
-  "02_Administratif",
-  "03_Plans",
-  "04_Controleurs",
-  "05_Engagements",
-  "06_Agrements",
-  "07_Studio",
-  "99_A_identifier",
-];
-
-// User-friendly French names (the dropdown hides the technical "NN_" folder codes).
-const FOLDER_LABELS: Record<string, string> = {
-  "02_Administratif": "Administratif",
-  "03_Plans": "Plans",
-  "04_Controleurs": "Contrôleurs",
-  "05_Engagements": "Engagements",
-  "06_Agrements": "Agréments",
-  "07_Studio": "Studio",
-  "99_A_identifier": "À identifier",
-};
-
-/** Friendly label for a folder: known mapping, else strip the leading code + underscores. */
-function friendlyFolder(name: string, label?: string | null): string {
-  if (FOLDER_LABELS[name]) return FOLDER_LABELS[name];
-  const base = (label && label.trim()) || name;
-  return base.replace(/^\d+[\s_-]*/, "").replace(/_/g, " ").trim() || name;
-}
-
-// Solid tone for the corner status badge.
 // Calm, de-saturated status tones (soft tint + readable text — no solid fills).
 const STATUS_TONE: Record<string, string> = {
   "À valider": "bg-slate-100 text-slate-600",
@@ -84,33 +60,9 @@ const STATUS_TONE: Record<string, string> = {
   "Rejeté": "bg-rose-50 text-rose-700",
 };
 
-// Human-readable document type — full set, mirrors the backend PIECE_TYPES.
-const DOC_LABEL: Record<string, string> = {
-  kbis: "Kbis",
-  rapport_audit_initial: "Rapport d'audit initial",
-  plan_masse: "Plan de masse",
-  cadastre: "Cadastre",
-  liasse: "Liasse fiscale",
-  manuel_procedures: "Manuel de procédures",
-  attestation_conformite_logiciel: "Attestation conformité logiciel",
-  piece_identite_exploitant: "Pièce d'identité (exploitant)",
-  attestation_formation_exploitant: "Attestation de formation (exploitant)",
-  piece_identite_responsable_legal: "Pièce d'identité (responsable légal)",
-  recepisse_cofrac: "Récépissé COFRAC",
-  references_techniques: "Références techniques",
-  attestation_voirie_lourde: "Attestation voirie lourde",
-  attestation_planeite: "Attestation de planéité",
-  agrement_prefectoral: "Agrément préfectoral",
-  assurance: "Assurance",
-  piece_identite: "Pièce d'identité",
-  autre: "Autre",
-};
-const docLabel = (t?: string) =>
-  !t ? "—" : DOC_LABEL[t] ?? t.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
-
 export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: ValidationsViewProps) {
   // Backend validation queue: already joined with centre info + a real workflow statut.
-  const { queue, isQueueLoading: isLoading, ensureQueue, verify, move, rename, reject } = usePiecesContext();
+  const { queue, isQueueLoading: isLoading, ensureQueue, verify, bulkVerify, move, rename, reject } = usePiecesContext();
   const { folders, ensureLoaded: ensureFolders } = useFoldersContext();
   // Live Drive root listing — the actual folders a piece can be moved into.
   const { byPath: driveByPath, browse: driveBrowse } = useDriveContext();
@@ -124,7 +76,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     setValidationsList(queue.map(queueItemToValidation));
   }, [queue]);
   const [selectedTab, setSelectedTab] = useState("tout"); // tout, à valider, à identifier, kbis, assurance, pièce id
-  const [selectedConfFilter, setSelectedConfFilter] = useState<"all" | "high" | "low">("all");
+  const [selectedConfFilter, setSelectedConfFilter] = useState<ConfFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<{ key: "recuLe" | "confIA" | "status"; order: "asc" | "desc" }>({ key: "recuLe", order: "desc" });
 
@@ -146,46 +98,21 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   //  1. Configured routing folders (Dossiers & Routage), when any are set up.
   //  2. The live Drive root folders (the real directories that exist).
   //  3. Canonical hardcoded list — last-resort fallback only.
-  const folderOptions = useMemo<SelectOption[]>(() => {
-    const configured = [...folders]
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((f) => ({ value: f.name, label: friendlyFolder(f.name, f.label) }));
-    if (configured.length > 0) return configured;
-
-    const driveFolders = (driveByPath[""]?.folders ?? [])
-      .map((f) => ({ value: f.name, label: friendlyFolder(f.name) }));
-    if (driveFolders.length > 0) return driveFolders;
-
-    return DEFAULT_FOLDERS.map((n) => ({ value: n, label: friendlyFolder(n) }));
-  }, [folders, driveByPath]);
+  const folderOptions = useMemo(
+    () => destinationFolderOptions(folders, driveByPath[""]?.folders ?? []),
+    [folders, driveByPath],
+  );
 
   // Reset page when tab/filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedTab, selectedConfFilter, searchQuery]);
 
-  // Filter validations based on selections
-  const filteredValidations = validationsList.filter((item) => {
-    // 1. Text Search
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchCode = item.code.toLowerCase().includes(query);
-      const matchNom = item.nom.toLowerCase().includes(query);
-      const matchDetail = item.detail.toLowerCase().includes(query);
-      if (!matchCode && !matchNom && !matchDetail) return false;
-    }
-
-    // 2. Status tabs (tab keys are the status labels themselves)
-    if (selectedTab !== "tout" && item.status !== selectedTab) return false;
-
-    // 3. Confidence level toggles
-    if (selectedConfFilter === "high") {
-      if (item.confIA < 90) return false;
-    } else if (selectedConfFilter === "low") {
-      if (item.confIA >= 70) return false;
-    }
-
-    return true;
+  // Filtering rules live in the pieces feature (single source of truth).
+  const filteredValidations = filterValidations(validationsList, {
+    search: searchQuery,
+    tab: selectedTab,
+    conf: selectedConfFilter,
   });
 
   // Actions — all routed through the shared pieces cache context.
@@ -255,24 +182,18 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     }
   };
 
-  // Bulk validation for high-confidence clusters — the pending pieces in the current
-  // filter with AI confidence ≥ 90%. NOTE: no bulk-approve backend route yet, so this
-  // loops the existing per-piece verify (see BACKEND_NOTES.md → "Bulk validation").
-  const highConfidencePending = filteredValidations.filter(
-    (v) => v.pieceId && v.confIA >= 90 && (v.status === "À valider" || v.status === "À identifier"),
-  );
+  // Bulk validation for high-confidence clusters — the eligible pending pieces in
+  // the current filter (rule + the per-piece loop both live in the pieces feature).
+  const bulkPending = highConfidencePending(filteredValidations);
   const handleBulkValidate = async () => {
-    if (highConfidencePending.length === 0) return;
+    if (bulkPending.length === 0) return;
     const ok = await confirm({
-      title: `Valider ${highConfidencePending.length} pièce${highConfidencePending.length > 1 ? "s" : ""} fiable${highConfidencePending.length > 1 ? "s" : ""} ?`,
+      title: `Valider ${bulkPending.length} pièce${bulkPending.length > 1 ? "s" : ""} fiable${bulkPending.length > 1 ? "s" : ""} ?`,
       message: "Toutes les pièces en attente avec une confiance IA ≥ 90 % seront validées, et les clients notifiés par WhatsApp.",
       confirmLabel: "Tout valider",
     });
     if (!ok) return;
-    let done = 0;
-    for (const it of highConfidencePending) {
-      try { await verify(it.pieceId!); done++; } catch { /* keep going */ }
-    }
+    const done = await bulkVerify(bulkPending.map((v) => v.pieceId!));
     notify(`${done} pièce${done > 1 ? "s" : ""} validée${done > 1 ? "s" : ""}.`);
   };
 
@@ -373,14 +294,14 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                 />
               </div>
               <div className="flex items-center gap-2">
-                {highConfidencePending.length > 0 && (
+                {bulkPending.length > 0 && (
                   <Button
                     size="sm"
                     onClick={handleBulkValidate}
                     className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                     title="Valider toutes les pièces fiables en attente"
                   >
-                    <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables ({highConfidencePending.length})
+                    <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables ({bulkPending.length})
                   </Button>
                 )}
               <DropdownMenu>
@@ -429,7 +350,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                           <div className="min-w-0">
                             <p className="truncate text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{item.nom}</p>
                             <p className="mt-0.5 text-[11px] text-slate-500">
-                              <span className="font-medium text-[#5A5A7A]">{docLabel(item.docType)}</span>
+                              <span className="font-medium text-[#5A5A7A]">{pieceTypeLabel(item.docType)}</span>
                               <span className="text-slate-300"> · </span>
                               <span className="font-mono">{item.code}</span>
                               {ville && <><span className="text-slate-300"> · </span>{ville}</>}

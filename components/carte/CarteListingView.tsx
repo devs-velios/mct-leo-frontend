@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ChevronRight, Compass, Menu, Plus, Minus, RotateCcw, CheckCircle, Map, Layers, PenTool, UserCheck, FolderPlus, Activity, Phone, Mail } from "lucide-react";
-import { type Center, REGIONS, getRegionIdOfCenter } from "./carteData";
+import { REGIONS } from "./carteData";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { na } from "@/lib/utils";
 import { type CentreDetail } from "@/lib/features/centres";
+import { type Center, hoveredCentreInfo, carteStats, centersInRegion } from "@/lib/features/carte";
 
 interface Counts {
   total: number;
@@ -112,28 +113,8 @@ export default function CarteListingView({
   onOpenDossier,
   setMobileMenuOpen
 }: CarteListingViewProps) {
-  // Important real info for the hovered/selected pin (from the centre detail endpoint).
-  const hoveredInfo = useMemo(() => {
-    if (!hoveredDetail) return null;
-    const c = hoveredDetail.centre;
-    const vals = Object.values(c?.contacts_clients ?? {}).filter((v): v is string => typeof v === "string");
-    const present = hoveredDetail.pieces_stats?.present ?? 0;
-    const missing = hoveredDetail.pieces_stats?.missing ?? 0;
-    const total = present + missing;
-    return {
-      type: c?.type_contrat === "P" ? "Premium" : "Réseau",
-      activites: (c?.activites ?? []) as string[],
-      etape: hoveredDetail.dossiers?.[0]?.etape_pipeline ?? "",
-      adresse: [c?.street, c?.zip, c?.ville].filter(Boolean).join(", "),
-      phone: vals.find((v) => /\d{8,}/.test(v.replace(/\D/g, ""))) ?? "",
-      email: vals.find((v) => v.includes("@")) ?? "",
-      present,
-      missing,
-      completeness: total > 0 ? Math.round((present / total) * 100) : 0,
-      openAlerts: (hoveredDetail.alerts ?? []).filter((a) => a.status === "open").length,
-      pendingReminders: (hoveredDetail.reminders ?? []).filter((r) => r.status === "pending").length,
-    };
-  }, [hoveredDetail]);
+  // Important real info for the hovered/selected pin (normalized in the carte feature).
+  const hoveredInfo = useMemo(() => hoveredCentreInfo(hoveredDetail), [hoveredDetail]);
   // Zoom & Pan State
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -214,25 +195,12 @@ export default function CarteListingView({
     });
   };
 
-  // Stats calculation
-  const stats = useMemo(() => {
-    const activeSites = filteredCenters.filter(c => c.phase === "Onboarding" || c.phase === "Ouvert").length;
-    const uniqueRegions = new Set(filteredCenters.map(c => getRegionIdOfCenter(c.ville)));
-    const coverageRegions = uniqueRegions.size;
-    const recentActivity = filteredCenters.filter(c => c.joursInactif === 0).length;
-
-    return {
-      activeSites,
-      coverageRegions,
-      recentActivity
-    };
-  }, [filteredCenters]);
-
-  // Count centers inside the hovered region
-  const centersInHoveredRegion = useMemo(() => {
-    if (!hoveredRegion) return 0;
-    return filteredCenters.filter(c => getRegionIdOfCenter(c.ville) === hoveredRegion).length;
-  }, [hoveredRegion, filteredCenters]);
+  // Coverage stats + hovered-region count derive from the carte feature selectors.
+  const stats = useMemo(() => carteStats(filteredCenters), [filteredCenters]);
+  const centersInHoveredRegion = useMemo(
+    () => centersInRegion(filteredCenters, hoveredRegion),
+    [hoveredRegion, filteredCenters],
+  );
 
   return (
     <motion.div

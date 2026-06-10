@@ -13,27 +13,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Panel, EmptyState } from "./Panel";
-import { useDossiersContext } from "@/lib/features/dossiers";
-
-const DAY = 86_400_000;
-const HOUR = 3_600_000;
-
-type PeriodKey = "24h" | "7d" | "30d" | "90d" | "1an";
-
-const PERIODS: { key: PeriodKey; label: string; windowMs: number; buckets: number; step: number }[] = [
-  { key: "24h", label: "24 h", windowMs: DAY, buckets: 8, step: 3 * HOUR },
-  { key: "7d", label: "7 j", windowMs: 7 * DAY, buckets: 7, step: DAY },
-  { key: "30d", label: "30 j", windowMs: 30 * DAY, buckets: 10, step: 3 * DAY },
-  { key: "90d", label: "90 j", windowMs: 90 * DAY, buckets: 12, step: 7.5 * DAY },
-  { key: "1an", label: "1 an", windowMs: 365 * DAY, buckets: 12, step: 365 / 12 * DAY },
-];
-
-function labelFor(period: PeriodKey, end: number): string {
-  const d = new Date(end);
-  if (period === "24h") return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  if (period === "1an") return d.toLocaleDateString("fr-FR", { month: "short" });
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
-}
+import { useDossiersContext, TREND_PERIODS as PERIODS, dossiersTrend, type TrendPeriodKey as PeriodKey } from "@/lib/features/dossiers";
 
 const Tip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
   if (active && payload && payload.length) {
@@ -61,23 +41,11 @@ export default function TrendChart() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setNow(Date.now()); }, []);
 
-  const cfg = PERIODS.find((p) => p.key === period)!;
-
-  const data = useMemo(() => {
-    if (now == null) return [] as { name: string; dossiers: number }[];
-    const start0 = now - cfg.windowMs;
-    const buckets = Array.from({ length: cfg.buckets }, (_, i) => {
-      const end = start0 + (i + 1) * cfg.step;
-      return { start: end - cfg.step, end, name: labelFor(period, end), dossiers: 0 };
-    });
-    for (const d of dossiers) {
-      const t = new Date(d.created_at).getTime();
-      if (Number.isNaN(t) || t <= start0 || t > now) continue;
-      const b = buckets.find((w) => t > w.start && t <= w.end);
-      if (b) b.dossiers += 1;
-    }
-    return buckets.map((b) => ({ name: b.name, dossiers: b.dossiers }));
-  }, [dossiers, cfg, period, now]);
+  // Time-series bucketing lives in the dossiers feature (dossiersTrend selector).
+  const data = useMemo(
+    () => (now == null ? [] : dossiersTrend(dossiers, period, now)),
+    [dossiers, period, now],
+  );
 
   const total = data.reduce((s, d) => s + d.dossiers, 0);
   const max = Math.max(4, ...data.map((d) => d.dossiers));

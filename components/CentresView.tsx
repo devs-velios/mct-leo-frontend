@@ -7,6 +7,7 @@ import {
   useCentresContext,
   type CentreListItem,
   type CreateCentrePayload,
+  filterCentres,
 } from "@/lib/features/centres";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
@@ -56,17 +57,10 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
 
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
 
-  const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return centres.filter((c) => {
-      // Statut — match any selected (empty = all).
-      if (statutSel.length > 0 && !statutSel.includes(c.statut_ouverture)) return false;
-      // Activités — keep centres offering at least one selected activity (empty = all).
-      if (activiteSel.length > 0 && !(c.activites ?? []).some((a) => activiteSel.includes(a))) return false;
-      if (!q) return true;
-      return [c.code_centre, c.enseigne, c.ville].some((x) => (x ?? "").toLowerCase().includes(q));
-    });
-  }, [centres, statutSel, activiteSel, search]);
+  const rows = useMemo(
+    () => filterCentres(centres, { search, statut: statutSel, activites: activiteSel }),
+    [centres, statutSel, activiteSel, search],
+  );
 
   // ── Create only — all editing/deletion lives on the dossier page ──────────────
   const openCreate = () => {

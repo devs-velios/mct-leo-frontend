@@ -4,29 +4,12 @@ import { PieChart } from "lucide-react";
 import { DonutChart } from "@/components/ui/donut-chart";
 import { Panel, EmptyState } from "./Panel";
 import { useDashboardContext } from "@/lib/features/dashboard/DashboardProvider";
+import { centreStatutSegments, dossierStageSegments } from "@/lib/features/dashboard";
 
 // Monochrome brand ramps — Centres use the orange family, Dossiers the indigo
 // family, so the two donuts read as clearly different (and stay on-brand).
 const ORANGE_RAMP = ["#E34F2D", "#EA5835", "#F08362", "#F4A98F", "#F8CABB"];
 const INDIGO_RAMP = ["#332151", "#4B2F5E", "#664A78", "#8A749B", "#B3A3C1"];
-
-const STATUT_LABEL: Record<string, string> = {
-  onboarding: "Onboarding",
-  agrement_en_cours: "Agrément en cours",
-  audit: "Audit",
-  ouvert: "Ouvert",
-  bloque: "Bloqué",
-};
-
-const STAGE_LABEL: Record<string, string> = {
-  signature_validee: "Signature",
-  plans_valides: "Plans",
-  installation_qualite: "Installation",
-  audit: "Audit",
-  depot_agrement: "Dépôt",
-  agrement_recu: "Agrément",
-  ouverture: "Ouverture",
-};
 
 type Seg = { value: number; color: string; label: string };
 
@@ -88,19 +71,16 @@ function Donut({
 export default function DistributionDonuts() {
   const { stats } = useDashboardContext();
 
-  const byStatut = stats?.centres.by_statut ?? {};
-  const centresSegs: Seg[] = Object.entries(byStatut).map(([k, v], i) => ({
-    value: v as number,
+  // Segment values + labels derive from the dashboard feature; the view assigns colours.
+  const centresSegs: Seg[] = centreStatutSegments(stats).map((s, i) => ({
+    ...s,
     color: ORANGE_RAMP[i % ORANGE_RAMP.length],
-    label: STATUT_LABEL[k] ?? k,
   }));
   const centresTotal = centresSegs.reduce((s, d) => s + d.value, 0);
 
-  const byStage = stats?.dossiers.by_stage ?? {};
-  const stageSegs: Seg[] = Object.entries(byStage).map(([k, v], i) => ({
-    value: v as number,
+  const stageSegs: Seg[] = dossierStageSegments(stats).map((s, i) => ({
+    ...s,
     color: INDIGO_RAMP[i % INDIGO_RAMP.length],
-    label: STAGE_LABEL[k] ?? k,
   }));
   const stageTotal = stageSegs.reduce((s, d) => s + d.value, 0);
 

@@ -3,35 +3,15 @@
 import { useEffect, useMemo } from "react";
 import { MapPin, GitBranch } from "lucide-react";
 import { Panel, EmptyState } from "./Panel";
-import { useDossiersContext } from "@/lib/features/dossiers";
-import { dossierToRow, type Dossier } from "@/components/dossiers/dossiersData";
-
-// The 7 regulatory pipeline stages (etape_pipeline) — board columns, in order.
-const COLUMNS: { key: string; label: string }[] = [
-  { key: "signature_validee", label: "Signature validée" },
-  { key: "plans_valides", label: "Plans validés" },
-  { key: "installation_qualite", label: "Installation & qualité" },
-  { key: "audit", label: "Audit" },
-  { key: "depot_agrement", label: "Dépôt agrément" },
-  { key: "agrement_recu", label: "Agrément reçu" },
-  { key: "ouverture", label: "Ouverture" },
-];
+import { useDossiersContext, dossierToRow, groupDossiersByStage, MICRO_STAGES as COLUMNS } from "@/lib/features/dossiers";
 
 export default function PipelineKanban({ onOpenDossier }: { onOpenDossier?: (id: string) => void }) {
   const { dossiers, ensureLoaded } = useDossiersContext();
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
 
-  const grouped = useMemo(() => {
-    const rows = dossiers.map(dossierToRow);
-    const map: Record<string, Dossier[]> = {};
-    for (const c of COLUMNS) map[c.key] = [];
-    for (const r of rows) {
-      const key = r.etape && map[r.etape] ? r.etape : null;
-      if (key) map[key].push(r);
-    }
-    return map;
-  }, [dossiers]);
+  // Group by the onboarding (micro) pipeline — the etape_pipeline the backend returns.
+  const grouped = useMemo(() => groupDossiersByStage(dossiers.map(dossierToRow), COLUMNS), [dossiers]);
 
   const total = dossiers.length;
 

@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Search, ChevronDown, User, MapPin, Menu, Clock } from "lucide-react";
-import { type Conversation } from "./conversationsData";
+import { type Conversation } from "@/lib/features/conversations";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 interface ConversationsListProps {

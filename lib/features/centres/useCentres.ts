@@ -89,6 +89,10 @@ export function useCentres() {
     }
   }, []);
 
+  // Mirror the list in a ref so navigation helpers read the latest rows without
+  // re-creating their callbacks on every list change.
+  const listRef = useRef(state.list);
+  listRef.current = state.list;
   // Mirror the per-id detail cache in a ref so the guard reads the latest value
   // without re-creating the callback, and dedup concurrent detail fetches.
   const detailCacheRef = useRef(state.detailCache);
@@ -128,6 +132,24 @@ export function useCentres() {
     getInFlightRef.current.set(id, p);
     return p;
   }, []);
+
+  // Resolve a centre's most-recent dossier id for navigation (centre switcher →
+  // open that centre's dossier hub). Reads the cached list row first (instant, no
+  // network); falls back to the centre detail when the row carries no dossier id.
+  // Warms the shared detail cache either way so the destination view reads it
+  // instantly instead of waterfalling a fresh fetch. Returns null if the centre
+  // has no dossier (caller should route to the centre page instead).
+  const resolveLatestDossierId = useCallback(async (centreId: string): Promise<string | null> => {
+    const fromList = listRef.current.find((c) => c.id === centreId)?.dossier_id ?? null;
+    const detailPromise = getDetail(centreId); // warm cache (deduped, cache-first)
+    if (fromList) return fromList;
+    try {
+      const detail = await detailPromise; // reuse the in-flight prefetch (no second fetch)
+      return detail.dossiers?.[detail.dossiers.length - 1]?.id ?? null;
+    } catch {
+      return null;
+    }
+  }, [getDetail]);
 
   const create = useCallback(async (payload: CreateCentrePayload) => {
     const result = await createCentre(payload);
@@ -199,6 +221,7 @@ export function useCentres() {
     loadDetail,
     ensureDetail,
     getDetail,
+    resolveLatestDossierId,
     create,
     update,
     remove,

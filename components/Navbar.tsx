@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationPopover, type Notification } from "@/components/ui/notification-popover";
-import { useAlertsContext } from "@/lib/features/alerts";
+import { useAlertsContext, openAlerts as selectOpenAlerts, alertsToNotifications } from "@/lib/features/alerts";
 
 interface NavbarProps {
   setMobileMenuOpen: (open: boolean) => void;
@@ -32,15 +32,9 @@ export default function Navbar({ setMobileMenuOpen, onOpenDossier }: NavbarProps
   }, []);
 
   // Open alerts → notifications; locally "read" so the badge can be cleared.
-  const openAlerts = useMemo(() => alerts.filter((a) => a.status === "open"), [alerts]);
+  const openAlerts = useMemo(() => selectOpenAlerts(alerts), [alerts]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
-  const notifications: Notification[] = openAlerts.map((a) => ({
-    id: a.id,
-    title: `${a.type}${a.code_centre ? ` · ${a.code_centre}` : ""}`,
-    description: a.message,
-    timestamp: new Date(a.created_at),
-    read: readIds.has(a.id),
-  }));
+  const notifications: Notification[] = alertsToNotifications(alerts, readIds);
 
   const handleSelect = (id: string) => {
     const alert = openAlerts.find((a) => a.id === id);

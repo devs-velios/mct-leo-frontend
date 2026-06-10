@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown, Check, Sparkles } from "lucide-react";
-import { type DashboardDossier } from "./dashboardData";
+import { type DashboardDossier } from "@/lib/features/centres";
 
 interface NewDossierModalProps {
   isOpen: boolean;

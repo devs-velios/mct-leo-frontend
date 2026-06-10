@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
-import { useAlertsContext } from "@/lib/features/alerts";
+import { useAlertsContext, openAlerts as selectOpenAlerts } from "@/lib/features/alerts";
 
 interface AlertsBellProps {
   onOpenDossier?: (centreId: string) => void;
@@ -18,7 +18,7 @@ export default function AlertsBell({ onOpenDossier }: AlertsBellProps) {
 
   useEffect(() => { ensureLoaded({ status: "open" }); }, [ensureLoaded]);
 
-  const openAlerts = alerts.filter((a) => a.status === "open");
+  const openAlerts = selectOpenAlerts(alerts);
   const count = openAlerts.length;
 
   useEffect(() => {

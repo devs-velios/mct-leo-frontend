@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import ConversationsList from "./conversations/ConversationsList";
 import {
+  useConversationsContext,
   type Conversation,
   inboxToConversation,
-} from "./conversations/conversationsData";
-import ConversationsList from "./conversations/ConversationsList";
-import { useConversationsContext } from "@/lib/features/conversations";
+  filterConversations,
+} from "@/lib/features/conversations";
 
 interface ConversationsViewProps {
   onOpenDossier?: (id: string) => void;
@@ -26,10 +27,7 @@ export default function ConversationsView({ onOpenDossier, setMobileMenuOpen }: 
   useEffect(() => { ensureInbox(); }, [ensureInbox]);
 
   // Derive view conversations from the cached inbox (id = centre_id → opens the hub).
-  const conversations: Conversation[] = inbox.map((i) => ({
-    ...inboxToConversation(i),
-    messages: [],
-  }));
+  const conversations: Conversation[] = inbox.map(inboxToConversation);
 
   // Auto close phase dropdown
   useEffect(() => {
@@ -44,21 +42,10 @@ export default function ConversationsView({ onOpenDossier, setMobileMenuOpen }: 
     return () => document.removeEventListener("click", handleOutsideClick);
   }, [isPhaseDropdownOpen]);
 
-  // Filter conversations
-  const filteredConversations = conversations.filter(c => {
-    if (selectedPhase !== "Toutes phases") {
-      if (c.phase !== selectedPhase) return false;
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchTitle = c.title.toLowerCase().includes(query);
-      const matchSubtitle = c.subtitle.toLowerCase().includes(query);
-      const matchId = c.id.toLowerCase().includes(query);
-      if (!matchTitle && !matchSubtitle && !matchId) return false;
-    }
-
-    return true;
+  // Filtering rules live in the conversations feature (single source of truth).
+  const filteredConversations = filterConversations(conversations, {
+    search: searchQuery,
+    phase: selectedPhase,
   });
 
   return (

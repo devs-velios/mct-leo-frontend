@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { MapPin, Calendar } from "lucide-react";
-import { type Dossier } from "./dossiersData";
+import { type Dossier } from "@/lib/features/dossiers";
 
 type Phase = "Signature" | "Onboarding" | "Dépôt" | "Ouvert" | "Suivi qualité";
 

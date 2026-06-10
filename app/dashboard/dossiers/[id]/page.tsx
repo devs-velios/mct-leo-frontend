@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import DossierDetailsView from "@/components/DossierDetailsView";
 import { useDossiersContext } from "@/lib/features/dossiers";
 import { useCentresContext } from "@/lib/features/centres";
@@ -19,16 +19,37 @@ const TAB_PATHS: Record<string, string> = {
  * so we resolve the dossier → its centre, then render the dossier hub focused on it.
  */
 export default function DossierDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex-1 flex items-center justify-center bg-[#F5F5F7]">
+          <div className="text-slate-400 font-bold text-xs uppercase tracking-widest animate-pulse">
+            Chargement du dossier...
+          </div>
+        </div>
+      }
+    >
+      <DossierDetailPageInner />
+    </Suspense>
+  );
+}
+
+function DossierDetailPageInner() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { getDossier } = useDossiersContext();
-  const { centres, getDetail } = useCentresContext();
+  const { resolveLatestDossierId } = useCentresContext();
   const dossierId = String(params.id);
+  // The centre switcher passes the centre id as a hint (it already knows it),
+  // letting us skip the dossier→centre round trip on a centre switch.
+  const centreHint = searchParams.get("centre");
 
-  const [centreId, setCentreId] = useState<string | null>(null);
+  const [centreId, setCentreId] = useState<string | null>(centreHint);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (centreHint) { setCentreId(centreHint); setError(false); return; }
     let alive = true;
     setCentreId(null);
     setError(false);
@@ -36,21 +57,18 @@ export default function DossierDetailPage() {
       .then((d) => { if (alive) setCentreId(d.centre_id); })
       .catch(() => { if (alive) setError(true); });
     return () => { alive = false; };
-  }, [dossierId, getDossier]);
+  }, [dossierId, centreHint, getDossier]);
 
   // Centre switcher → open the DOSSIER of the selected centre (stay in the hub).
-  // Resolve the centre's dossier id from the cached list, falling back to its detail.
+  // Resolution + cache-warming lives in the centres feature; the page only routes.
+  // The `?centre=` hint lets the destination skip the dossier→centre round trip.
   const handleSwitchCentre = async (selectedCentreId: string) => {
-    let targetDossierId = centres.find((c) => c.id === selectedCentreId)?.dossier_id ?? null;
-    if (!targetDossierId) {
-      try {
-        const detail = await getDetail(selectedCentreId); // cached
-        targetDossierId = detail.dossiers?.[detail.dossiers.length - 1]?.id ?? null;
-      } catch {
-        /* fall through to the centre page if it has no dossier */
-      }
-    }
-    router.push(targetDossierId ? `/dashboard/dossiers/${targetDossierId}` : `/dashboard/centres/${selectedCentreId}`);
+    const targetDossierId = await resolveLatestDossierId(selectedCentreId);
+    router.push(
+      targetDossierId
+        ? `/dashboard/dossiers/${targetDossierId}?centre=${selectedCentreId}`
+        : `/dashboard/centres/${selectedCentreId}`
+    );
   };
 
   if (error) {

@@ -1,16 +1,7 @@
-// Types and mock data for the main Dashboard page.
+// Mock data for the main Dashboard page. The view-model type and the
+// backend→view mapping live in the centres feature (lib/features/centres).
 
-export interface DashboardDossier {
-  id: string;
-  code?: string; // human-friendly code_centre (never show the raw UUID id)
-  enseigne: string;
-  ville: string;
-  gerant: string;
-  phase: string;
-  joursInactif: number;
-  statut: string;
-  contact: string;
-}
+import { type DashboardDossier } from "@/lib/features/centres";
 
 export interface LiveActivity {
   id: number;
@@ -18,51 +9,6 @@ export interface LiveActivity {
   detail: string;
   temps: string;
   type: string;
-}
-
-// ── Backend mapping (GET /api/centres) ─────────────────────────────────────────
-export interface CentreRow {
-  id: string;
-  code_centre: string;
-  enseigne: string | null;
-  ville: string | null;
-  statut_ouverture: string;
-  last_activity_at: string | null;
-  contacts_clients?: unknown;
-}
-
-const STATUT_PHASE: Record<string, string> = {
-  onboarding: "Onboarding",
-  audit: "Audit",
-  agrement_en_cours: "Dépôt Agrément",
-  ouvert: "Ouvert",
-  bloque: "Bloqué"
-};
-
-function firstPhone(contacts: unknown): string {
-  if (!contacts || typeof contacts !== "object") return "";
-  for (const v of Object.values(contacts as Record<string, unknown>)) {
-    if (typeof v === "string" && /\d{8,}/.test(v.replace(/[\s.\-()]/g, ""))) return v;
-  }
-  return "";
-}
-
-/** Map a backend centre row → the dashboard table row shape. */
-export function centreToDossier(c: CentreRow): DashboardDossier {
-  const days = c.last_activity_at
-    ? Math.max(0, Math.floor((Date.now() - new Date(c.last_activity_at).getTime()) / 86400000))
-    : 0;
-  return {
-    id: c.id,
-    code: c.code_centre,
-    enseigne: c.enseigne ?? c.code_centre,
-    ville: c.ville ?? "",
-    gerant: "",
-    phase: STATUT_PHASE[c.statut_ouverture] ?? "Onboarding",
-    joursInactif: days,
-    statut: days >= 5 ? "critique" : "normal",
-    contact: firstPhone(c.contacts_clients)
-  };
 }
 
 // Mock Data for centres needing attention

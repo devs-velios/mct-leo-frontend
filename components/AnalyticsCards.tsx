@@ -2,6 +2,7 @@
 
 import { Folder, Building, FileText, Bell, AlertTriangle } from "lucide-react";
 import { useDashboardContext } from "@/lib/features/dashboard/DashboardProvider";
+import { dashboardMetrics } from "@/lib/features/dashboard";
 import { Stats, type StatItem } from "@/components/ui/stats";
 
 export default function AnalyticsCards() {
@@ -9,8 +10,7 @@ export default function AnalyticsCards() {
   const loading = stats == null;
 
   const fmt = (n: number | undefined) => (stats == null ? "" : String(n ?? 0));
-  const openCentres = stats?.centres.by_statut?.ouvert ?? 0;
-  const piecesPending = stats ? stats.pieces.total - stats.pieces.verified : undefined;
+  const { piecesPending, openCentres } = dashboardMetrics(stats);
   const openAlerts = stats?.open_alerts ?? 0;
 
   const items: StatItem[] = [

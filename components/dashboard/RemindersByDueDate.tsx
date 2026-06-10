@@ -13,9 +13,10 @@ import {
   Cell,
 } from "recharts";
 import { Panel, EmptyState } from "./Panel";
-import { useRemindersContext } from "@/lib/features/reminders";
+import { useRemindersContext, remindersByDueBucket } from "@/lib/features/reminders";
 
-const DAY = 86_400_000;
+// Per-bucket bar colours (presentational; bucket order matches the feature selector).
+const BUCKET_COLORS = ["#DF3714", "#E34F2D", "#EA5835", "#4B2F5E", "#332151"];
 
 const Tip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
   if (active && payload && payload.length) {
@@ -42,29 +43,11 @@ export default function RemindersByDueDate() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setNow(Date.now()); }, []);
 
+  // Due-date bucketing lives in the reminders feature; the view adds bar colours.
   const { data, total } = useMemo(() => {
-    const startOfTomorrow = now != null ? new Date(now).setHours(24, 0, 0, 0) : 0;
-    const buckets = [
-      { name: "En retard", value: 0, color: "#DF3714" },
-      { name: "Aujourd'hui", value: 0, color: "#E34F2D" },
-      { name: "≤ 7 j", value: 0, color: "#EA5835" },
-      { name: "≤ 30 j", value: 0, color: "#4B2F5E" },
-      { name: "Plus tard", value: 0, color: "#332151" },
-    ];
-    let count = 0;
-    if (now == null) return { data: buckets, total: 0 };
-    for (const r of reminders) {
-      if (r.status !== "pending") continue;
-      const t = new Date(r.scheduled_at).getTime();
-      if (Number.isNaN(t)) continue;
-      count += 1;
-      if (t < now) buckets[0].value += 1;
-      else if (t < startOfTomorrow) buckets[1].value += 1;
-      else if (t < now + 7 * DAY) buckets[2].value += 1;
-      else if (t < now + 30 * DAY) buckets[3].value += 1;
-      else buckets[4].value += 1;
-    }
-    return { data: buckets, total: count };
+    // Pass 0 before the clock is captured → all buckets render at zero (EmptyState shows).
+    const { buckets, total } = remindersByDueBucket(now == null ? [] : reminders, now ?? 0);
+    return { data: buckets.map((b, i) => ({ ...b, color: BUCKET_COLORS[i] })), total };
   }, [reminders, now]);
 
   const overdue = data[0].value;

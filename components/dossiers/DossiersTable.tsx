@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ChevronRight, MapPin, Calendar } from "lucide-react";
-import { type Dossier } from "./dossiersData";
+import { type Dossier } from "@/lib/features/dossiers";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { type RowSelection } from "@/components/hooks/useRowSelection";
 

@@ -128,6 +128,9 @@ export interface FunnelChartProps {
   labelLayout?: "spread" | "grouped";
   labelOrientation?: "vertical" | "horizontal";
   labelAlign?: "center" | "start" | "end";
+  /** Extra classes for the value/label text (e.g. "text-white" when labels sit on a dark fill). */
+  valueClassName?: string;
+  labelClassName?: string;
   grid?:
     | boolean
     | {
@@ -544,6 +547,8 @@ function SegmentLabel({
   layout = "spread",
   orientation,
   align = "center",
+  valueClassName,
+  labelClassName,
 }: {
   stage: FunnelStage;
   pct: number;
@@ -558,11 +563,13 @@ function SegmentLabel({
   layout?: "spread" | "grouped";
   orientation?: "vertical" | "horizontal";
   align?: "center" | "start" | "end";
+  valueClassName?: string;
+  labelClassName?: string;
 }) {
   const display = stage.displayValue ?? formatValue(stage.value);
 
   const valueEl = showValues && (
-    <span className="whitespace-nowrap font-semibold text-foreground text-sm">
+    <span className={cn("whitespace-nowrap font-semibold text-foreground text-sm", valueClassName)}>
       {display}
     </span>
   );
@@ -572,7 +579,7 @@ function SegmentLabel({
     </span>
   );
   const labelEl = showLabels && (
-    <span className="whitespace-nowrap font-medium text-muted-foreground text-xs">
+    <span className={cn("whitespace-nowrap font-medium text-muted-foreground text-xs", labelClassName)}>
       {stage.label}
     </span>
   );
@@ -695,6 +702,8 @@ export function FunnelChart({
   labelLayout = "spread",
   labelOrientation,
   labelAlign = "center",
+  valueClassName,
+  labelClassName,
   grid: gridProp = false,
 }: FunnelChartProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -926,6 +935,7 @@ export function FunnelChart({
                   formatValue={formatValue}
                   index={i}
                   isHorizontal={horiz}
+                  labelClassName={labelClassName}
                   layout={labelLayout}
                   orientation={labelOrientation}
                   pct={pct}
@@ -934,6 +944,7 @@ export function FunnelChart({
                   showValues={showValues}
                   stage={stage}
                   staggerDelay={staggerDelay}
+                  valueClassName={valueClassName}
                 />
               </motion.div>
             );

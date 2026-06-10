@@ -32,6 +32,25 @@ export interface AdvancePayload {
   target?: string;
 }
 
+// Pipeline view-model row — derived from a DossierListItem (see selectors.dossierToRow)
+// for the tables/boards. Never expose the raw UUID id; navigate by centre id.
+export interface Dossier {
+  id: string;
+  code?: string; // human-friendly code_centre (never show the raw UUID id)
+  centre: string;
+  ville: string;
+  gerant: string;
+  phase: "Signature" | "Onboarding" | "Dépôt" | "Ouvert" | "Suivi qualité";
+  joursInactif: number;
+  signatureDate: string;
+  ouvertureDate: string;
+  enseigne: "Norauto" | "Speedy" | "Feu Vert" | "Indépendant";
+  contact: string;
+  dossierId?: string; // real dossier UUID (for advance-stage)
+  etape?: string; // micro status (etape_pipeline)
+  macro?: string; // macro status (statut_ouverture)
+}
+
 export type FetchStatus = "idle" | "loading" | "loaded" | "error";
 
 export interface DossiersState {

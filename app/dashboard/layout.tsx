@@ -4,10 +4,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/features/auth/useAuth";
 import { AppProviders } from "@/lib/features/AppProviders";
-import { useCentresContext } from "@/lib/features/centres";
+import { useCentresContext, type DashboardDossier, centreToDashboardRow } from "@/lib/features/centres";
 import AppSidebar from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { type DashboardDossier, centreToDossier } from "@/components/dashboard/dashboardData";
 
 interface DashboardContextType {
   // Opens a centre's dossier detail page (resolves the centre's dossier id → routes there).
@@ -48,7 +47,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   // The list now returns last_activity_at (most recent message) → real "jours inactif".
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
   useEffect(() => {
-    setDossiersList(centres.map((c) => centreToDossier({ ...c, last_activity_at: c.last_activity_at ?? null })));
+    setDossiersList(centres.map(centreToDashboardRow));
   }, [centres]);
 
   const [isNewDossierModalOpen, setIsNewDossierModalOpen] = useState(false);

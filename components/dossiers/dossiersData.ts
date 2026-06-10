@@ -1,59 +1,7 @@
-// Types and mock data for the Dossiers (pipeline) view.
+// Mock data for the Dossiers (pipeline) view. The view-model type and the
+// backend→view mapping/selectors live in the dossiers feature (lib/features/dossiers).
 
-export interface Dossier {
-  id: string;
-  code?: string; // human-friendly code_centre (never show the raw UUID id)
-  centre: string;
-  ville: string;
-  gerant: string;
-  phase: "Signature" | "Onboarding" | "Dépôt" | "Ouvert" | "Suivi qualité";
-  joursInactif: number;
-  signatureDate: string;
-  ouvertureDate: string;
-  enseigne: "Norauto" | "Speedy" | "Feu Vert" | "Indépendant";
-  contact: string;
-  dossierId?: string; // real dossier UUID (for advance-stage)
-  etape?: string; // micro status (etape_pipeline)
-  macro?: string; // macro status (statut_ouverture)
-}
-
-// ── Backend mapping (GET /api/dossiers) ────────────────────────────────────────
-const STAGE_PHASE: Record<string, Dossier["phase"]> = {
-  signature_validee: "Signature",
-  plans_valides: "Onboarding",
-  installation_qualite: "Onboarding",
-  audit: "Dépôt",
-  depot_agrement: "Dépôt",
-  agrement_recu: "Dépôt",
-  ouverture: "Ouvert"
-};
-
-export interface DossierApi {
-  id: string;
-  etape_pipeline: string;
-  created_at: string;
-  centre: { id: string; code_centre: string; enseigne: string | null; ville: string | null; statut_ouverture: string } | null;
-}
-
-/** Map a backend dossier (with embedded centre) → the pipeline view's Dossier shape. */
-export function dossierToRow(d: DossierApi): Dossier {
-  return {
-    id: d.centre?.id ?? d.id, // navigate by centre id (detail view is centre-based)
-    code: d.centre?.code_centre,
-    centre: d.centre?.enseigne ?? d.centre?.code_centre ?? "—",
-    ville: d.centre?.ville ?? "",
-    gerant: "",
-    phase: STAGE_PHASE[d.etape_pipeline] ?? "Onboarding",
-    joursInactif: 0,
-    signatureDate: new Date(d.created_at).toLocaleDateString("fr-FR"),
-    ouvertureDate: "—",
-    enseigne: "Indépendant",
-    contact: "",
-    dossierId: d.id,
-    etape: d.etape_pipeline,
-    macro: d.centre?.statut_ouverture
-  };
-}
+import { type Dossier } from "@/lib/features/dossiers";
 
 // 47 Mock Dossiers
 export const initialDossiers: Dossier[] = [

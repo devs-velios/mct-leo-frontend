@@ -2,35 +2,7 @@
 
 import { useState } from "react";
 import { Check, GripVertical } from "lucide-react";
-
-export interface StageDef { key: string; label: string; }
-
-// Canonical pipeline (etape_pipeline) — the 6 business phases, in backend step_order.
-// Source of truth: backend dossier_steps (step_order) / advance-stage targets.
-export const MICRO_STAGES: StageDef[] = [
-  { key: "onboarding", label: "Onboarding" },
-  { key: "recuperation_documents", label: "Récupération des documents" },
-  { key: "activation_outils", label: "Activation des outils" },
-  { key: "suivi_projet", label: "Suivi de projet" },
-  { key: "qualite_audit", label: "Qualité & audit" },
-  { key: "demande_agrement", label: "Demande d'agrément" },
-];
-export const MICRO_KEYS = MICRO_STAGES.map((s) => s.key);
-
-/** Human label for a stage key (humanized fallback for any unexpected value). */
-export const stageLabel = (key: string | null | undefined): string => {
-  if (!key) return "—";
-  const known = MICRO_STAGES.find((s) => s.key === key);
-  return known ? known.label : key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
-};
-
-export const microNext = (k: string) => { const i = MICRO_KEYS.indexOf(k); return i >= 0 && i < MICRO_KEYS.length - 1 ? MICRO_KEYS[i + 1] : null; };
-export const microPrev = (k: string) => { const i = MICRO_KEYS.indexOf(k); return i > 0 ? MICRO_KEYS[i - 1] : null; };
-export const microToMacro = (k: string): string => {
-  if (k === "qualite_audit") return "audit";
-  if (k === "demande_agrement") return "agrement_en_cours";
-  return "onboarding";
-};
+import { MICRO_STAGES, microNext, microPrev } from "@/lib/features/dossiers";
 
 interface PipelineBoardsProps {
   etape: string | null | undefined;        // current micro stage

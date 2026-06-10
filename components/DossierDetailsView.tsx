@@ -18,14 +18,19 @@ import {
   Clock
 } from "lucide-react";
 
-import { type Message, type DossierDetail, centreDetailToDossier } from "./dossier-details/dossierData";
-import PipelineBoards, { microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS } from "./dossier-details/PipelineBoards";
+import PipelineBoards from "./dossier-details/PipelineBoards";
 import CentreInfoModal from "./dossier-details/CentreInfoModal";
 import { Timeline, TimelineItem, TimelineDot, TimelineLine, TimelineHeading, TimelineContent } from "@/components/ui/timeline";
-import { api } from "@/lib/api";
-import { useCentresContext, type CentreDetail as CentreFullDetail } from "@/lib/features/centres";
-import { useConversationsContext } from "@/lib/features/conversations";
-import { useDossiersContext } from "@/lib/features/dossiers";
+import {
+  useCentresContext,
+  type CentreDetail as CentreFullDetail,
+  type Message,
+  type DossierDetail,
+  centreDetailToDossier,
+} from "@/lib/features/centres";
+import { useConversationsContext, awaitInboundReply } from "@/lib/features/conversations";
+import { useDossiersContext, microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS } from "@/lib/features/dossiers";
+import { useAlertsContext } from "@/lib/features/alerts";
 import Markdown from "@/components/ui/Markdown";
 
 interface DossierDetailsViewProps {
@@ -45,6 +50,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const { upload: uploadWhatsappDoc, send: sendWhatsappMessage } = useConversationsContext();
   // Pipeline advance/revert goes through the shared dossiers context (feature pattern).
   const { advance: advanceStage } = useDossiersContext();
+  // Operator-alert resolution goes through the alerts feature (no direct api calls in views).
+  const { resolve: resolveAlert } = useAlertsContext();
   // Local active dossier state
   const [dossier, setDossier] = useState<DossierDetail | null>(null);
   // Full backend payload (GET /api/centres/:id) — holds dossiers (micro+macro+nav) and alerts.
@@ -68,8 +75,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const load = useCallback((force = false) => {
     return getDetail(dossierId, force)
       .then((d) => {
-        setRaw(d as CentreFullDetail);
-        setDossier(centreDetailToDossier(d as Parameters<typeof centreDetailToDossier>[0]));
+        setRaw(d);
+        setDossier(centreDetailToDossier(d));
       })
       .catch(() => { setRaw(null); setDossier(null); });
   }, [dossierId, getDetail]);
@@ -149,7 +156,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   // Resolve an open operator alert for this centre.
   const handleResolveAlert = async (id: string) => {
     try {
-      await api.post(`alerts/${id}/resolve`);
+      await resolveAlert(id);
       await load(true);
       triggerToast("Alerte résolue.");
     } catch {
@@ -214,32 +221,15 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     try {
       await sendWhatsappMessage(dossierId, text); // → /api/simulate/whatsapp/message (Léo replies async)
 
-      // Léo answers via the inbound worker (async). Check after 10s; if the reply hasn't
-      // landed yet, check again every 10s (until it arrives or the safety cap is hit).
-      const POLL_MS = 10_000;
-      const MAX_ATTEMPTS = 30; // ~5 min safety cap so we never poll forever
-      let attempt = 0;
-      const poll = async () => {
-        attempt += 1;
-        try {
-          const d = await getDetail(dossierId, true); // fresh pull (also refreshes the cache)
-          const msgs = (d.messages ?? []) as { sender: string }[];
-          if (msgs.length > baseCount) {
-            // Backend caught up (client persisted, maybe + reply) → sync the feed.
-            setRaw(d as CentreFullDetail);
-            setDossier(centreDetailToDossier(d as Parameters<typeof centreDetailToDossier>[0]));
-          }
-          // Stop once Léo's reply landed (client + reply = +2) or after the cap.
-          if (msgs.length >= baseCount + 2 || attempt >= MAX_ATTEMPTS) {
-            setChatTyping(false);
-            return;
-          }
-        } catch {
-          if (attempt >= MAX_ATTEMPTS) { setChatTyping(false); return; }
-        }
-        setTimeout(poll, POLL_MS);
-      };
-      setTimeout(poll, POLL_MS);
+      // Léo answers via the inbound worker (async). The poll cadence + stop-rule live
+      // in the conversations feature; we just supply how to fetch + sync the feed.
+      await awaitInboundReply({
+        fetchDetail: () => getDetail(dossierId, true), // fresh pull (also refreshes the cache)
+        count: (d) => (d.messages ?? []).length,
+        baseCount,
+        onGrow: (d) => { setRaw(d); setDossier(centreDetailToDossier(d)); },
+      });
+      setChatTyping(false);
     } catch (err) {
       setChatTyping(false);
       // Roll back the optimistic message and surface the real reason.

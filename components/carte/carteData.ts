@@ -1,37 +1,8 @@
-// Types and mock data for the Carte (network map) view.
+// Static reference data (region outlines) + mock centres for the Carte view. The
+// view-model type, coordinate projection, region resolution, and the backend→view
+// mapping live in the carte feature (lib/features/carte).
 
-export interface Center {
-  id: string;
-  code?: string; // human-friendly code_centre (never show the raw UUID id)
-  enseigne: string;
-  ville: string;
-  gerant: string;
-  phase: "Signature" | "Onboarding" | "Dépôt" | "Ouvert" | "Suivi";
-  joursInactif: number;
-  contact: string;
-  email: string;
-  siret: string;
-  denomination: string;
-  adresse: string;
-  signatureDate: string;
-  ouvertureDate: string;
-  latitude: number;
-  longitude: number;
-  x: number; // SVG X position
-  y: number; // SVG Y position
-  completude: number; // Completion percentage
-  documents: {
-    kbis: "validé" | "manquant" | "en_cours";
-    assurance: "validé" | "manquant" | "en_cours";
-    identite: "validé" | "manquant" | "en_cours";
-  };
-  messages: {
-    sender: string;
-    text: string;
-    time: string;
-    type: "ai" | "user" | "operator";
-  }[];
-}
+import { type Center, projectCoords } from "@/lib/features/carte";
 
 // 13 Regions of France SVG outlines
 export const REGIONS = [
@@ -537,28 +508,6 @@ for (let i = initialDossierCount; i < totalNeeded; i++) {
 
 
 // Coordinate projection formula mapping GPS (lat, lng) to the high-fidelity SVG coordinates
-export function projectCoords(lat: number, lng: number): { x: number; y: number } {
-  const x = 40.47 * lng + 216.6;
-  const y = -55.23 * lat + 2846.3;
-  return { x: Math.round(x), y: Math.round(y) };
-}
-
-// Region mapping helper to find the administrative region ID of a city
-export function getRegionIdOfCenter(ville: string): string {
-  const cityLower = ville.toLowerCase();
-  if (cityLower.includes("paris") || cityLower.includes("testville")) return "ile-de-france";
-  if (cityLower.includes("lyon") || cityLower.includes("annecy") || cityLower.includes("dijon")) return "auvergne-rhone-alpes";
-  if (cityLower.includes("marseille") || cityLower.includes("nice") || cityLower.includes("toulon")) return "provence-alpes-cote-d-azur";
-  if (cityLower.includes("montpellier") || cityLower.includes("toulouse")) return "occitanie";
-  if (cityLower.includes("bordeaux")) return "nouvelle-aquitaine";
-  if (cityLower.includes("nantes")) return "pays-de-la-loire";
-  if (cityLower.includes("strasbourg")) return "grand-est";
-  if (cityLower.includes("rennes")) return "bretagne";
-  if (cityLower.includes("lille") || cityLower.includes("rouen")) return "hauts-de-france";
-  if (cityLower.includes("reims")) return "grand-est";
-  return "ile-de-france";
-}
-
 // Auto-map coordinates for all mock centers
 mockCentersData.forEach(center => {
   const projected = projectCoords(center.latitude, center.longitude);
@@ -567,56 +516,3 @@ mockCentersData.forEach(center => {
 });
 
 export { mockCentersData };
-
-// ── Backend mapping (GET /api/centres) ─────────────────────────────────────────
-const STATUT_PHASE_CARTE: Record<string, Center["phase"]> = {
-  onboarding: "Onboarding",
-  audit: "Dépôt",
-  agrement_en_cours: "Dépôt",
-  ouvert: "Ouvert",
-  bloque: "Onboarding"
-};
-
-export interface CentreApiGeo {
-  id: string;
-  code_centre: string;
-  enseigne: string | null;
-  ville: string | null;
-  statut_ouverture: string;
-  latitude: number | null;
-  longitude: number | null;
-  contacts_clients?: Record<string, unknown>;
-}
-
-/** Map real centres (with lat/long) → the map's Center shape, projecting coords to x/y. */
-export function centresToCarte(list: CentreApiGeo[]): Center[] {
-  return list
-    .filter((c) => c.latitude != null && c.longitude != null)
-    .map((c) => {
-      const { x, y } = projectCoords(c.latitude as number, c.longitude as number);
-      const vals = Object.values(c.contacts_clients ?? {}).filter((v): v is string => typeof v === "string");
-      return {
-        id: c.id,
-        code: c.code_centre,
-        enseigne: c.enseigne ?? c.code_centre,
-        ville: c.ville ?? "",
-        gerant: "",
-        phase: STATUT_PHASE_CARTE[c.statut_ouverture] ?? "Onboarding",
-        joursInactif: 0,
-        contact: vals.find((v) => /\d{8,}/.test(v.replace(/\D/g, ""))) ?? "",
-        email: vals.find((v) => v.includes("@")) ?? "",
-        siret: "",
-        denomination: c.enseigne ?? "",
-        adresse: "",
-        signatureDate: "",
-        ouvertureDate: "",
-        latitude: c.latitude as number,
-        longitude: c.longitude as number,
-        x,
-        y,
-        completude: 0,
-        documents: { kbis: "manquant", assurance: "manquant", identite: "manquant" },
-        messages: []
-      } as Center;
-    });
-}
