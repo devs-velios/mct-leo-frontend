@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import PipelineBoards from "./dossier-details/PipelineBoards";
+import DossierDetailSkeleton from "./dossier-details/DossierDetailSkeleton";
 import CentreInfoModal from "./dossier-details/CentreInfoModal";
 import { Timeline, TimelineItem, TimelineDot, TimelineLine, TimelineHeading, TimelineContent } from "@/components/ui/timeline";
 import {
@@ -30,7 +31,8 @@ import {
   centreDetailToDossier,
 } from "@/lib/features/centres";
 import { useConversationsContext, awaitInboundReply } from "@/lib/features/conversations";
-import { useDossiersContext, microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS } from "@/lib/features/dossiers";
+import { useDossiersContext, microToMacro, MICRO_STAGES } from "@/lib/features/dossiers";
+import { usePipelineContext } from "@/lib/features/pipeline";
 import { useAlertsContext } from "@/lib/features/alerts";
 import { pieceTypeLabel } from "@/lib/features/pieces";
 import AddReminderModal from "./dossier-details/AddReminderModal";
@@ -56,7 +58,10 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const { advance: advanceStage } = useDossiersContext();
   // Operator-alert resolution goes through the alerts feature (no direct api calls in views).
   const { resolve: resolveAlert } = useAlertsContext();
-  // Direction heat-map (multi-case overview embedded at the bottom of the page).
+  // Settings-managed pipeline catalog — drives the timeline columns/labels/order so a phase
+  // reorder/add/remove/relabel in Settings is reflected here (never hardcode phase names).
+  const { phases: pipelinePhases, ensureLoaded: ensurePipeline } = usePipelineContext();
+  useEffect(() => { ensurePipeline(); }, [ensurePipeline]);
   // Schedule-reminder modal (the modal itself talks to the reminders feature).
   const [reminderOpen, setReminderOpen] = useState(false);
   // Local active dossier state
@@ -79,17 +84,34 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
   // Load the real centre detail (id = centre id) via the shared cache — instant on
   // revisit, deduped. Pass force=true to bypass the cache (post-mutation reconcile).
+  // Which centre id the currently-displayed `raw`/`dossier` belongs to. Used to show a
+  // loading screen while SWITCHING centres (the old data lingers during the fetch — without
+  // this the screen looks frozen). A background reconcile keeps the same id → no loader.
+  const [loadedId, setLoadedId] = useState<string | null>(null);
   const load = useCallback((force = false) => {
     return getDetail(dossierId, force)
       .then((d) => {
         setRaw(d);
         setDossier(centreDetailToDossier(d));
+        setLoadedId(dossierId);
       })
-      .catch(() => { setRaw(null); setDossier(null); });
+      .catch(() => { setRaw(null); setDossier(null); setLoadedId(dossierId); });
   }, [dossierId, getDetail]);
   useEffect(() => {
     load();
   }, [load]);
+
+  // Minimum skeleton-display window: keep the skeleton up for a short beat when switching
+  // centres so a fast/cached load doesn't flash. The timer marks the floor "done" for the
+  // current id; until then `skeletonFloor` is derived true. A background reconcile keeps the
+  // same id, so the floor stays done and never re-triggers the skeleton.
+  const [floorDoneId, setFloorDoneId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = dossierId;
+    const t = setTimeout(() => setFloorDoneId(id), 500);
+    return () => clearTimeout(t);
+  }, [dossierId]);
+  const skeletonFloor = floorDoneId !== dossierId;
 
   // Keep the WhatsApp feed pinned to the latest message — scroll the chat box only (not the page).
   useEffect(() => {
@@ -136,22 +158,29 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     // local order. Validating only against the local order would reject a legit drop on
     // the highlighted column and snap the card back.
     const current = activeDossier.etape_pipeline;
+    // Adjacency comes from the settings-managed catalog order (fall back to the canonical
+    // micro order until it loads). Using the catalog keeps the OPTIMISTIC next/prev correct
+    // so the next tile activates instantly — otherwise it only fixes up after load() returns.
+    const catKeys = pipelinePhases.length ? pipelinePhases.map((p) => p.name) : MICRO_STAGES.map((s) => s.key);
+    const catNext = (k: string) => { const i = catKeys.indexOf(k); return i >= 0 && i < catKeys.length - 1 ? catKeys[i + 1] : null; };
+    const catPrev = (k: string) => { const i = catKeys.indexOf(k); return i > 0 ? catKeys[i - 1] : null; };
     const direction =
       target === activeDossier.next_stage ? "next"
       : target === activeDossier.prev_stage ? "back"
-      : target === microNext(current ?? "") ? "next"
-      : target === microPrev(current ?? "") ? "back"
+      : target === catNext(current ?? "") ? "next"
+      : target === catPrev(current ?? "") ? "back"
       : null;
     if (!direction) return; // not an adjacent step — ignore
     const prevRaw = raw;
-    // Optimistically patch the active dossier's micro stage + derived macro + nav hints.
+    // Optimistically patch the active dossier's micro stage + derived macro + nav hints —
+    // next/prev from the catalog so the highlighted/active tile updates in the same render.
     setRaw((r) =>
       r
         ? {
             ...r,
             dossiers: r.dossiers.map((d) =>
               d.id === dossierUuid
-                ? { ...d, etape_pipeline: target, statut_ouverture: microToMacro(target), next_stage: microNext(target), prev_stage: microPrev(target) }
+                ? { ...d, etape_pipeline: target, statut_ouverture: microToMacro(target), next_stage: catNext(target), prev_stage: catPrev(target) }
                 : d,
             ),
           }
@@ -254,14 +283,11 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     }
   };
 
-  if (!dossier) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F5F5F7]">
-        <div className="text-slate-400 font-bold text-xs uppercase tracking-widest animate-pulse">
-          Chargement du dossier...
-        </div>
-      </div>
-    );
+  // Show the skeleton on first load AND while switching to a different centre (the old
+  // `dossier` lingers during the fetch — guarding on the loaded id avoids a frozen screen).
+  // `skeletonFloor` keeps it up a short minimum so a fast/cached switch doesn't flash.
+  if (!dossier || loadedId !== dossierId || skeletonFloor) {
+    return <DossierDetailSkeleton />;
   }
 
   return (
@@ -398,7 +424,10 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                 Parcours du dossier
               </span>
               {(() => {
-                const microIdx = activeDossier?.etape_pipeline ? MICRO_KEYS.indexOf(activeDossier.etape_pipeline) : -1;
+                // Stages from the settings-managed catalog (sorted by order); fall back to the
+                // canonical micro stages only until the catalog resolves.
+                const timelineStages = pipelinePhases.length ? pipelinePhases.map((p) => ({ key: p.name, label: p.label })) : MICRO_STAGES;
+                const microIdx = activeDossier?.etape_pipeline ? timelineStages.findIndex((s) => s.key === activeDossier.etape_pipeline) : -1;
                 const isBlocked = activeDossier?.statut_ouverture === "bloque";
                 return (
                   <>
@@ -408,11 +437,11 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                       </p>
                     )}
                     <Timeline positions="left">
-                      {MICRO_STAGES.map((s, i) => {
+                      {timelineStages.map((s, i) => {
                         const done = microIdx >= 0 && i < microIdx;
                         const current = i === microIdx;
                         const status = current ? (isBlocked ? "error" : "current") : done ? "done" : "default";
-                        const last = i === MICRO_STAGES.length - 1;
+                        const last = i === timelineStages.length - 1;
                         return (
                           <TimelineItem key={s.key} status={done ? "done" : "default"}>
                             <TimelineHeading variant="primary">{s.label}</TimelineHeading>
