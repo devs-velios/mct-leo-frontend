@@ -23,6 +23,8 @@ import { AssistantProvider } from "./assistant";
 import { UsersProvider } from "./users";
 import { SimulateProvider } from "./simulate";
 import { DocumentsProvider } from "./documents";
+import { PipelineProvider } from "./pipeline";
+import { IntervenersProvider } from "./interveners";
 
 // Order is irrelevant — the providers are independent. Compose from an array to keep
 // the nesting flat and easy to extend.
@@ -43,6 +45,8 @@ const PROVIDERS = [
   UsersProvider,
   SimulateProvider,
   DocumentsProvider,
+  PipelineProvider,
+  IntervenersProvider,
 ] as const;
 
 export function AppProviders({ children }: { children: ReactNode }) {

@@ -56,6 +56,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const { advance: advanceStage } = useDossiersContext();
   // Operator-alert resolution goes through the alerts feature (no direct api calls in views).
   const { resolve: resolveAlert } = useAlertsContext();
+  // Direction heat-map (multi-case overview embedded at the bottom of the page).
   // Schedule-reminder modal (the modal itself talks to the reminders feature).
   const [reminderOpen, setReminderOpen] = useState(false);
   // Local active dossier state
@@ -129,10 +130,18 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const handleMoveStage = async (target: string) => {
     if (!activeDossier) return;
     const dossierUuid = activeDossier.id;
-    // Move by DIRECTION (next/back) relative to the current stage — the drop target is
-    // always an adjacent column, so derive the direction from the canonical order.
+    // Move by DIRECTION (next/back) relative to the current stage. The droppable columns
+    // are chosen from the backend's next/prev (PipelineBoards), which can skip a local
+    // step — so resolve direction against those FIRST, then fall back to the canonical
+    // local order. Validating only against the local order would reject a legit drop on
+    // the highlighted column and snap the card back.
     const current = activeDossier.etape_pipeline;
-    const direction = target === microNext(current ?? "") ? "next" : target === microPrev(current ?? "") ? "back" : null;
+    const direction =
+      target === activeDossier.next_stage ? "next"
+      : target === activeDossier.prev_stage ? "back"
+      : target === microNext(current ?? "") ? "next"
+      : target === microPrev(current ?? "") ? "back"
+      : null;
     if (!direction) return; // not an adjacent step — ignore
     const prevRaw = raw;
     // Optimistically patch the active dossier's micro stage + derived macro + nav hints.

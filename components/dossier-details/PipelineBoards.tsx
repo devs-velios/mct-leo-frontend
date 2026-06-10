@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, GripVertical } from "lucide-react";
-import { MICRO_STAGES, microNext, microPrev } from "@/lib/features/dossiers";
+import { MICRO_STAGES } from "@/lib/features/dossiers";
+import { usePipelineContext } from "@/lib/features/pipeline";
 
 interface PipelineBoardsProps {
   etape: string | null | undefined;        // current micro stage
@@ -18,38 +19,51 @@ interface PipelineBoardsProps {
  * Single pipeline visualization for a dossier — the micro (draggable, fine-grained) board.
  */
 export default function PipelineBoards({ etape, nextStage, prevStage, code, centre, onMove }: PipelineBoardsProps) {
-  // Adjacent (droppable) stages. Prefer the backend's next/prev; fall back to the
-  // canonical local order so drag-to-advance works even when the backend doesn't
-  // return adjacency for the current pipeline.
-  const adjacent = [nextStage, prevStage].filter(Boolean) as string[];
-  const localAdjacent = [microNext(etape ?? ""), microPrev(etape ?? "")].filter(Boolean) as string[];
-  const movableKeys = new Set(adjacent.length ? adjacent : localAdjacent);
+  // Columns come from the settings-managed pipeline catalog (already sorted by `order`),
+  // so reordering / adding / removing a phase in Settings is reflected here directly.
+  // Fall back to the canonical micro stages only until the catalog resolves, to avoid a
+  // momentarily blank board on first load.
+  const { phases, ensureLoaded } = usePipelineContext();
+  useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+
+  const stages = phases.length ? phases.map((p) => ({ key: p.name, label: p.label })) : MICRO_STAGES;
+  const currentIdx = stages.findIndex((s) => s.key === etape);
+  const catalogNext = currentIdx >= 0 ? stages[currentIdx + 1]?.key : undefined;
+  const catalogPrev = currentIdx >= 0 ? stages[currentIdx - 1]?.key : undefined;
+
+  // Droppable columns = the dossier's allowed transitions. Prefer the backend's
+  // per-dossier next/prev (it may legitimately skip a phase); fall back to the catalog
+  // neighbours when the backend doesn't return adjacency for the current pipeline.
+  const backendAdjacent = [nextStage, prevStage].filter(Boolean) as string[];
+  const catalogAdjacent = [catalogNext, catalogPrev].filter(Boolean) as string[];
+  const movableKeys = new Set(backendAdjacent.length ? backendAdjacent : catalogAdjacent);
 
   return (
     <div className="lg:col-span-3">
       {/* ── MICRO — draggable, fine-grained (single pipeline visualization) ──── */}
-      <MicroBoard currentKey={etape} movableKeys={movableKeys} onMove={onMove} cardCode={code} cardName={centre} />
+      <MicroBoard stages={stages} currentKey={etape} currentIdx={currentIdx} movableKeys={movableKeys} onMove={onMove} cardCode={code} cardName={centre} />
     </div>
   );
 }
 
 // ── Micro board — draggable kanban (drag-only; adjacent columns are drop targets) ──────────
 function MicroBoard({
+  stages,
   currentKey,
+  currentIdx,
   movableKeys,
   onMove,
   cardCode,
   cardName,
 }: {
+  stages: { key: string; label: string }[];
   currentKey: string | null | undefined;
+  currentIdx: number;
   movableKeys: Set<string>;
   onMove: (key: string) => void;
   cardCode: string;
   cardName: string;
 }) {
-  const stages = MICRO_STAGES;
-  const currentIdx = stages.findIndex((s) => s.key === currentKey);
-  const [dragging, setDragging] = useState(false);
   const [overKey, setOverKey] = useState<string | null>(null);
 
   return (
@@ -69,7 +83,7 @@ function MicroBoard({
               key={s.key}
               onDragOver={movable ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setOverKey(s.key); } : undefined}
               onDragLeave={movable ? () => setOverKey((k) => (k === s.key ? null : k)) : undefined}
-              onDrop={movable ? (e) => { e.preventDefault(); setOverKey(null); setDragging(false); onMove(s.key); } : undefined}
+              onDrop={movable ? (e) => { e.preventDefault(); setOverKey(null); onMove(s.key); } : undefined}
               className={`w-64 shrink-0 flex flex-col rounded-2xl p-4 transition-all duration-200 ${
                 isOver
                   ? "bg-[#E34F2D]/5 border-2 border-dashed border-[#E34F2D]/40 scale-[1.01]"
@@ -88,8 +102,8 @@ function MicroBoard({
               {isCurrent ? (
                 <div
                   draggable
-                  onDragStart={(e) => { setDragging(true); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", s.key); }}
-                  onDragEnd={() => { setDragging(false); setOverKey(null); }}
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", s.key); }}
+                  onDragEnd={() => { setOverKey(null); }}
                   className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">

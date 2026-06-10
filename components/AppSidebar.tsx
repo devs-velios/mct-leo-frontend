@@ -9,8 +9,7 @@ import {
   Bell,
   Sparkles,
   MessageSquareText,
-  HardDrive,
-  Users,
+  Settings2,
   Zap,
   LogOut,
   ChevronsLeft,
@@ -70,14 +69,15 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { name: "Assistant", icon: Sparkles },
       {
-        name: "Drive",
-        icon: HardDrive,
+        name: "Paramètres",
+        icon: Settings2,
         children: [
-          { name: "Drive", label: "Explorateur" },
-          { name: "Dossiers Drive", label: "Dossiers & Routage" },
+          { name: "Utilisateurs", label: "Utilisateurs" },
+          { name: "Pipeline", label: "Pipeline" },
+          { name: "Whitelist", label: "Whitelist" },
+          { name: "Drive", label: "Drive Management" },
         ],
       },
-      { name: "Utilisateurs", icon: Users },
       { name: "Simulateur", icon: Zap },
     ],
   },
@@ -137,14 +137,9 @@ export default function AppSidebar({ activeTab, driveTab = "explorer", onNavigat
                   const Icon = item.icon;
                   // Items with children render as an animated collapsible submenu.
                   if (item.children) {
-                    // On the merged Drive page both children share one route, so resolve
-                    // the active child from driveTab instead of the path-based activeTab.
-                    const submenuActiveTab =
-                      item.name === "Drive" && activeTab === "Drive"
-                        ? driveTab === "config"
-                          ? "Dossiers Drive"
-                          : "Drive"
-                        : activeTab;
+                    // "Drive Management" is a single entry → /dashboard/drive (the page has its
+                    // own Explorateur / Dossiers & Routage tabs), so plain path-based matching.
+                    const submenuActiveTab = activeTab;
                     return (
                       <SidebarSubmenu
                         key={item.name}

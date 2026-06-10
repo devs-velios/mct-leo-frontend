@@ -14,9 +14,11 @@ const ROLES = [
 
 interface UsersViewProps {
   setMobileMenuOpen?: (open: boolean) => void;
+  /** Render just the invite form (no page header / scroll wrapper) — for the Paramètres tabs. */
+  embedded?: boolean;
 }
 
-export default function UsersView({ setMobileMenuOpen }: UsersViewProps) {
+export default function UsersView({ setMobileMenuOpen, embedded }: UsersViewProps) {
   const { invite } = useUsersContext();
   const { canWrite } = useRole(); // inviting users is operateur-only on the backend
   const [email, setEmail] = useState("");
@@ -47,21 +49,23 @@ export default function UsersView({ setMobileMenuOpen }: UsersViewProps) {
 
   return (
     <>
-      {/* Header */}
-      <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
-        <div className="mb-3 flex items-center justify-between md:hidden">
-          <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
-          <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
-            <Menu className="h-5 w-5" />
-          </button>
-        </div>
-        <div>
-          <h1 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Utilisateurs</h1>
-          <p className="text-xs text-[#5A5A7A]">Inviter un membre de l&apos;équipe et définir son rôle</p>
-        </div>
-      </header>
+      {/* Header (hidden when embedded under the Paramètres tabs) */}
+      {!embedded && (
+        <header className="border-b border-slate-100 bg-white/80 px-4 py-4 backdrop-blur lg:px-6">
+          <div className="mb-3 flex items-center justify-between md:hidden">
+            <span className="font-serif-mct text-lg font-bold text-[#332151]">MCT Léo</span>
+            <button onClick={() => setMobileMenuOpen?.(true)} className="rounded-lg p-2 text-[#332151] hover:bg-slate-100">
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+          <div>
+            <h1 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Utilisateurs</h1>
+            <p className="text-xs text-[#5A5A7A]">Inviter un membre de l&apos;équipe et définir son rôle</p>
+          </div>
+        </header>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50/30">
+      <div className={embedded ? "" : "flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50/30"}>
         <div className="mx-auto max-w-xl">
           <form
             onSubmit={handleSubmit}
