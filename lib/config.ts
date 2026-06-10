@@ -10,7 +10,7 @@ export const SUPABASE_URL = "https://nscmtkulokipqsgzpuzt.supabase.co";
 export const SUPABASE_SERVICE_ROLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zY210a3Vsb2tpcHFzZ3pwdXp0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDEyNTg5MCwiZXhwIjoyMDk1NzAxODkwfQ.HgFTwf4sXccgY3OOGp9J-s3ml4RidDc1PfVcMsh462U";
 
-export const LEO_API_URL = "http://localhost:8000";
+export const LEO_API_URL = "https://mctproject.veliosai.com";
 
 export const DEMO_EMAIL = "test@gmail.com";
 
