@@ -11,7 +11,7 @@ interface CarteViewProps {
 }
 
 export default function CarteView({ onOpenDossier, setMobileMenuOpen }: CarteViewProps) {
-  const { centres, ensureList, ensureDetail, detailCache } = useCentresContext();
+  const { centres, ensureList, getDetail, detailCache } = useCentresContext();
   // Local copy so the map can apply optimistic per-center tweaks (docs, messages).
   const [centers, setCenters] = useState<Center[]>([]);
 
@@ -29,11 +29,12 @@ export default function CarteView({ onOpenDossier, setMobileMenuOpen }: CarteVie
   const [hoveredCenter, setHoveredCenter] = useState<Center | null>(null);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
 
-  // Fetch the FULL centre detail for the hovered pin via the shared context cache
-  // (cached per centre, deduped, and reused by the centre detail page).
+  // Warm the FULL centre detail for the hovered pin into the shared cache (cached
+  // per centre, deduped). getDetail writes the cache only — unlike ensureDetail it
+  // doesn't overwrite the shared "current detail" slice on every hover.
   useEffect(() => {
-    if (hoveredCenter?.id) ensureDetail(hoveredCenter.id);
-  }, [hoveredCenter?.id, ensureDetail]);
+    if (hoveredCenter?.id) void getDetail(hoveredCenter.id);
+  }, [hoveredCenter?.id, getDetail]);
   const hoveredDetail = hoveredCenter ? detailCache[hoveredCenter.id] : undefined;
 
   // Phase filter + counts derive from the carte feature selectors.

@@ -1,5 +1,5 @@
 // Client-side API helper. Talks only to the same-origin /api/leo/* proxy, which forwards to
-// the Léo backend (attaching the JWT server-side). Use these from Client Components.
+// the Léo backend (attaching the JWT server-side). Use these from Client Components..
 
 export class ApiError extends Error {
   status: number;

@@ -1,0 +1,23 @@
+# MCT-LEO frontend (Next.js 16). Build + run the production server on port 3001.
+#   docker compose up --build        # build & start
+#   docker compose up -d             # start detached
+#   docker compose down              # stop & remove
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mct-leo-frontend
+    container_name: mct-leo-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      NEXT_TELEMETRY_DISABLED: "1"
+    # Runtime config (Supabase/LEO API URLs) is currently hard-coded in lib/config.ts.
+    # Once moved to env vars, uncomment to load them from a local .env file:
+    # env_file:
+    #   - .env
+    restart: unless-stopped

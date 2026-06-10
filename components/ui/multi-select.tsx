@@ -34,6 +34,8 @@ interface MultiSelectProps {
   searchPlaceholder?: string;
   emptyText?: string;
   className?: string;
+  /** Extra classes for the dropdown panel (e.g. a width). Defaults to "w-56". */
+  contentClassName?: string;
   align?: "start" | "center" | "end";
   /** Show a "Tout effacer" action when there is an active selection. */
   clearable?: boolean;
@@ -47,6 +49,7 @@ export function MultiSelect({
   searchPlaceholder = "Rechercher…",
   emptyText = "Aucun résultat.",
   className,
+  contentClassName,
   align = "start",
   clearable = true,
 }: MultiSelectProps) {
@@ -89,7 +92,7 @@ export function MultiSelect({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align={align} className="w-56 p-0">
+      <PopoverContent align={align} className={cn("p-0", contentClassName ?? "w-56")}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>

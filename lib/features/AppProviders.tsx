@@ -14,6 +14,7 @@ import { CentresProvider } from "./centres";
 import { DossiersProvider } from "./dossiers";
 import { PiecesProvider } from "./pieces";
 import { AlertsProvider } from "./alerts";
+import { RagProvider } from "./rag";
 import { RemindersProvider } from "./reminders";
 import { ConversationsProvider } from "./conversations";
 import { FoldersProvider } from "./folders";
@@ -33,6 +34,7 @@ const PROVIDERS = [
   DossiersProvider,
   PiecesProvider,
   AlertsProvider,
+  RagProvider,
   RemindersProvider,
   ConversationsProvider,
   FoldersProvider,

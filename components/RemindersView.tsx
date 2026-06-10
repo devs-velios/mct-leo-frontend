@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Menu, Bell, XCircle, Trash2, Pencil, Plus, X, ChevronDown, Search, Building2, Calendar, Send, FileText, Repeat, ArrowRight, MoreHorizontal } from "lucide-react";
+import { Menu, Bell, XCircle, Trash2, Pencil, Plus, X, ChevronDown, Search, Building2, Calendar, Send, FileText, Repeat, ArrowRight, MoreHorizontal, ArrowUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRemindersContext, type Reminder } from "@/lib/features/reminders";
-import { useDossiersContext } from "@/lib/features/dossiers";
+import { useDossiersContext, stageLabel } from "@/lib/features/dossiers";
+import { useCentresContext } from "@/lib/features/centres";
+import { pieceTypeLabel } from "@/lib/features/pieces";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
+import { SingleSelect } from "@/components/ui/single-select";
 import { DataTable } from "@/components/ui/data-table";
 import {
   AlertDialog,
@@ -24,6 +27,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -93,23 +100,20 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
     remove: removeReminder,
   } = useRemindersContext();
   const { dossiers, ensureLoaded: ensureDossiers } = useDossiersContext();
+  const { getDetail, detailCache } = useCentresContext();
   const { prompt } = useDialog();
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ dossier_id: "", piece: "", message: "", scheduled_at: "" });
   // Reminder pending a destructive/irreversible action — drives the confirm AlertDialog.
   const [confirmAction, setConfirmAction] = useState<{ reminder: Reminder; kind: "delete" | "stop" } | null>(null);
+  const [sort, setSort] = useState<{ key: "scheduled_at" | "status" | "centre"; order: "asc" | "desc" }>({ key: "scheduled_at", order: "desc" });
 
   const closeModal = () => {
     setShowCreate(false);
     setEditingId(null);
     setForm({ dossier_id: "", piece: "", message: "", scheduled_at: "" });
-    setDossierSearchQuery("");
   };
-
-  // Custom select dropdown state inside the modal
-  const [isDossierDropdownOpen, setIsDossierDropdownOpen] = useState(false);
-  const [dossierSearchQuery, setDossierSearchQuery] = useState("");
 
   // Cache-guarded loads via the shared contexts.
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
@@ -122,18 +126,27 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
     return m;
   }, [dossiers]);
 
-  // Close custom dropdown on outside click
-  useEffect(() => {
-    if (!isDossierDropdownOpen) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".dossier-dropdown-container")) {
-        setIsDossierDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, [isDossierDropdownOpen]);
+  // Centre picker options (centre name + friendly stage) for the shared SingleSelect.
+  const dossierOptions = useMemo(
+    () => dossiers.map((d) => ({
+      value: d.id,
+      label: `${d.centre?.enseigne ?? d.centre?.code_centre ?? "—"} · ${stageLabel(d.etape_pipeline)}`,
+    })),
+    [dossiers],
+  );
+
+  // When a centre is picked, load its detail so the document picker can list its pièces.
+  const selectedCentreId = useMemo(
+    () => dossiers.find((d) => d.id === form.dossier_id)?.centre?.id ?? null,
+    [dossiers, form.dossier_id],
+  );
+  useEffect(() => { if (selectedCentreId) void getDetail(selectedCentreId); }, [selectedCentreId, getDetail]);
+  const pieceOptions = useMemo(() => {
+    const d = selectedCentreId ? detailCache[selectedCentreId] : undefined;
+    if (!d) return [] as { value: string; label: string }[];
+    const codes = [...new Set([...(d.presentPieces ?? []), ...(d.missingPieces ?? [])])];
+    return codes.map((c) => ({ value: c, label: pieceTypeLabel(c) }));
+  }, [selectedCentreId, detailCache]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,16 +191,19 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
     setShowCreate(true);
   };
 
-  // Find currently selected dossier object for displaying label in selector
-  const selectedDossier = dossiers.find((d) => d.id === form.dossier_id);
-  const selectedDossierLabel = selectedDossier
-    ? `${selectedDossier.centre?.enseigne ?? selectedDossier.centre?.code_centre ?? "—"} · ${selectedDossier.etape_pipeline}`
-    : "— Choisir un dossier / centre —";
-
-  // Filter dossiers list by search query
-  const filteredDossiers = dossiers.filter((d) => {
-    const term = `${d.centre?.enseigne ?? ""} ${d.centre?.code_centre ?? ""} ${d.etape_pipeline}`.toLowerCase();
-    return term.includes(dossierSearchQuery.toLowerCase());
+  // Sort the reminders for the table (by date / statut / centre, asc or desc).
+  const sortedItems = [...items].sort((a, b) => {
+    let cmp = 0;
+    if (sort.key === "status") {
+      cmp = statusLabel(a.status).localeCompare(statusLabel(b.status));
+    } else if (sort.key === "centre") {
+      const ca = centreByDossier.get(a.dossier_id);
+      const cb = centreByDossier.get(b.dossier_id);
+      cmp = (ca?.enseigne ?? ca?.code_centre ?? "").localeCompare(cb?.enseigne ?? cb?.code_centre ?? "");
+    } else {
+      cmp = new Date(a.scheduled_at ?? 0).getTime() - new Date(b.scheduled_at ?? 0).getTime();
+    }
+    return sort.order === "asc" ? cmp : -cmp;
   });
 
   return (
@@ -242,8 +258,31 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
           </div>
         ) : (
           <div className="max-w-[1400px] mx-auto rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden p-4 sm:p-5">
+            {/* Table toolbar — sort control */}
+            <div className="mb-3 flex items-center justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#332151]">
+                    <ArrowUpDown className="h-3.5 w-3.5" /> Trier
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[210px]">
+                  <DropdownMenuLabel>Trier par</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup value={sort.key} onValueChange={(k) => setSort((s) => ({ ...s, key: k as typeof s.key }))}>
+                    <DropdownMenuRadioItem value="scheduled_at">Date d&apos;envoi</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="centre">Centre</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="status">Statut</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={sort.order} onValueChange={(o) => setSort((s) => ({ ...s, order: o as "asc" | "desc" }))}>
+                    <DropdownMenuRadioItem value="desc">Décroissant</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="asc">Croissant</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <DataTable<Reminder>
-              data={items}
+              data={sortedItems}
               getRowId={(r) => r.id}
               minWidth="820px"
               hideToolbar
@@ -378,117 +417,55 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
               </div>
 
               <form onSubmit={submit} className="space-y-4">
-                {/* Centre / dossier Custom Searchable Dropdown */}
-                <div className="relative dossier-dropdown-container">
+                {/* Centre — shared single-select combobox (same control as the Centres filter). */}
+                <div>
                   <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
-                    Centre / dossier
+                    Centre concerné
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsDossierDropdownOpen(!isDossierDropdownOpen)}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 outline-none flex items-center justify-between cursor-pointer hover:bg-slate-100/50 hover:border-slate-300 transition-all shadow-sm"
-                  >
-                    <span className="truncate">{selectedDossierLabel}</span>
-                    <ChevronDown
-                      className={`h-4.5 w-4.5 text-[#332151] transition-transform duration-200 shrink-0 ${
-                        isDossierDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  <AnimatePresence>
-                    {isDossierDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
-                        className="absolute z-50 top-full mt-2 left-0 right-0 bg-white border border-slate-100 rounded-2xl shadow-2xl p-2 flex flex-col max-h-[300px]"
-                      >
-                        {/* Search Input */}
-                        <div className="relative mb-2 shrink-0">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                          <input
-                            type="text"
-                            placeholder="Rechercher un dossier/centre..."
-                            value={dossierSearchQuery}
-                            onChange={(e) => setDossierSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#E34F2D] focus:bg-white transition-all uppercase tracking-wider"
-                          />
-                        </div>
-
-                        {/* List Items */}
-                        <div className="flex-1 overflow-y-auto max-h-48 custom-scrollbar space-y-0.5 pr-1">
-                          {filteredDossiers.map((d) => (
-                            <button
-                              key={d.id}
-                              type="button"
-                              onClick={() => {
-                                setForm((f) => ({ ...f, dossier_id: d.id }));
-                                setIsDossierDropdownOpen(false);
-                                setDossierSearchQuery("");
-                              }}
-                              className={`w-full text-left px-3 py-2.5 text-xs font-bold transition-all cursor-pointer rounded-xl flex flex-col gap-0.5 ${
-                                form.dossier_id === d.id
-                                  ? "bg-[#E34F2D] text-white shadow-sm"
-                                  : "text-slate-700 hover:bg-slate-50 hover:text-[#E34F2D]"
-                              }`}
-                            >
-                              <span className="truncate">
-                                {d.centre?.enseigne ?? d.centre?.code_centre ?? "—"}
-                              </span>
-                              <span
-                                className={`text-[9px] uppercase tracking-wider ${
-                                  form.dossier_id === d.id ? "text-white/80" : "text-slate-400"
-                                }`}
-                              >
-                                {d.etape_pipeline}
-                              </span>
-                            </button>
-                          ))}
-                          {filteredDossiers.length === 0 && (
-                            <div className="py-8 text-center text-xs text-slate-400 font-bold">
-                              Aucun dossier trouvé
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <SingleSelect
+                    value={form.dossier_id}
+                    onChange={(v) => setForm((f) => ({ ...f, dossier_id: v, piece: "" }))}
+                    options={dossierOptions}
+                    placeholder="Choisir un centre"
+                    searchPlaceholder="Rechercher un centre…"
+                    className="w-full"
+                    fullWidth
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Pièce input */}
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
-                      Pièce (vide = digest)
-                    </label>
-                    <input
-                      type="text"
-                      value={form.piece}
-                      onChange={(e) => setForm((f) => ({ ...f, piece: e.target.value }))}
-                      placeholder="Ex: kbis, assurance..."
-                      className="w-full rounded-xl bg-slate-50 border border-slate-200/70 px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-[#E34F2D] focus:bg-white transition-all shadow-sm"
-                    />
-                  </div>
+                {/* Document — the selected centre's expected pièces (full width). */}
+                <div>
+                  <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
+                    Document à demander
+                  </label>
+                  <SingleSelect
+                    value={form.piece}
+                    onChange={(v) => setForm((f) => ({ ...f, piece: v }))}
+                    options={[{ value: "", label: "Tous les documents (récapitulatif)" }, ...pieceOptions]}
+                    placeholder={form.dossier_id ? "Choisir un document" : "Choisissez d'abord un centre"}
+                    searchPlaceholder="Rechercher un document…"
+                    className="w-full"
+                    fullWidth
+                  />
+                </div>
 
-                  {/* Date heure picker */}
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
-                      Date / heure
-                    </label>
-                    <DateTimePicker
-                      value={form.scheduled_at ? new Date(form.scheduled_at) : undefined}
-                      onChange={(d) => setForm((f) => ({ ...f, scheduled_at: d.toISOString() }))}
-                      fromDate={new Date()}
-                      placeholder="Choisir date et heure"
-                    />
-                  </div>
+                {/* Date heure picker (full width) */}
+                <div>
+                  <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
+                    Date et heure
+                  </label>
+                  <DateTimePicker
+                    value={form.scheduled_at ? new Date(form.scheduled_at) : undefined}
+                    onChange={(d) => setForm((f) => ({ ...f, scheduled_at: d.toISOString() }))}
+                    fromDate={new Date()}
+                    placeholder="Choisir date et heure"
+                  />
                 </div>
 
                 {/* Message textarea */}
                 <div>
                   <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">
-                    Message (vide = défaut)
+                    Message (optionnel)
                   </label>
                   <textarea
                     rows={3}

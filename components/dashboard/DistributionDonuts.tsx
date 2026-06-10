@@ -58,7 +58,8 @@ function Donut({
             {segments.map((s) => (
               <span key={s.label} className="flex items-center gap-1.5 text-[#5A5A7A]">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-                {s.label} ({s.value})
+                {s.label}
+                <span className="rounded bg-slate-200/60 px-1 py-0.5 text-[9px] font-black text-[#332151]">{s.value}</span>
               </span>
             ))}
           </div>

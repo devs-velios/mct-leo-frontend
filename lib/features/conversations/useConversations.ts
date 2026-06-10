@@ -104,13 +104,15 @@ export function useConversations() {
     if (mountedRef.current) dispatch({ type: "SET_TYPING", centreId, value: false });
   }, [loadMessages, revalidateInbox]);
 
-  const send = useCallback(async (centreId: string, text: string) => {
+  // `poll` defaults on (in-page chat needs the messages-store poll). Callers that drive
+  // their own reply poll (the dossier hub polls centre detail) pass { poll: false } to
+  // avoid a second, unused polling loop hitting /messages + /inbox.
+  const send = useCallback(async (centreId: string, text: string, opts: { poll?: boolean } = {}) => {
     await sendClientMessage(centreId, text);
-    // HTTP, not a socket → poll for Léo's reply.
-    void pollForReply(centreId);
+    if (opts.poll !== false) void pollForReply(centreId); // HTTP, not a socket → poll for Léo's reply.
   }, [pollForReply]);
 
-  const upload = useCallback(async (centreId: string, file: File) => {
+  const upload = useCallback(async (centreId: string, file: File, opts: { poll?: boolean } = {}) => {
     // Show the file in the thread immediately + a spinner while it uploads.
     dispatch({ type: "SET_UPLOADING", centreId, name: file.name });
     appendLocal(centreId, {
@@ -125,7 +127,7 @@ export function useConversations() {
       if (mountedRef.current) dispatch({ type: "SET_UPLOADING", centreId, name: null });
     }
     // OCR + Léo's follow-up are async → poll the thread for the result.
-    void pollForReply(centreId);
+    if (opts.poll !== false) void pollForReply(centreId);
   }, [appendLocal, pollForReply]);
 
   return {

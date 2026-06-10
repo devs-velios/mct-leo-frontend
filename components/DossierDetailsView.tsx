@@ -15,7 +15,8 @@ import {
   Paperclip,
   ExternalLink,
   ShieldCheck,
-  Clock
+  Clock,
+  BellPlus
 } from "lucide-react";
 
 import PipelineBoards from "./dossier-details/PipelineBoards";
@@ -31,6 +32,9 @@ import {
 import { useConversationsContext, awaitInboundReply } from "@/lib/features/conversations";
 import { useDossiersContext, microNext, microPrev, microToMacro, MICRO_STAGES, MICRO_KEYS } from "@/lib/features/dossiers";
 import { useAlertsContext } from "@/lib/features/alerts";
+import { pieceTypeLabel } from "@/lib/features/pieces";
+import AddReminderModal from "./dossier-details/AddReminderModal";
+import { type SelectOption } from "@/components/ui/Select";
 import Markdown from "@/components/ui/Markdown";
 
 interface DossierDetailsViewProps {
@@ -52,6 +56,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const { advance: advanceStage } = useDossiersContext();
   // Operator-alert resolution goes through the alerts feature (no direct api calls in views).
   const { resolve: resolveAlert } = useAlertsContext();
+  // Schedule-reminder modal (the modal itself talks to the reminders feature).
+  const [reminderOpen, setReminderOpen] = useState(false);
   // Local active dossier state
   const [dossier, setDossier] = useState<DossierDetail | null>(null);
   // Full backend payload (GET /api/centres/:id) — holds dossiers (micro+macro+nav) and alerts.
@@ -170,7 +176,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     setChatUploading(true);
     const id = toast.loading(`Envoi de « ${file.name} »…`);
     try {
-      await uploadWhatsappDoc(dossierId, file);
+      await uploadWhatsappDoc(dossierId, file, { poll: false });
       await load(true);
       toast.success("Document envoyé et analysé.", { id });
     } catch {
@@ -193,7 +199,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     const type = uploadRef.current?.type ?? "autre";
     const id = toast.loading(`Téléversement de « ${type} »…`);
     try {
-      await uploadWhatsappDoc(dossierId, file); // WhatsApp pipeline → OCR + classify
+      await uploadWhatsappDoc(dossierId, file, { poll: false }); // WhatsApp pipeline → OCR + classify
       await load(true);
       toast.success(`Document « ${type} » envoyé et analysé.`, { id });
     } catch {
@@ -219,7 +225,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     setChatTyping(true);
 
     try {
-      await sendWhatsappMessage(dossierId, text); // → /api/simulate/whatsapp/message (Léo replies async)
+      await sendWhatsappMessage(dossierId, text, { poll: false }); // → /api/simulate/whatsapp/message (Léo replies async)
 
       // Léo answers via the inbound worker (async). The poll cadence + stop-rule live
       // in the conversations feature; we just supply how to fetch + sync the feed.
@@ -354,15 +360,28 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
           {/* LEFT COLUMN: centre-details button + pipeline (aligns with the WhatsApp feed) */}
           <div className="lg:col-span-1 space-y-8">
 
-            {/* Opens a read-only modal with the full centre information. */}
-            <button
-              type="button"
-              onClick={() => setCentreInfoOpen(true)}
-              disabled={!raw?.centre}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#332151] px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#E34F2D] disabled:opacity-50 cursor-pointer"
-            >
-              <Building2 className="h-4 w-4" /> <span>Détails du centre</span>
-            </button>
+            {/* Centre details (read-only modal) + schedule a reminder for this dossier. */}
+            <div className="flex items-stretch gap-2">
+              <button
+                type="button"
+                onClick={() => setCentreInfoOpen(true)}
+                disabled={!raw?.centre}
+                aria-label="Voir les détails du centre"
+                className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#332151] px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#E34F2D] disabled:opacity-50 cursor-pointer"
+              >
+                <Building2 className="h-4 w-4 shrink-0" /> <span className="truncate">Détails du centre</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setReminderOpen(true)}
+                disabled={!activeDossier}
+                aria-label="Ajouter un rappel pour ce dossier"
+                title="Ajouter un rappel"
+                className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#332151]/15 bg-white px-4 py-3.5 text-sm font-bold text-[#332151] transition-colors hover:border-[#E34F2D] hover:text-[#E34F2D] disabled:opacity-50 cursor-pointer"
+              >
+                <BellPlus className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">Rappel</span>
+              </button>
+            </div>
 
             {/* PARCOURS — single pipeline visualization (vertical timeline + adjacent-step controls) */}
             <div className="bg-white p-6 rounded-2xl border border-slate-100">
@@ -643,6 +662,16 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
       </div>
 
       <CentreInfoModal open={centreInfoOpen} centre={raw?.centre ?? null} onClose={() => setCentreInfoOpen(false)} />
+
+      <AddReminderModal
+        open={reminderOpen}
+        dossierId={activeDossier?.id ?? null}
+        centreLabel={[dossier?.code, dossier?.centre].filter(Boolean).join(" — ")}
+        pieceOptions={[...new Set([...(raw?.presentPieces ?? []), ...(raw?.missingPieces ?? [])])].map(
+          (code): SelectOption => ({ value: code, label: pieceTypeLabel(code) }),
+        )}
+        onClose={() => setReminderOpen(false)}
+      />
     </div>
   );
 }

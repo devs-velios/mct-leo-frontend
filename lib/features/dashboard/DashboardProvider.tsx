@@ -5,6 +5,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { useDashboard } from "./useDashboard";
 import { type DashboardStats } from "./types";
 
@@ -18,7 +19,10 @@ interface DashboardContextValue {
 const DashboardContext = createContext<DashboardContextValue | undefined>(undefined);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const { stats, isLoading, error, refresh } = useDashboard({ poll: true });
+  // Stats only render on the dashboard landing page → poll there only, not on the
+  // 13 other /dashboard/* pages (the provider is mounted once for the whole shell).
+  const pathname = usePathname();
+  const { stats, isLoading, error, refresh } = useDashboard({ poll: pathname === "/dashboard" });
 
   return (
     <DashboardContext.Provider value={{ stats, isLoading, error, refresh }}>

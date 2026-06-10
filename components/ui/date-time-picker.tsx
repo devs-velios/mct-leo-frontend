@@ -17,9 +17,9 @@ interface DateTimePickerProps {
   fromDate?: Date;
 }
 
-// 30-minute slots, 08:00 → 20:00.
-const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
-  const total = i * 30 + 8 * 60;
+// 15-minute slots, 08:00 → 20:00.
+const TIME_SLOTS = Array.from({ length: 49 }, (_, i) => {
+  const total = i * 15 + 8 * 60;
   const h = Math.floor(total / 60);
   const m = total % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -40,6 +40,10 @@ export function DateTimePicker({
   const selectedTime = value
     ? `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`
     : null;
+  // Disable days strictly before `fromDate`'s DAY (normalize to midnight so "today" stays selectable).
+  const minDay = fromDate
+    ? new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate())
+    : undefined;
 
   const handleDay = (day?: Date) => {
     if (!day) return;
@@ -72,14 +76,14 @@ export function DateTimePicker({
           </span>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto">
+      <PopoverContent align="start" className="w-auto z-[120]">
         <div className="flex max-sm:flex-col">
           <Calendar
             mode="single"
             selected={value}
             onSelect={handleDay}
             defaultMonth={value}
-            disabled={fromDate ? { before: fromDate } : undefined}
+            disabled={minDay ? { before: minDay } : undefined}
             className="p-3"
           />
           <div className="flex flex-col border-slate-100 max-sm:border-t sm:border-l">

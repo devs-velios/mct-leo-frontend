@@ -86,14 +86,13 @@ export function usePieces() {
     try {
       const piece = await verifyPiece(id);
       if (mountedRef.current) dispatch({ type: "PIECE_UPDATED", piece });
-      void revalidate();
-      void refreshQueue();
+      void refreshQueue(); // only the queue is rendered; reconcile it (no /pieces + /pieces/stats refetch)
       return piece;
     } catch (err) {
       void refreshQueue(); // revert to backend truth on failure
       throw err;
     }
-  }, [revalidate, refreshQueue]);
+  }, [refreshQueue]);
 
   // Validate many pieces in one go (no bulk-approve backend route yet, so this loops
   // the per-piece verify and tolerates individual failures). Returns the number
@@ -109,31 +108,28 @@ export function usePieces() {
   const move = useCallback(async (id: string, folderPath: string) => {
     const piece = await movePiece(id, folderPath);
     if (mountedRef.current) dispatch({ type: "PIECE_UPDATED", piece });
-    void revalidate();
-    void refreshQueue();
+    void refreshQueue(); // only the queue is rendered
     return piece;
-  }, [revalidate, refreshQueue]);
+  }, [refreshQueue]);
 
   const rename = useCallback(async (id: string, newName: string) => {
     const piece = await renamePiece(id, newName);
     if (mountedRef.current) dispatch({ type: "PIECE_UPDATED", piece });
-    void revalidate();
-    void refreshQueue();
+    void refreshQueue(); // only the queue is rendered
     return piece;
-  }, [revalidate, refreshQueue]);
+  }, [refreshQueue]);
 
   const reject = useCallback(async (id: string, reason: string) => {
     dispatch({ type: "QUEUE_PATCH", id, patch: { statut: "rejete", valide_par_humain: false, rejet_raison: reason } }); // optimistic instant
     try {
       const piece = await rejectPiece(id, reason);
-      void revalidate();
-      void refreshQueue(); // reconcile (rejected item now carries statut "rejete")
+      void refreshQueue(); // reconcile (rejected item now carries statut "rejete"); only the queue is rendered
       return piece;
     } catch (err) {
       await refreshQueue();
       throw err;
     }
-  }, [revalidate, refreshQueue]);
+  }, [refreshQueue]);
 
   return {
     pieces: state.list,

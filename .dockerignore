@@ -1,0 +1,28 @@
+# Dependencies & build output (rebuilt inside the image)
+node_modules
+.next
+out
+build
+coverage
+
+# Local / VCS / tooling
+.git
+.gitignore
+.agents
+.claude
+.cursor
+.idea
+.vscode
+
+# Env & secrets (config is currently hard-coded in lib/config.ts)
+.env*
+!.env.example
+
+# Misc
+.DS_Store
+*.pem
+npm-debug.log*
+*.tsbuildinfo
+Dockerfile
+docker-compose.yml
+.dockerignore

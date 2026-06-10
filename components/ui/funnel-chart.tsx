@@ -128,6 +128,12 @@ export interface FunnelChartProps {
   labelLayout?: "spread" | "grouped";
   labelOrientation?: "vertical" | "horizontal";
   labelAlign?: "center" | "start" | "end";
+  /**
+   * Minimum rendered segment thickness as a fraction of the largest stage (0–1).
+   * Keeps thin stages tall enough that their label fits INSIDE the shape — the
+   * displayed value/percentage stay the real numbers; only the drawn height is floored.
+   */
+  minSegment?: number;
   /** Extra classes for the value/label text (e.g. "text-white" when labels sit on a dark fill). */
   valueClassName?: string;
   labelClassName?: string;
@@ -327,7 +333,8 @@ function HSegment({
 
   const rings = Array.from({ length: layers }, (_, l) => {
     const scale = 1 - (l / layers) * 0.35;
-    const opacity = 0.18 + (l / (layers - 1 || 1)) * 0.65;
+    // layers === 1 → a single solid segment (no faint outer "haze" rings).
+    const opacity = layers <= 1 ? 1 : 0.18 + (l / (layers - 1)) * 0.65;
     return {
       d: hSegmentPath(normStart, normEnd, segW, fullH, scale, straight),
       opacity,
@@ -454,7 +461,8 @@ function VSegment({
 
   const rings = Array.from({ length: layers }, (_, l) => {
     const scale = 1 - (l / layers) * 0.35;
-    const opacity = 0.18 + (l / (layers - 1 || 1)) * 0.65;
+    // layers === 1 → a single solid segment (no faint outer "haze" rings).
+    const opacity = layers <= 1 ? 1 : 0.18 + (l / (layers - 1)) * 0.65;
     return {
       d: vSegmentPath(normStart, normEnd, segH, fullW, scale, straight),
       opacity,
@@ -702,6 +710,7 @@ export function FunnelChart({
   labelLayout = "spread",
   labelOrientation,
   labelAlign = "center",
+  minSegment = 0,
   valueClassName,
   labelClassName,
   grid: gridProp = false,
@@ -745,7 +754,9 @@ export function FunnelChart({
 
   const max = first.value;
   const n = data.length;
-  const norms = data.map((d) => d.value / max);
+  // Real ratio, but floored at `minSegment` so a tiny stage still draws tall enough
+  // to keep its label inside the shape (the shown value/percentage are unaffected).
+  const norms = data.map((d) => Math.min(1, Math.max(max > 0 ? d.value / max : 0, minSegment)));
   const horiz = orientation === "horizontal";
   const { w: W, h: H } = sz;
 

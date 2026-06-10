@@ -133,10 +133,10 @@ export default function Table({
         {/* Category filter tabs */}
         <Tabs value={selectedFilter} onValueChange={setSelectedFilter} className="w-full sm:w-auto">
           <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
-            <TabsTrigger value="tous">Tout ({countTous})</TabsTrigger>
-            <TabsTrigger value="critiques">Critique ≥ 5j ({countCritiques})</TabsTrigger>
-            <TabsTrigger value="onboarding">Onboarding ({countOnboarding})</TabsTrigger>
-            <TabsTrigger value="agrement">Dépôt agrément ({countAgrement})</TabsTrigger>
+            <TabsTrigger value="tous">Tout <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countTous}</span></TabsTrigger>
+            <TabsTrigger value="critiques">Critique ≥ 5j <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countCritiques}</span></TabsTrigger>
+            <TabsTrigger value="onboarding">Onboarding <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countOnboarding}</span></TabsTrigger>
+            <TabsTrigger value="agrement">Dépôt agrément <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{countAgrement}</span></TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

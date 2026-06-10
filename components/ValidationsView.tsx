@@ -301,7 +301,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                     className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                     title="Valider toutes les pièces fiables en attente"
                   >
-                    <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables ({bulkPending.length})
+                    <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables <span className="rounded bg-white/25 px-1.5 py-0.5 text-[10px] font-black">{bulkPending.length}</span>
                   </Button>
                 )}
               <DropdownMenu>

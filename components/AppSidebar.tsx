@@ -8,10 +8,10 @@ import {
   CheckSquare,
   Bell,
   Sparkles,
+  MessageSquareText,
   HardDrive,
   Users,
   Zap,
-  Settings,
   LogOut,
   ChevronsLeft,
   ChevronsRight,
@@ -61,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "À traiter",
     items: [
       { name: "Validations", icon: CheckSquare },
+      { name: "Approbations", icon: MessageSquareText },
       { name: "Rappels", icon: Bell },
     ],
   },
@@ -78,7 +79,6 @@ const NAV_GROUPS: NavGroup[] = [
       },
       { name: "Utilisateurs", icon: Users },
       { name: "Simulateur", icon: Zap },
-      { name: "Fonctionnement", icon: Settings },
     ],
   },
 ];

@@ -40,3 +40,20 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# markdown docs (keep project instruction files tracked)
+*.md
+!CLAUDE.md
+!AGENTS.md
+!README.md
+
+# test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+/test/
+/tests/
+/e2e/

@@ -299,7 +299,7 @@ export default function CarteListingView({
             <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-100 text-[10px] text-slate-600 font-semibold shadow-md">
               <div className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#E34F2D] shadow-sm"></span>
-                <span>Centres ({counts.total})</span>
+                <span className="flex items-center gap-1">Centres <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[9px] font-black text-[#332151]">{counts.total}</span></span>
               </div>
             </div>
 
@@ -591,8 +591,9 @@ export default function CarteListingView({
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[#E34F2D]">Onboarding</p>
-                    <h3 className="font-serif-mct text-base font-bold text-[#332151]">
-                      Centres en onboarding ({onboardingCenters.length})
+                    <h3 className="flex items-center gap-2 font-serif-mct text-base font-bold text-[#332151]">
+                      Centres en onboarding
+                      <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[10px] font-black text-[#332151]">{onboardingCenters.length}</span>
                     </h3>
                   </div>
                 </div>

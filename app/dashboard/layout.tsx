@@ -69,6 +69,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   let activeTab = "Dashboard";
   if (pathname.includes("/centres")) activeTab = "Centres";
   else if (pathname.includes("/validations")) activeTab = "Validations";
+  else if (pathname.includes("/approbations")) activeTab = "Approbations";
   else if (pathname.includes("/dossiers")) activeTab = "Dossiers";
   else if (pathname.includes("/carte")) activeTab = "Carte";
   else if (pathname.includes("/conversations")) activeTab = "Conversations";
@@ -89,6 +90,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     if (tab === "Dashboard") router.push("/dashboard");
     else if (tab === "Centres") router.push("/dashboard/centres");
     else if (tab === "Validations") router.push("/dashboard/validations");
+    else if (tab === "Approbations") router.push("/dashboard/approbations");
     else if (tab === "Dossiers") router.push("/dashboard/dossiers");
     else if (tab === "Carte") router.push("/dashboard/carte");
     else if (tab === "Conversations") router.push("/dashboard/conversations");
