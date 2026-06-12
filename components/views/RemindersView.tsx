@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Menu, Bell, XCircle, Trash2, Pencil, Plus, X, ChevronDown, Search, Building2, Calendar, Send, FileText, Repeat, ArrowRight, MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Menu, Bell, XCircle, Trash2, Pencil, Plus, X, ArrowUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRemindersContext, type Reminder } from "@/lib/features/reminders";
 import { useDossiersContext, stageLabel } from "@/lib/features/dossiers";
@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import ReminderCard from "@/components/ui/reminder-card";
 
 // Human-readable status (no raw enum values shown to the operator).
 const STATUS_LABEL: Record<string, string> = {
@@ -53,15 +54,6 @@ const STATUS_TONE: Record<string, string> = {
   cancelled: "bg-slate-100 text-slate-600",
   escalated: "bg-rose-50 text-rose-700",
   cancelled_by_client_reply: "bg-slate-100 text-slate-600",
-};
-
-// Left-edge stripe colour, mirrors the status tone.
-const STATUS_STRIPE: Record<string, string> = {
-  pending: "bg-amber-500",
-  sent: "bg-emerald-500",
-  cancelled: "bg-slate-300",
-  escalated: "bg-rose-500",
-  cancelled_by_client_reply: "bg-slate-300",
 };
 
 const KIND_LABEL: Record<string, string> = { auto: "Automatique", manual: "Manuel" };
@@ -86,27 +78,6 @@ const reminderReason = (piece?: string | null) =>
 const statusLabel = (s: string) => STATUS_LABEL[s] ?? s;
 const fmtDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
-
-// A small labelled value used in the reminder cards.
-function Field({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <span className="flex items-center gap-1 text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5">
-        <span className="text-slate-300">{icon}</span>
-        {label}
-      </span>
-      <span className="block text-[11.5px] font-bold text-[#332151] truncate">{value}</span>
-    </div>
-  );
-}
-
-// ISO datetime → the value a <input type="datetime-local"> expects.
-function toLocalInput(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { setMobileMenuOpen?: (o: boolean) => void; onOpenDossier?: (centreId: string) => void }) {
   const {
@@ -342,74 +313,27 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {sortedItems.map((r) => {
                   const centre = centreByDossier.get(r.dossier_id);
-                  const centreName = centre?.enseigne ?? centre?.code_centre ?? "Dossier";
-                  const tone = STATUS_TONE[r.status] ?? "bg-slate-500 text-white";
-                  const dueType = dueTypeOf(r.escalation);
                   return (
-                    <div
+                    <ReminderCard
                       key={r.id}
-                      onMouseEnter={() => { if (centre?.id) void getDetail(centre.id).catch(() => {}); }}
-                      className="flex flex-col gap-3 rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-shadow hover:shadow-[0_12px_36px_rgb(0,0,0,0.06)]"
-                    >
-                      {/* Centre (no icon) + status */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-[#332151]">{centreName}</p>
-                          {centre?.code_centre && <p className="font-mono text-[11px] text-slate-500">{centre.code_centre}</p>}
-                          {centre?.ville && <p className="text-[11px] text-slate-400">{centre.ville}</p>}
-                        </div>
-                        <span className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${tone}`}>
-                          {statusLabel(r.status)}
-                        </span>
-                      </div>
-
-                      {/* Détails — reason + due type + kind */}
-                      <div className="rounded-xl bg-slate-50/70 p-3">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Détails</p>
-                        <p className="mt-0.5 text-xs font-semibold text-[#332151]">{reminderReason(r.piece_attendue)}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-md border border-slate-100 bg-white px-2 py-0.5 text-[10px] font-semibold text-[#5A5A7A]">
-                            {KIND_LABEL[r.kind] ?? r.kind}
-                          </span>
-                          {dueType && (
-                            <span className="rounded-md bg-[#332151]/10 px-2 py-0.5 text-[10px] font-semibold text-[#332151]">{dueType}</span>
-                          )}
-                          {r.escalation > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#E34F2D]">
-                              <Repeat className="h-2.5 w-2.5" /> Relance n°{r.escalation}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Footer — scheduled + actions */}
-                      <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#5A5A7A]">
-                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> {fmtDate(r.scheduled_at)}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {centre?.id && (
-                            <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#332151]">
-                              Ouvrir <ArrowRight className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5A5A7A]"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[190px]">
-                              {r.status === "pending" && (
-                                <>
-                                  <DropdownMenuItem onClick={() => edit(r)}><Pencil /> Modifier</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "stop" })}><XCircle /> Arrêter</DropdownMenuItem>
-                                </>
-                              )}
-                              <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "delete" })} className="text-red-600 focus:bg-red-50"><Trash2 /> Supprimer</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </div>
+                      centreName={centre?.enseigne ?? centre?.code_centre ?? "Dossier"}
+                      centreCode={centre?.code_centre}
+                      ville={centre?.ville}
+                      statusLabel={statusLabel(r.status)}
+                      statusTone={STATUS_TONE[r.status] ?? "bg-slate-500 text-white"}
+                      reason={reminderReason(r.piece_attendue)}
+                      kindLabel={KIND_LABEL[r.kind] ?? r.kind}
+                      dueType={dueTypeOf(r.escalation)}
+                      escalation={r.escalation}
+                      scheduledLabel={fmtDate(r.scheduled_at)}
+                      isPending={r.status === "pending"}
+                      canOpen={!!centre?.id}
+                      onOpen={() => centre?.id && onOpenDossier?.(centre.id)}
+                      onHover={() => { if (centre?.id) void getDetail(centre.id).catch(() => {}); }}
+                      onEdit={() => edit(r)}
+                      onStop={() => setConfirmAction({ reminder: r, kind: "stop" })}
+                      onDelete={() => setConfirmAction({ reminder: r, kind: "delete" })}
+                    />
                   );
                 })}
               </div>
