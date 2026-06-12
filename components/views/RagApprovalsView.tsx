@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Menu, Send, X, Check, Sparkles, ShieldAlert, Loader2, Inbox } from "lucide-react";
+import { Menu, Send, X, Check, Sparkles, ShieldAlert, Loader2, Inbox, Eye } from "lucide-react";
 import { useRagContext, type RagSuggestion, type RagSuggestionFilter } from "@/lib/features/rag";
 import { useCentresContext } from "@/lib/features/centres";
 import { useDialog } from "@/components/ui/DialogProvider";
@@ -10,6 +10,7 @@ import { SkeletonTable } from "@/components/ui/Skeleton";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
+import Markdown from "@/components/ui/Markdown";
 
 interface RagApprovalsViewProps {
   setMobileMenuOpen?: (open: boolean) => void;
@@ -27,6 +28,8 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
   const { centres, ensureList } = useCentresContext();
   const { confirm } = useDialog();
   const [tab, setTab] = useState<RagSuggestionFilter>("pending");
+  // The suggestion shown full-screen in the "view answer" modal.
+  const [viewing, setViewing] = useState<RagSuggestion | null>(null);
 
   // Cache-guarded: fetch each tab once, reuse across navigations.
   useEffect(() => { ensureLoaded({ status: tab }); }, [tab, ensureLoaded]);
@@ -130,7 +133,20 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
         const text = s.final_answer ?? s.draft_answer;
         return (
           <div className="min-w-0">
-            <p className="line-clamp-2 text-xs leading-relaxed text-[#1A1A1A]" title={text}>{text}</p>
+            <div className="flex items-start gap-1.5">
+              {/* Formatted preview (markdown), capped so rows stay compact. */}
+              <div className="min-w-0 flex-1 max-h-[3.75rem] overflow-hidden text-[#1A1A1A] [&_*]:!text-xs [&_*]:!leading-relaxed" title={text}>
+                <Markdown>{text}</Markdown>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setViewing(s); }}
+                title="Voir la réponse complète"
+                aria-label="Voir la réponse complète"
+                className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5A5A7A] transition-colors hover:border-[#E34F2D]/40 hover:text-[#E34F2D]"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+            </div>
             {isPending && s.sensitive_reason && (
               <span className="mt-1 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
                 <ShieldAlert className="h-2.5 w-2.5" /> {s.sensitive_reason}
@@ -277,6 +293,46 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
             >
               {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Approuver
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Full-answer modal (opened by the eye button). */}
+      {viewing && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#332151]/30 p-4 backdrop-blur-sm"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E34F2D]/10 text-[#E34F2D]">
+                  <Sparkles className="h-4.5 w-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-serif-mct text-base font-bold text-[#332151]">Réponse de Léo</h3>
+                  <p className="truncate text-[11px] text-[#5A5A7A]">{centreLabel(viewing.centre_id)}</p>
+                </div>
+              </div>
+              <button onClick={() => setViewing(null)} aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-[#332151]">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Question du client</p>
+                <p className="mt-1 text-sm font-semibold text-[#332151]">{viewing.question}</p>
+              </div>
+              <div>
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">Réponse</p>
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                  <Markdown>{viewing.final_answer ?? viewing.draft_answer}</Markdown>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

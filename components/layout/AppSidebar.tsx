@@ -77,6 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
           { name: "Pipeline", label: "Pipeline" },
           { name: "Whitelist", label: "Whitelist" },
           { name: "Drive", label: "Drive Management" },
+          { name: "Audit", label: "Journal d'audit" },
         ],
       },
       { name: "Simulateur", icon: Zap },
