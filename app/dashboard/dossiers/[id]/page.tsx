@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import DossierDetailsView from "@/components/DossierDetailsView";
+import DossierDetailsView from "@/components/views/DossierDetailsView";
 import DossierDetailSkeleton from "@/components/dossier-details/DossierDetailSkeleton";
 import { useDossiersContext } from "@/lib/features/dossiers";
 import { useCentresContext } from "@/lib/features/centres";

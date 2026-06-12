@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/features/auth/useAuth";
 import { AppProviders } from "@/lib/features/AppProviders";
 import { useCentresContext, type DashboardDossier, centreToDashboardRow } from "@/lib/features/centres";
-import AppSidebar from "@/components/AppSidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 interface DashboardContextType {

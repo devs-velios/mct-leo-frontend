@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useCentresContext } from "@/lib/features/centres";
 import { usePipelineContext } from "@/lib/features/pipeline";
 import { type Center, enrichCentresWithCoords, filterCentresByPhase, centreCounts, centreEtapeCounts, ALL_PHASES } from "@/lib/features/carte";
-import CarteListingView from "./carte/CarteListingView";
+import CarteListingView from "@/components/carte/CarteListingView";
 
 interface CarteViewProps {
   onOpenDossier?: (id: string) => void;

@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
-import DossiersView from "@/components/DossiersView";
+import DossiersView from "@/components/views/DossiersView";
 import { useDashboard } from "../layout";
 
 export default function DossiersPage() {

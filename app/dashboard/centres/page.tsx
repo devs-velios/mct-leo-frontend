@@ -1,6 +1,6 @@
 "use client";
 
-import CentresView from "@/components/CentresView";
+import CentresView from "@/components/views/CentresView";
 import { useDashboard } from "../layout";
 
 export default function CentresPage() {

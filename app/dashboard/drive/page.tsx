@@ -1,8 +1,8 @@
 "use client";
 
 import { HardDrive, FolderTree, Menu } from "lucide-react";
-import DriveView from "@/components/DriveView";
-import FoldersView from "@/components/FoldersView";
+import DriveView from "@/components/views/DriveView";
+import FoldersView from "@/components/views/FoldersView";
 import { useDashboard } from "../layout";
 
 // Drive is now a single page with two tabs: the read-only file explorer and the

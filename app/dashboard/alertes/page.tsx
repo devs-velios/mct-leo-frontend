@@ -1,6 +1,6 @@
 "use client";
 
-import AlertsView from "@/components/AlertsView";
+import AlertsView from "@/components/views/AlertsView";
 import { useDashboard } from "../layout";
 
 export default function AlertesPage() {

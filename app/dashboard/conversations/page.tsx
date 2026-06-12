@@ -1,6 +1,6 @@
 "use client";
 
-import ConversationsView from "@/components/ConversationsView";
+import ConversationsView from "@/components/views/ConversationsView";
 import { useDashboard } from "../layout";
 
 export default function ConversationsPage() {

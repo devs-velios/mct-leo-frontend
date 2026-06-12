@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import ConversationsList from "./conversations/ConversationsList";
+import ConversationsList from "@/components/conversations/ConversationsList";
 import {
   useConversationsContext,
   type Conversation,

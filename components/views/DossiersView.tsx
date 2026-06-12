@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { List, Kanban as KanbanIcon, Menu, X } from "lucide-react";
-import DossiersTable from "./dossiers/DossiersTable";
-import DossiersKanban from "./dossiers/DossiersKanban";
+import DossiersTable from "@/components/dossiers/DossiersTable";
+import DossiersKanban from "@/components/dossiers/DossiersKanban";
 import {
   useDossiersContext,
   type Dossier,

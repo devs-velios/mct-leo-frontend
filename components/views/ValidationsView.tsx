@@ -14,9 +14,9 @@ import {
   ArrowUpDown,
   MoreHorizontal
 } from "lucide-react";
-import RejectModal from "./validations/RejectModal";
-import PreviewModal, { type PreviewTarget } from "./validations/PreviewModal";
-import MoveModal from "./validations/MoveModal";
+import RejectModal from "@/components/validations/RejectModal";
+import PreviewModal, { type PreviewTarget } from "@/components/validations/PreviewModal";
+import MoveModal from "@/components/validations/MoveModal";
 import {
   usePiecesContext,
   type ValidationItem,

@@ -19,7 +19,7 @@ import { CentreCell, VilleCell } from "@/components/ui/centre-cell";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { BulkActionBar } from "@/components/ui/bulk-action-bar";
 import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
-import CreateCentreModal, { type CentreFormValues } from "./centres/CreateCentreModal";
+import CreateCentreModal, { type CentreFormValues } from "@/components/centres/CreateCentreModal";
 
 // statut_ouverture → display + tone.
 const STATUT: Record<string, { label: string; cls: string }> = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import DirectionView from "@/components/DirectionView";
+import DirectionView from "@/components/views/DirectionView";
 import { useDashboard } from "../layout";
 
 export default function DirectionPage() {

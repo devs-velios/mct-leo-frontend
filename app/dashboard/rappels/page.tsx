@@ -1,5 +1,5 @@
 "use client";
-import RemindersView from "@/components/RemindersView";
+import RemindersView from "@/components/views/RemindersView";
 import { useDashboard } from "../layout";
 export default function RappelsPage() {
   const { setMobileMenuOpen, setSelectedDossierId } = useDashboard();

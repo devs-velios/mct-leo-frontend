@@ -1,6 +1,6 @@
 "use client";
 
-import WhitelistView from "@/components/WhitelistView";
+import WhitelistView from "@/components/views/WhitelistView";
 import { useDashboard } from "../layout";
 
 export default function WhitelistPage() {

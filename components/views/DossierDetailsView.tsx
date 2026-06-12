@@ -19,9 +19,9 @@ import {
   BellPlus
 } from "lucide-react";
 
-import PipelineBoards from "./dossier-details/PipelineBoards";
-import DossierDetailSkeleton from "./dossier-details/DossierDetailSkeleton";
-import CentreInfoModal from "./dossier-details/CentreInfoModal";
+import PipelineBoards from "@/components/dossier-details/PipelineBoards";
+import DossierDetailSkeleton from "@/components/dossier-details/DossierDetailSkeleton";
+import CentreInfoModal from "@/components/dossier-details/CentreInfoModal";
 import { Timeline, TimelineItem, TimelineDot, TimelineLine, TimelineHeading, TimelineContent } from "@/components/ui/timeline";
 import {
   useCentresContext,
@@ -35,7 +35,7 @@ import { useDossiersContext, microToMacro, MICRO_STAGES } from "@/lib/features/d
 import { usePipelineContext } from "@/lib/features/pipeline";
 import { useAlertsContext } from "@/lib/features/alerts";
 import { pieceTypeLabel, pieceCategory, PIECE_CATEGORY_ORDER } from "@/lib/features/pieces";
-import AddReminderModal from "./dossier-details/AddReminderModal";
+import AddReminderModal from "@/components/dossier-details/AddReminderModal";
 import { type SelectOption } from "@/components/ui/Select";
 import Markdown from "@/components/ui/Markdown";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import UsersView from "@/components/UsersView";
+import UsersView from "@/components/views/UsersView";
 import { useDashboard } from "../layout";
 
 export default function UtilisateursPage() {

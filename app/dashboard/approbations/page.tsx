@@ -1,6 +1,6 @@
 "use client";
 
-import RagApprovalsView from "@/components/RagApprovalsView";
+import RagApprovalsView from "@/components/views/RagApprovalsView";
 import { useDashboard } from "../layout";
 
 export default function ApprobationsPage() {

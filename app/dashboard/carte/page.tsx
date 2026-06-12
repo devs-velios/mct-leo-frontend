@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import CarteView from "@/components/CarteView";
+import CarteView from "@/components/views/CarteView";
 import { useDashboard } from "../layout";
 
 function CartePageInner() {

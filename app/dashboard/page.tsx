@@ -1,8 +1,8 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import AnalyticsCards from "@/components/AnalyticsCards";
-import Charts from "@/components/Charts";
+import Navbar from "@/components/layout/Navbar";
+import AnalyticsCards from "@/components/dashboard/AnalyticsCards";
+import Charts from "@/components/dashboard/Charts";
 import NewDossierModal from "@/components/dashboard/NewDossierModal";
 import { useDashboard } from "./layout";
 

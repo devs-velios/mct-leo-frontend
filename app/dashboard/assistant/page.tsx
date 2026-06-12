@@ -1,6 +1,6 @@
 "use client";
 
-import AssistantView from "@/components/AssistantView";
+import AssistantView from "@/components/views/AssistantView";
 import { useDashboard } from "../layout";
 
 export default function AssistantPage() {

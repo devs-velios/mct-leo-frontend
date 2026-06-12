@@ -1,6 +1,6 @@
 "use client";
 
-import PipelineManagementView from "@/components/PipelineManagementView";
+import PipelineManagementView from "@/components/views/PipelineManagementView";
 import { useDashboard } from "../layout";
 
 export default function PipelinePage() {

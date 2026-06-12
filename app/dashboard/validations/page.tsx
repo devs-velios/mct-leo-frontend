@@ -1,6 +1,6 @@
 "use client";
 
-import ValidationsView from "@/components/ValidationsView";
+import ValidationsView from "@/components/views/ValidationsView";
 import { useDashboard } from "../layout";
 
 export default function ValidationsPage() {
