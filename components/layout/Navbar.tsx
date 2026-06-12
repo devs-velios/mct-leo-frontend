@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationPopover, type Notification } from "@/components/ui/notification-popover";
+import { useAlertsContext, openAlerts as selectOpenAlerts, alertsToNotifications } from "@/lib/features/alerts";
 
 interface NavbarProps {
   setMobileMenuOpen: (open: boolean) => void;
@@ -11,8 +13,12 @@ interface NavbarProps {
   onOpenDossier?: (centreId: string) => void;
 }
 
-export default function Navbar({ setMobileMenuOpen }: NavbarProps) {
+export default function Navbar({ setMobileMenuOpen, onOpenDossier }: NavbarProps) {
   const router = useRouter();
+  const { alerts, ensureLoaded } = useAlertsContext();
+
+  // Pull all open alerts once — they surface here in the bell, not on a dedicated page.
+  useEffect(() => { ensureLoaded({ status: "open" }); }, [ensureLoaded]);
 
   // Real current date in French (set after mount to avoid hydration mismatch).
   const [today, setToday] = useState("");
@@ -26,6 +32,16 @@ export default function Navbar({ setMobileMenuOpen }: NavbarProps) {
     setToday(d.charAt(0).toUpperCase() + d.slice(1));
   }, []);
 
+  // Open alerts → notifications; locally "read" so the badge can be cleared.
+  const openAlerts = useMemo(() => selectOpenAlerts(alerts), [alerts]);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const notifications: Notification[] = alertsToNotifications(alerts, readIds);
+
+  const handleSelect = (id: string) => {
+    const alert = openAlerts.find((a) => a.id === id);
+    if (alert?.centre_id) onOpenDossier?.(alert.centre_id);
+  };
+
   return (
     <header className="flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
       <div className="min-w-0">
@@ -34,6 +50,12 @@ export default function Navbar({ setMobileMenuOpen }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationPopover
+          notifications={notifications}
+          onSelect={handleSelect}
+          onMarkAllAsRead={() => setReadIds(new Set(openAlerts.map((a) => a.id)))}
+          emptyLabel="Aucune alerte active 🎉"
+        />
         <Button
           variant="outline"
           onClick={() => router.push("/dashboard/simulateur")}

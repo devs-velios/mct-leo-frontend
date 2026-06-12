@@ -27,8 +27,6 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
     } else if (typeof window !== "undefined") {
       sessionStorage.removeItem("mct_chunk_reload");
     }
-    // Surface for diagnostics (Vercel logs / console).
-    console.error("[dashboard] render error:", error);
   }, [error]);
 
   return (

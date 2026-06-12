@@ -75,6 +75,7 @@ const NAV_GROUPS: NavGroup[] = [
         children: [
           { name: "Utilisateurs", label: "Utilisateurs" },
           { name: "Pipeline", label: "Pipeline" },
+          { name: "Documents requis", label: "Documents requis" },
           { name: "Whitelist", label: "Whitelist" },
           { name: "Drive", label: "Drive Management" },
           { name: "Audit", label: "Journal d'audit" },
