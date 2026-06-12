@@ -1,10 +1,10 @@
 // RAG feature — state reducer.
 
-import { type RagState, type RagSuggestion } from "./types";
+import { type RagState, type RagSuggestion, type RagSuggestionFilter } from "./types";
 
 export type RagAction =
-  | { type: "FETCH_START" }
-  | { type: "FETCH_SUCCESS"; suggestions: RagSuggestion[]; count: number }
+  | { type: "FETCH_START"; filter: RagSuggestionFilter | null }
+  | { type: "FETCH_SUCCESS"; suggestions: RagSuggestion[]; count: number; filter: RagSuggestionFilter | null }
   | { type: "FETCH_ERROR"; error: string }
   | { type: "REVIEW_SUCCESS"; id: string };
 
@@ -13,14 +13,25 @@ export const initialRagState: RagState = {
   count: 0,
   status: "idle",
   error: null,
+  loadedFilter: null,
 };
 
 export function ragReducer(state: RagState, action: RagAction): RagState {
   switch (action.type) {
-    case "FETCH_START":
-      return { ...state, status: "loading", error: null };
+    case "FETCH_START": {
+      // Switching to a different tab? Drop the previous filter's rows now so they
+      // don't flash under the new tab while its fetch is in flight.
+      const switching = action.filter !== state.loadedFilter;
+      return {
+        ...state,
+        status: "loading",
+        error: null,
+        suggestions: switching ? [] : state.suggestions,
+        count: switching ? 0 : state.count,
+      };
+    }
     case "FETCH_SUCCESS":
-      return { ...state, suggestions: action.suggestions, count: action.count, status: "loaded", error: null };
+      return { ...state, suggestions: action.suggestions, count: action.count, status: "loaded", error: null, loadedFilter: action.filter };
     case "FETCH_ERROR":
       return { ...state, status: "error", error: action.error };
     case "REVIEW_SUCCESS":

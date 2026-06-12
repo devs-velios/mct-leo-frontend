@@ -28,10 +28,11 @@ export function useRag() {
 
   const refresh = useCallback(async (params?: ListParams) => {
     lastParamsRef.current = params;
-    dispatch({ type: "FETCH_START" });
+    const filter = params?.status ?? null;
+    dispatch({ type: "FETCH_START", filter });
     try {
       const data = await fetchSuggestions(params);
-      if (mountedRef.current) dispatch({ type: "FETCH_SUCCESS", suggestions: data.suggestions, count: data.count });
+      if (mountedRef.current) dispatch({ type: "FETCH_SUCCESS", suggestions: data.suggestions, count: data.count, filter });
     } catch (err) {
       if (mountedRef.current) {
         dispatch({ type: "FETCH_ERROR", error: err instanceof Error ? err.message : "Échec du chargement des réponses" });

@@ -57,9 +57,10 @@ export default function AnalyticsCards() {
       // TODO(backend): expose average time-to-unblock in the dashboard stats payload.
       subtext: "Délai moyen de déblocage : —",
       icon: OctagonAlert,
-      danger: blocked > 0,
       loading,
-      onClick: () => router.push("/dashboard/dossiers?statut=bloque"),
+      // Just open the dossiers list (no statut=bloque filter — the list filter keys
+      // off a different field and would show an empty "no match" state).
+      onClick: () => router.push("/dashboard/dossiers"),
     },
     {
       label: "Documents à valider",

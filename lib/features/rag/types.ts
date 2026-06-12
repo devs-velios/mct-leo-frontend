@@ -31,4 +31,7 @@ export interface RagState {
   count: number;
   status: FetchStatus;
   error: string | null;
+  /** Which filter the current `suggestions` belong to — so a tab switch can drop
+   *  the previous tab's rows instead of flashing them under the new tab. */
+  loadedFilter: RagSuggestionFilter | null;
 }
