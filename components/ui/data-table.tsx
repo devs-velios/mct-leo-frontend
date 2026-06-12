@@ -76,6 +76,8 @@ export interface DataTableProps<T> {
   enableAnimations?: boolean;
 
   onRowClick?: (row: T) => void;
+  /** Fired when a row is hovered — use to prefetch/warm the destination's data. */
+  onRowHover?: (row: T) => void;
   rowClassName?: (row: T) => string;
 
   /** Pass a selection adapter (e.g. from useRowSelection) to show checkboxes. */
@@ -110,19 +112,20 @@ export interface DataTableProps<T> {
 type SortOrder = "asc" | "desc";
 
 const containerVariants: Variants = {
-  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } },
+  // Light, capped stagger — no long delay before the first row paints.
+  visible: { transition: { staggerChildren: 0.015, delayChildren: 0 } },
 };
 
 const rowVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.98, filter: "blur(4px)" },
+  // A plain fade-up: no per-row blur/scale (those force expensive repaints on every
+  // row and made large tables feel sluggish).
+  hidden: { opacity: 0, y: 6 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    filter: "blur(0px)",
-    transition: { type: "spring", stiffness: 400, damping: 25, mass: 0.7 },
+    transition: { duration: 0.16, ease: "easeOut" },
   },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.12 } },
 };
 
 function alignClass(align?: "left" | "center" | "right") {
@@ -137,6 +140,7 @@ export function DataTable<T>({
   minWidth = "720px",
   enableAnimations = true,
   onRowClick,
+  onRowHover,
   rowClassName,
   selection,
   toolbar,
@@ -430,6 +434,7 @@ export function DataTable<T>({
                     <motion.div key={id} variants={shouldAnimate ? rowVariants : undefined}>
                       <div
                         onClick={onRowClick ? () => onRowClick(row) : undefined}
+                        onMouseEnter={onRowHover ? () => onRowHover(row) : undefined}
                         className={cn(
                           "group relative border-b border-border/20 px-3 py-3.5 transition-all duration-150",
                           selected ? "bg-muted/30" : "bg-muted/5 hover:bg-muted/20",

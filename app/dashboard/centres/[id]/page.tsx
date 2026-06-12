@@ -18,7 +18,7 @@ export default function CentreDetailPage() {
       centreId={centreId}
       onBack={() => router.push("/dashboard/centres")}
       onOpenDossier={(dossierId) => router.push(`/dashboard/dossiers/${dossierId}`)}
-      onViewOnMap={() => router.push("/dashboard/carte")}
+      onViewOnMap={() => router.push(`/dashboard/carte?centre=${centreId}`)}
     />
   );
 }

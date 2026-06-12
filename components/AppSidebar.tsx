@@ -11,6 +11,7 @@ import {
   MessageSquareText,
   Settings2,
   Zap,
+  LayoutGrid,
   LogOut,
   ChevronsLeft,
   ChevronsRight,
@@ -47,7 +48,7 @@ interface NavGroup { label: string; items: NavItem[]; }
 
 // Grouped navigation — journey order: pilotage → réseau → files d'attente → outils.
 const NAV_GROUPS: NavGroup[] = [
-  { label: "Pilotage", items: [{ name: "Dashboard", icon: LayoutDashboard }] },
+  { label: "Pilotage", items: [{ name: "Dashboard", icon: LayoutDashboard }, { name: "Vue Direction", icon: LayoutGrid }] },
   {
     label: "Réseau",
     items: [

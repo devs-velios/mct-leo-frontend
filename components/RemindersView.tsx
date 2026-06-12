@@ -11,7 +11,9 @@ import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
 import { SingleSelect } from "@/components/ui/single-select";
-import { DataTable } from "@/components/ui/data-table";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { CityFilter } from "@/components/ui/city-filter";
+import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +66,23 @@ const STATUS_STRIPE: Record<string, string> = {
 
 const KIND_LABEL: Record<string, string> = { auto: "Automatique", manual: "Manuel" };
 
+// Status filter options (the two main states + the terminal ones).
+const STATUT_OPTIONS: MultiSelectOption[] = [
+  { value: "pending", label: "En attente" },
+  { value: "sent", label: "Envoyé" },
+  { value: "escalated", label: "Escaladé" },
+  { value: "cancelled", label: "Annulé" },
+];
+
+// Escalation level → due-type badge. TODO(backend): expose the real échéance (J+7/15/30).
+const DUE_BY_ESCALATION = ["J+7", "J+15", "J+30"];
+const dueTypeOf = (escalation: number) =>
+  escalation > 0 ? DUE_BY_ESCALATION[Math.min(escalation - 1, DUE_BY_ESCALATION.length - 1)] : null;
+
+// Human reason for a reminder (the piece concerned), instead of a generic digest label.
+const reminderReason = (piece?: string | null) =>
+  piece ? `Relance pour la pièce : ${pieceTypeLabel(piece)}` : "Relance — récapitulatif des pièces manquantes";
+
 const statusLabel = (s: string) => STATUS_LABEL[s] ?? s;
 const fmtDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -108,6 +127,9 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
   // Reminder pending a destructive/irreversible action — drives the confirm AlertDialog.
   const [confirmAction, setConfirmAction] = useState<{ reminder: Reminder; kind: "delete" | "stop" } | null>(null);
   const [sort, setSort] = useState<{ key: "scheduled_at" | "status" | "centre"; order: "asc" | "desc" }>({ key: "scheduled_at", order: "desc" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [villeSel, setVilleSel] = useState<string[]>([]);
+  const [statutSel, setStatutSel] = useState<string[]>([]);
 
   const closeModal = () => {
     setShowCreate(false);
@@ -191,8 +213,25 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
     setShowCreate(true);
   };
 
+  // Free-text search + city filter, resolved through the reminder's centre.
+  const query = searchQuery.trim().toLowerCase();
+  const filteredItems = items.filter((r) => {
+    const centre = centreByDossier.get(r.dossier_id);
+    const ville = centre?.ville ?? "";
+    if (statutSel.length > 0 && !statutSel.includes(r.status)) return false;
+    if (villeSel.length > 0 && !villeSel.includes(ville)) return false;
+    if (query) {
+      const hay = [centre?.enseigne, centre?.code_centre, ville].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+
+  // Distinct cities present across the reminders (feeds the city filter popover).
+  const cityList = items.map((r) => centreByDossier.get(r.dossier_id)?.ville);
+
   // Sort the reminders for the table (by date / statut / centre, asc or desc).
-  const sortedItems = [...items].sort((a, b) => {
+  const sortedItems = [...filteredItems].sort((a, b) => {
     let cmp = 0;
     if (sort.key === "status") {
       cmp = statusLabel(a.status).localeCompare(statusLabel(b.status));
@@ -257,9 +296,22 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
             </div>
           </div>
         ) : (
-          <div className="max-w-[1400px] mx-auto rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden p-4 sm:p-5">
-            {/* Table toolbar — sort control */}
-            <div className="mb-3 flex items-center justify-end">
+          <div className="max-w-[1400px] mx-auto space-y-4">
+            {/* Search + filters (shared toolbar, identical to Centres) */}
+            <TableToolbar
+              search={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Rechercher par code, enseigne, ville..."
+            >
+              <MultiSelect
+                options={STATUT_OPTIONS}
+                selected={statutSel}
+                onChange={setStatutSel}
+                placeholder="Statut"
+                searchPlaceholder="Rechercher un statut…"
+                emptyText="Aucun statut."
+              />
+              <CityFilter cities={cityList} selected={villeSel} onChange={setVilleSel} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#332151]">
@@ -280,108 +332,88 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-            <DataTable<Reminder>
-              data={sortedItems}
-              getRowId={(r) => r.id}
-              minWidth="820px"
-              hideToolbar
-              bare
-              onRowClick={(r) => { const centre = centreByDossier.get(r.dossier_id); if (centre?.id) onOpenDossier?.(centre.id); }}
-              rowClassName={(r) => (centreByDossier.get(r.dossier_id)?.id ? "cursor-pointer" : "cursor-default")}
-              columns={[
-                {
-                  id: "centre",
-                  header: "Centre",
-                  width: "minmax(220px,1.4fr)",
-                  cell: (r) => {
-                    const centre = centreByDossier.get(r.dossier_id);
-                    const centreName = centre?.enseigne ?? centre?.code_centre ?? "Dossier";
-                    return (
-                      <div className="min-w-0">
-                        {centre?.code_centre && (
-                          <span className="font-mono text-[10.5px] font-bold text-[#332151]">{centre.code_centre}</span>
-                        )}
-                        <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-[#332151]">
-                          <Building2 className="h-3.5 w-3.5 text-[#E34F2D] shrink-0" />
-                          <span className="truncate">{centreName}</span>
-                        </p>
-                        {centre?.ville && <p className="text-[11px] font-semibold text-slate-400">{centre.ville}</p>}
+            </TableToolbar>
+
+            {sortedItems.length === 0 ? (
+              <div className="rounded-3xl border border-slate-100 bg-white p-10 text-center text-sm font-semibold text-[#5A5A7A]">
+                Aucun rappel ne correspond à vos filtres.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {sortedItems.map((r) => {
+                  const centre = centreByDossier.get(r.dossier_id);
+                  const centreName = centre?.enseigne ?? centre?.code_centre ?? "Dossier";
+                  const tone = STATUS_TONE[r.status] ?? "bg-slate-500 text-white";
+                  const dueType = dueTypeOf(r.escalation);
+                  return (
+                    <div
+                      key={r.id}
+                      onMouseEnter={() => { if (centre?.id) void getDetail(centre.id).catch(() => {}); }}
+                      className="flex flex-col gap-3 rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-shadow hover:shadow-[0_12px_36px_rgb(0,0,0,0.06)]"
+                    >
+                      {/* Centre (no icon) + status */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-[#332151]">{centreName}</p>
+                          {centre?.code_centre && <p className="font-mono text-[11px] text-slate-500">{centre.code_centre}</p>}
+                          {centre?.ville && <p className="text-[11px] text-slate-400">{centre.ville}</p>}
+                        </div>
+                        <span className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${tone}`}>
+                          {statusLabel(r.status)}
+                        </span>
                       </div>
-                    );
-                  },
-                },
-                {
-                  id: "details",
-                  header: "Détails",
-                  width: "minmax(200px,1.4fr)",
-                  cell: (r) => (
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-[#5A5A7A]">{KIND_LABEL[r.kind] ?? r.kind}</span>
-                        {r.escalation > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#E34F2D]">
-                            <Repeat className="h-2.5 w-2.5" /> Relance n°{r.escalation}
+
+                      {/* Détails — reason + due type + kind */}
+                      <div className="rounded-xl bg-slate-50/70 p-3">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Détails</p>
+                        <p className="mt-0.5 text-xs font-semibold text-[#332151]">{reminderReason(r.piece_attendue)}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-md border border-slate-100 bg-white px-2 py-0.5 text-[10px] font-semibold text-[#5A5A7A]">
+                            {KIND_LABEL[r.kind] ?? r.kind}
                           </span>
-                        )}
+                          {dueType && (
+                            <span className="rounded-md bg-[#332151]/10 px-2 py-0.5 text-[10px] font-semibold text-[#332151]">{dueType}</span>
+                          )}
+                          {r.escalation > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-[#E34F2D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#E34F2D]">
+                              <Repeat className="h-2.5 w-2.5" /> Relance n°{r.escalation}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="mt-1 text-[11px] font-semibold text-slate-500">{r.piece_attendue ?? "Digest (toutes pièces)"}</p>
+
+                      {/* Footer — scheduled + actions */}
+                      <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#5A5A7A]">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> {fmtDate(r.scheduled_at)}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {centre?.id && (
+                            <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#332151]">
+                              Ouvrir <ArrowRight className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5A5A7A]"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[190px]">
+                              {r.status === "pending" && (
+                                <>
+                                  <DropdownMenuItem onClick={() => edit(r)}><Pencil /> Modifier</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "stop" })}><XCircle /> Arrêter</DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "delete" })} className="text-red-600 focus:bg-red-50"><Trash2 /> Supprimer</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
                     </div>
-                  ),
-                },
-                {
-                  id: "scheduled",
-                  header: "Programmé le",
-                  width: "150px",
-                  cell: (r) => (
-                    <span className="whitespace-nowrap text-[11px] font-bold text-[#332151]">{fmtDate(r.scheduled_at)}</span>
-                  ),
-                },
-                {
-                  id: "statut",
-                  header: "Statut",
-                  width: "130px",
-                  cell: (r) => {
-                    const tone = STATUS_TONE[r.status] ?? "bg-slate-500 text-white";
-                    return (
-                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{statusLabel(r.status)}</span>
-                    );
-                  },
-                },
-                {
-                  id: "actions",
-                  header: "Actions",
-                  width: "170px",
-                  align: "right",
-                  cell: (r) => {
-                    const centre = centreByDossier.get(r.dossier_id);
-                    return (
-                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        {centre?.id && (
-                          <Button size="sm" variant="outline" onClick={() => onOpenDossier?.(centre.id)} title="Ouvrir le dossier" className="gap-1.5 text-[11px] font-bold text-[#332151]">
-                            Ouvrir <ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5A5A7A]"><MoreHorizontal className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[190px]">
-                            {r.status === "pending" && (
-                              <>
-                                <DropdownMenuItem onClick={() => edit(r)}><Pencil /> Modifier</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "stop" })}><XCircle /> Arrêter</DropdownMenuItem>
-                              </>
-                            )}
-                            <DropdownMenuItem onClick={() => setConfirmAction({ reminder: r, kind: "delete" })} className="text-red-600 focus:bg-red-50"><Trash2 /> Supprimer</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    );
-                  },
-                },
-              ]}
-            />
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

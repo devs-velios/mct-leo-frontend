@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Menu, Plus, Search, ArrowRight } from "lucide-react";
+import { Menu, Plus, ArrowRight } from "lucide-react";
 import {
   useCentresContext,
   type CentreListItem,
@@ -13,6 +13,9 @@ import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { CityFilter } from "@/components/ui/city-filter";
+import { CentreCell, VilleCell } from "@/components/ui/centre-cell";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { BulkActionBar } from "@/components/ui/bulk-action-bar";
 import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
@@ -49,12 +52,13 @@ function contactsOf(v: CentreFormValues): Record<string, string> {
 }
 
 export default function CentresView({ setMobileMenuOpen, onOpenDossier }: CentresViewProps) {
-  const { centres, isListLoading, ensureList, create } = useCentresContext();
+  const { centres, isListLoading, ensureList, create, getDetail } = useCentresContext();
   const deleteCentre = useDeleteCentre();
 
   const [search, setSearch] = useState("");
   const [statutSel, setStatutSel] = useState<string[]>([]);
   const [activiteSel, setActiviteSel] = useState<string[]>([]);
+  const [villeSel, setVilleSel] = useState<string[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -62,8 +66,8 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
   useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
 
   const rows = useMemo(
-    () => filterCentres(centres, { search, statut: statutSel, activites: activiteSel }),
-    [centres, statutSel, activiteSel, search],
+    () => filterCentres(centres, { search, statut: statutSel, activites: activiteSel, villes: villeSel }),
+    [centres, statutSel, activiteSel, villeSel, search],
   );
 
   // Multi-select + bulk delete (scoped to the filtered rows). Deleting a centre also
@@ -123,35 +127,29 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
         <div className="max-w-[1500px] mx-auto space-y-6">
           {/* Search + filters */}
-          <div className="bg-white rounded-3xl border border-slate-100/80 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher par code, enseigne, ville..."
-                className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none focus:border-[#332151] focus:bg-white transition-all"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <MultiSelect
-                options={STATUT_OPTIONS}
-                selected={statutSel}
-                onChange={setStatutSel}
-                placeholder="Statut"
-                searchPlaceholder="Rechercher un statut…"
-                emptyText="Aucun statut."
-              />
-              <MultiSelect
-                options={ACTIVITE_OPTIONS}
-                selected={activiteSel}
-                onChange={setActiviteSel}
-                placeholder="Activités"
-                searchPlaceholder="Rechercher une activité…"
-                emptyText="Aucune activité."
-              />
-            </div>
-          </div>
+          <TableToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Rechercher par code, enseigne, ville..."
+          >
+            <MultiSelect
+              options={STATUT_OPTIONS}
+              selected={statutSel}
+              onChange={setStatutSel}
+              placeholder="Statut"
+              searchPlaceholder="Rechercher un statut…"
+              emptyText="Aucun statut."
+            />
+            <MultiSelect
+              options={ACTIVITE_OPTIONS}
+              selected={activiteSel}
+              onChange={setActiviteSel}
+              placeholder="Activités"
+              searchPlaceholder="Rechercher une activité…"
+              emptyText="Aucune activité."
+            />
+            <CityFilter cities={centres.map((c) => c.ville)} selected={villeSel} onChange={setVilleSel} />
+          </TableToolbar>
 
           {/* Table — basic info + open-dossier launcher */}
           {isListLoading && centres.length === 0 ? (
@@ -161,26 +159,25 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
               <DataTable<CentreListItem>
                 data={rows}
                 getRowId={(c) => c.id}
-                minWidth="760px"
+                minWidth="900px"
                 hideToolbar
                 bare
                 selection={selection}
                 onRowClick={(c) => onOpenDossier?.(c.id)}
+                onRowHover={(c) => { void getDetail(c.id).catch(() => {}); }}
                 emptyMessage="Aucun centre ne correspond à votre recherche."
                 columns={[
                   {
                     id: "centre",
                     header: "Centre",
                     width: "minmax(220px,1.6fr)",
-                    cell: (c) => (
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{c.enseigne ?? "—"}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
-                          <span className="font-mono">{c.code_centre}</span>
-                          {c.ville && <><span className="text-slate-300"> · </span>{c.ville}</>}
-                        </p>
-                      </div>
-                    ),
+                    cell: (c) => <CentreCell name={c.enseigne} code={c.code_centre} />,
+                  },
+                  {
+                    id: "ville",
+                    header: "Ville",
+                    width: "minmax(120px,1fr)",
+                    cell: (c) => <VilleCell ville={c.ville} />,
                   },
                   {
                     id: "activites",
@@ -209,14 +206,14 @@ export default function CentresView({ setMobileMenuOpen, onOpenDossier }: Centre
                     id: "detail",
                     header: "Détail",
                     width: "180px",
-                    align: "right",
+                    align: "center",
                     cell: (c) => (
                       <Button
                         size="sm"
                         onClick={(e) => { e.stopPropagation(); onOpenDossier?.(c.id); }}
                         className="gap-1.5 text-[11px] font-bold bg-[#E34F2D]/10 text-[#E34F2D] shadow-none hover:bg-[#E34F2D]/20 hover:text-[#E34F2D]"
                       >
-                        Voir le détail
+                        Voir les détails
                         <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                       </Button>
                     ),

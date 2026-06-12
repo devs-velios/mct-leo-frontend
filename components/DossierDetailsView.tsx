@@ -34,7 +34,7 @@ import { useConversationsContext, awaitInboundReply } from "@/lib/features/conve
 import { useDossiersContext, microToMacro, MICRO_STAGES } from "@/lib/features/dossiers";
 import { usePipelineContext } from "@/lib/features/pipeline";
 import { useAlertsContext } from "@/lib/features/alerts";
-import { pieceTypeLabel } from "@/lib/features/pieces";
+import { pieceTypeLabel, pieceCategory, PIECE_CATEGORY_ORDER } from "@/lib/features/pieces";
 import AddReminderModal from "./dossier-details/AddReminderModal";
 import { type SelectOption } from "@/components/ui/Select";
 import Markdown from "@/components/ui/Markdown";
@@ -108,7 +108,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const [floorDoneId, setFloorDoneId] = useState<string | null>(null);
   useEffect(() => {
     const id = dossierId;
-    const t = setTimeout(() => setFloorDoneId(id), 500);
+    // Short floor just to avoid a flash on cached/prefetched opens (kept snappy).
+    const t = setTimeout(() => setFloorDoneId(id), 120);
     return () => clearTimeout(t);
   }, [dossierId]);
   const skeletonFloor = floorDoneId !== dossierId;
@@ -137,15 +138,8 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   const openAlerts = (raw?.alerts ?? []).filter((a) => a.status === "open");
 
   // Received documents with their real metadata (drive link, validation, confidence).
+  // Labels come from the shared pieceTypeLabel vocabulary (no raw codes shown).
   const receivedPieces = raw?.pieces ?? [];
-  const PIECE_LABEL: Record<string, string> = {
-    kbis: "KBIS", piece_identite_exploitant: "Pièce d'identité (exploitant)",
-    attestation_conformite_logiciel: "Attestation conformité logiciel",
-    bail_commercial: "Bail commercial", assurance: "Attestation d'assurance",
-    plan_implantation: "Plan d'implantation",
-  };
-  const pieceLabel = (t: string) =>
-    PIECE_LABEL[t] ?? (t ? t.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) : "Document");
 
   // Advance/revert the dossier to an ADJACENT stage. Optimistic: move the card instantly,
   // then reconcile with the backend (no flicker waiting on the round-trip).
@@ -289,6 +283,27 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
   if (!dossier || loadedId !== dossierId || skeletonFloor) {
     return <DossierDetailSkeleton />;
   }
+
+  // Document checklist grouped by category (received pieces + missing pieces), with
+  // human labels. Status: validated → green, received-pending → orange, missing → grey.
+  type ChecklistEntry =
+    | { kind: "received"; type: string; piece: (typeof receivedPieces)[number] }
+    | { kind: "missing"; type: string };
+  const checklistGroups = (() => {
+    const entries: ChecklistEntry[] = [
+      ...receivedPieces.map((piece) => ({ kind: "received" as const, type: piece.type_piece, piece })),
+      ...(dossier.missingPieces ?? []).map((type) => ({ kind: "missing" as const, type })),
+    ];
+    const byCat = new Map<string, ChecklistEntry[]>();
+    for (const e of entries) {
+      const cat = pieceCategory(e.type);
+      if (!byCat.has(cat)) byCat.set(cat, []);
+      byCat.get(cat)!.push(e);
+    }
+    const known = PIECE_CATEGORY_ORDER.filter((c) => byCat.has(c));
+    const extra = [...byCat.keys()].filter((c) => !PIECE_CATEGORY_ORDER.includes(c));
+    return [...known, ...extra].map((category) => ({ category, entries: byCat.get(category)! }));
+  })();
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">
@@ -622,77 +637,94 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">Documents Pièces</span>
               <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Checklist Live</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
-              {receivedPieces.map((p) => {
-                const validated = p.valide_par_humain;
-                const label = pieceLabel(p.type_piece);
-                const meta = validated && p.validated_at
-                  ? `Validé le ${new Date(p.validated_at).toLocaleDateString("fr-FR")}`
-                  : p.rejet_raison
-                  ? `Rejeté · ${p.rejet_raison}`
-                  : "À valider";
-                return (
-                  <div key={p.id} className={`flex flex-col gap-1.5 rounded-xl border px-4 py-2.5 ${validated ? "border-emerald-100 bg-emerald-50/40" : "border-amber-100 bg-amber-50/40"}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2 text-sm font-bold text-[#332151] min-w-0">
-                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white ${validated ? "bg-emerald-500" : "bg-amber-500"}`}>
-                          {validated ? <Check className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                        </span>
-                        <span className="truncate">{label}</span>
-                      </span>
-                      {p.drive_link && (
-                        <a
-                          href={p.drive_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Ouvrir dans le Drive"
-                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 hover:border-[#E34F2D] hover:text-[#E34F2D] transition-colors cursor-pointer"
-                        >
-                          <ExternalLink className="h-3 w-3" /> Drive
-                        </a>
-                      )}
-                    </div>
-                    {(p.nom_fichier_origine || p.nom_fichier_canonique) && (
-                      <span
-                        className="truncate pl-7 font-mono text-[11px] font-medium text-[#5A5A7A]"
-                        title={p.nom_fichier_origine ?? p.nom_fichier_canonique ?? ""}
-                      >
-                        {p.nom_fichier_origine ?? p.nom_fichier_canonique}
-                      </span>
-                    )}
-                    <div className="flex items-center justify-between gap-2 pl-7">
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${validated ? "text-emerald-600" : p.rejet_raison ? "text-red-500" : "text-amber-600"}`}>
-                        {validated && <ShieldCheck className="h-3 w-3" />}<span>{meta}</span>
-                      </span>
-                      {typeof p.confiance_classification === "number" && (
-                        <span className="shrink-0 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
-                          IA {Math.round(p.confiance_classification * 100)}%
-                        </span>
-                      )}
+            {/* Legend */}
+            <div className="mb-4 flex flex-wrap items-center gap-3 text-[10px] font-semibold text-[#5A5A7A]">
+              <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Reçu &amp; validé</span>
+              <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> À valider</span>
+              <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-300" /> Manquant</span>
+            </div>
+
+            {checklistGroups.length === 0 ? (
+              <p className="text-xs font-semibold italic text-slate-400">Aucune pièce attendue.</p>
+            ) : (
+              <div className="space-y-5">
+                {checklistGroups.map(({ category, entries }) => (
+                  <div key={category}>
+                    <h4 className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#332151]">{category}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                      {entries.map((e) => {
+                        if (e.kind === "missing") {
+                          return (
+                            <div key={`m-${e.type}`} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-2.5">
+                              <span className="flex items-center gap-2 text-sm font-medium text-slate-500 min-w-0">
+                                <span className="h-5 w-5 shrink-0 rounded-full border-2 border-dashed border-slate-300" />
+                                <span className="truncate">{pieceTypeLabel(e.type)}</span>
+                              </span>
+                              <button
+                                onClick={() => pickFileFor(e.type)}
+                                title={`Téléverser « ${pieceTypeLabel(e.type)} »`}
+                                aria-label={`Téléverser ${pieceTypeLabel(e.type)}`}
+                                className="group/up flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#E34F2D]/25 bg-[#E34F2D]/5 text-[#E34F2D] hover:bg-[#E34F2D] hover:text-white hover:border-[#E34F2D] transition-all duration-200 cursor-pointer"
+                              >
+                                <Upload className="h-3.5 w-3.5 transition-transform group-hover/up:-translate-y-0.5" />
+                              </button>
+                            </div>
+                          );
+                        }
+                        const p = e.piece;
+                        const validated = p.valide_par_humain;
+                        const meta = validated && p.validated_at
+                          ? `Validé le ${new Date(p.validated_at).toLocaleDateString("fr-FR")}`
+                          : p.rejet_raison
+                          ? `Rejeté · ${p.rejet_raison}`
+                          : "À valider";
+                        return (
+                          <div key={p.id} className={`flex flex-col gap-1.5 rounded-xl border px-4 py-2.5 ${validated ? "border-emerald-100 bg-emerald-50/40" : "border-amber-100 bg-amber-50/40"}`}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-2 text-sm font-medium text-[#332151] min-w-0">
+                                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white ${validated ? "bg-emerald-500" : "bg-amber-500"}`}>
+                                  {validated ? <Check className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                </span>
+                                <span className="truncate">{pieceTypeLabel(p.type_piece)}</span>
+                              </span>
+                              {p.drive_link && (
+                                <a
+                                  href={p.drive_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Ouvrir dans le Drive"
+                                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 hover:border-[#E34F2D] hover:text-[#E34F2D] transition-colors cursor-pointer"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> Drive
+                                </a>
+                              )}
+                            </div>
+                            {(p.nom_fichier_origine || p.nom_fichier_canonique) && (
+                              <span
+                                className="truncate pl-7 font-mono text-[11px] font-medium text-[#5A5A7A]"
+                                title={p.nom_fichier_origine ?? p.nom_fichier_canonique ?? ""}
+                              >
+                                {p.nom_fichier_origine ?? p.nom_fichier_canonique}
+                              </span>
+                            )}
+                            <div className="flex items-center justify-between gap-2 pl-7">
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${validated ? "text-emerald-600" : p.rejet_raison ? "text-red-500" : "text-amber-600"}`}>
+                                {validated && <ShieldCheck className="h-3 w-3" />}<span>{meta}</span>
+                              </span>
+                              {typeof p.confiance_classification === "number" && (
+                                <span className="shrink-0 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
+                                  IA {Math.round(p.confiance_classification * 100)}%
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                );
-              })}
-              {(dossier.missingPieces ?? []).map((p, i) => (
-                <div key={`m-${i}-${p}`} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-2.5">
-                  <span className="flex items-center gap-2 text-sm font-bold text-slate-500 min-w-0">
-                    <span className="h-5 w-5 shrink-0 rounded-full border-2 border-dashed border-slate-300" />
-                    <span className="truncate">{p}</span>
-                  </span>
-                  <button
-                    onClick={() => pickFileFor(p)}
-                    title={`Téléverser « ${p} »`}
-                    aria-label={`Téléverser ${p}`}
-                    className="group/up flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#E34F2D]/25 bg-[#E34F2D]/5 text-[#E34F2D] hover:bg-[#E34F2D] hover:text-white hover:border-[#E34F2D] transition-all duration-200 cursor-pointer"
-                  >
-                    <Upload className="h-3.5 w-3.5 transition-transform group-hover/up:-translate-y-0.5" />
-                  </button>
-                </div>
-              ))}
-              {receivedPieces.length === 0 && (dossier.missingPieces ?? []).length === 0 && (
-                <p className="text-xs font-semibold italic text-slate-400 sm:col-span-2 xl:col-span-3">Aucune pièce attendue.</p>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
             <div className="mt-4 flex justify-end border-t border-slate-100/60 pt-3">
               <button
                 onClick={() => onNavigateToTab?.("Validations")}

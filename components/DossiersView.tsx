@@ -1,14 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
-import {
-  Search,
-  List,
-  Kanban as KanbanIcon,
-  Menu,
-  X
-} from "lucide-react";
+import { List, Kanban as KanbanIcon, Menu, X } from "lucide-react";
 import DossiersTable from "./dossiers/DossiersTable";
 import DossiersKanban from "./dossiers/DossiersKanban";
 import {
@@ -17,15 +12,20 @@ import {
   type DossierSubFilter,
   dossierToRow,
   filterDossiers,
-  dossierStats,
+  stageLabel,
 } from "@/lib/features/dossiers";
+import { useCentresContext } from "@/lib/features/centres";
+import { usePipelineContext } from "@/lib/features/pipeline";
 import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import Select from "@/components/ui/Select";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { CityFilter } from "@/components/ui/city-filter";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { BulkActionBar } from "@/components/ui/bulk-action-bar";
+
+const DAY = 86_400_000;
 
 const PHASE_OPTIONS = [
   { value: "all", label: "Toutes les phases" },
@@ -37,32 +37,66 @@ const PHASE_OPTIONS = [
 ];
 
 interface DossiersViewProps {
-  onOpenDossier?: (id: string) => void;
+  /** Clicking a row opens the CENTRE profile (not a dossier view). */
+  onOpenCentre?: (centreId: string) => void;
   setMobileMenuOpen?: (open: boolean) => void;
 }
 
-export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: DossiersViewProps) {
-  const { dossiers, isLoading, ensureLoaded, advance } = useDossiersContext();
+export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: DossiersViewProps) {
+  const { dossiers, isLoading, ensureLoaded } = useDossiersContext();
+  const { centres, ensureList, getDetail } = useCentresContext();
+  const { phases, ensureLoaded: ensurePipeline } = usePipelineContext();
   // A dossier can't be deleted on its own — it belongs to a centre. Deleting the centre
-  // (via the centres route) removes the centre AND its dossier, and refreshes both caches.
+  // (via the centres route) removes the centre AND its dossiers, and refreshes both caches.
   const deleteCentre = useDeleteCentre();
   const [dossiersList, setDossiersList] = useState<Dossier[]>([]);
-  const [selectedSubFilter, setSelectedSubFilter] = useState<DossierSubFilter>("tout");
+  // Deep-link filters from the dashboard (KPI "Dossiers bloqués" → ?statut=bloque,
+  // funnel segment → ?etape=<phase>). Read once at mount; both stay clearable.
+  const searchParams = useSearchParams();
+  const [selectedSubFilter, setSelectedSubFilter] = useState<DossierSubFilter>(
+    searchParams.get("statut") === "bloque" ? "bloques" : "tout",
+  );
+  const [etapeFilter, setEtapeFilter] = useState<string | null>(searchParams.get("etape"));
 
-  // Cache-guarded load via the shared dossiers context; map backend rows → view shape.
+  // Cache-guarded loads.
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
-  useEffect(() => { setDossiersList(dossiers.map(dossierToRow)); }, [dossiers]);
+  useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
+  useEffect(() => { ensurePipeline(); }, [ensurePipeline]);
 
-  // Move a dossier one stage (macro auto-updates); context refreshes the cached list.
-  const handleAdvance = async (dossierId: string, direction: "next" | "back") => {
-    try {
-      await advance(dossierId, { direction });
-    } catch {
-      /* 422 at pipeline ends / illegal jump */
+  // Map backend rows → view shape, ENRICHED from the centres list (contract type,
+  // activities, inactivity) and the pipeline catalog (responsible role), plus a
+  // per-centre dossier count. All joins are frontend-only.
+  useEffect(() => {
+    const now = Date.now();
+    const centreById = new Map(centres.map((c) => [c.id, c]));
+    const roleByEtape = new Map(phases.map((p) => [p.name, p.responsable_role]));
+    const countByCentre = new Map<string, number>();
+    for (const d of dossiers) {
+      const cid = d.centre?.id;
+      if (cid) countByCentre.set(cid, (countByCentre.get(cid) ?? 0) + 1);
     }
-  };
+    setDossiersList(
+      dossiers.map((d) => {
+        const base = dossierToRow(d);
+        const centre = d.centre?.id ? centreById.get(d.centre.id) : undefined;
+        const last = centre?.last_activity_at ?? centre?.created_at ?? null;
+        const joursInactif = last ? Math.max(0, Math.floor((now - new Date(last).getTime()) / DAY)) : 0;
+        return {
+          ...base,
+          joursInactif,
+          typeDossier: d.type_dossier,
+          typeContrat: centre?.type_contrat,
+          activites: centre?.activites,
+          responsableRole: roleByEtape.get(d.etape_pipeline) ?? null,
+          nbDossiers: d.centre?.id ? countByCentre.get(d.centre.id) : undefined,
+        };
+      }),
+    );
+  }, [dossiers, centres, phases]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string>("all");
+  const [villeSel, setVilleSel] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"tableau" | "kanban">("tableau");
 
   // Drag and Drop local states
@@ -76,16 +110,15 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSubFilter, searchQuery, selectedPhase]);
+  }, [selectedSubFilter, searchQuery, selectedPhase, villeSel, etapeFilter]);
 
-  // Filtering + stats rules live in the dossiers feature (single source of truth).
   const filteredDossiers = filterDossiers(dossiersList, {
     phase: selectedPhase,
     search: searchQuery,
     subFilter: selectedSubFilter,
+    villes: villeSel,
+    etape: etapeFilter ?? undefined,
   });
-  const { total: statTotal, relancer: statRelancer, bloques: statBloques, ouverts: statOuverts } =
-    dossierStats(dossiersList);
 
   // Pagination calculation
   const totalItems = filteredDossiers.length;
@@ -94,19 +127,16 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
   const endIndex = startIndex + itemsPerPage;
   const displayedDossiers = filteredDossiers.slice(startIndex, endIndex);
 
-  // Row selection scoped to the visible (filtered) set, so "select all" + bulk
-  // actions act on what the user can see.
-  const selection = useRowSelection(filteredDossiers.map((d) => d.id));
+  // Row id = dossier UUID (unique per row, even when a centre holds several dossiers).
+  const rowKey = (d: Dossier) => d.dossierId ?? d.id;
+  const selection = useRowSelection(filteredDossiers.map(rowKey));
 
-  // Bulk delete. NOTE: the backend has no dossiers DELETE route yet — this is a
-  // UI-only sample that removes the rows from the local list. Wire it to the real
-  // endpoint once available (see BACKEND_NOTES.md → "Bulk delete").
+  // Bulk delete resolves each selected dossier back to its centre id (delete is centre-based).
   const handleBulkDelete = async () => {
-    // Row ids ARE the centre ids (dossierToRow maps id → centre id). Delete each centre
-    // via the centres route → its connected dossier is removed too.
-    const ids = [...new Set(selection.selectedIds)];
-    setDossiersList((prev) => prev.filter((d) => !ids.includes(d.id))); // optimistic
-    await Promise.all(ids.map((id) => deleteCentre(id).catch(() => {}))); // refreshes both caches
+    const ids = new Set(selection.selectedIds);
+    const centreIds = [...new Set(dossiersList.filter((d) => ids.has(rowKey(d))).map((d) => d.id))];
+    setDossiersList((prev) => prev.filter((d) => !ids.has(rowKey(d)))); // optimistic
+    await Promise.all(centreIds.map((id) => deleteCentre(id).catch(() => {}))); // refreshes both caches
   };
 
   // Drag and drop HTML5 handlers
@@ -115,37 +145,25 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
     e.dataTransfer.setData("text/plain", id);
     e.dataTransfer.effectAllowed = "move";
   };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDragEnter = (e: React.DragEvent, colName: string) => {
-    e.preventDefault();
-    setActiveDropCol(colName);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
+  const handleDragEnter = (e: React.DragEvent, colName: string) => { e.preventDefault(); setActiveDropCol(colName); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); };
   const handleDrop = (e: React.DragEvent, targetCol: Dossier["phase"]) => {
     e.preventDefault();
     const id = e.dataTransfer.getData("text/plain") || draggedId;
     if (id) {
       setDossiersList((prevList) =>
-        prevList.map((dossier) =>
-          dossier.id === id ? { ...dossier, phase: targetCol } : dossier
-        )
+        prevList.map((dossier) => (dossier.id === id ? { ...dossier, phase: targetCol } : dossier)),
       );
     }
     setDraggedId(null);
     setActiveDropCol(null);
   };
 
+  const hasChips = selectedSubFilter === "bloques" || Boolean(etapeFilter);
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">
-      {/* 1. TOP BAR ACCORDING TO THE SPECIFICATION */}
       <header className="px-4 sm:px-6 py-4 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 bg-white border-b border-slate-100 relative z-10 shrink-0 w-full min-w-0">
         <div className="w-full xl:w-auto">
           {setMobileMenuOpen && (
@@ -168,103 +186,79 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
         </div>
       </header>
 
-      {/* Main workspace container */}
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 w-full min-w-0 custom-scrollbar">
-        <div className="max-w-[1400px] mx-auto space-y-6">
+        <div className="max-w-[1400px] mx-auto space-y-4">
 
-          {/* FILTERS ROW */}
-          <div className="relative z-20 bg-white p-5 rounded-3xl border border-slate-100/80 shadow-[0_8px_30px_rgba(45,42,86,0.015)] flex flex-col xl:flex-row xl:items-center justify-between gap-5">
+          {/* Search (left) → Tableau/Kanban toggle → filters (phase + city), all in one bar. */}
+          <TableToolbar
+            search={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Rechercher par code, ville, gérant..."
+            className="relative z-10"
+          >
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "tableau" | "kanban")} className="shrink-0">
+              <TabsList>
+                <TabsTrigger value="tableau"><List className="h-3.5 w-3.5" /> Tableau</TabsTrigger>
+                <TabsTrigger value="kanban"><KanbanIcon className="h-3.5 w-3.5" /> Kanban</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Select value={selectedPhase} options={PHASE_OPTIONS} onChange={setSelectedPhase} className="min-w-[170px]" />
+            <CityFilter cities={dossiersList.map((d) => d.ville)} selected={villeSel} onChange={setVilleSel} />
+          </TableToolbar>
 
-            {/* Left filter status tabs (dropdown on mobile) */}
-            <ResponsiveTabs
-              value={selectedSubFilter}
-              onValueChange={(v) => setSelectedSubFilter(v as DossierSubFilter)}
-              className="w-full xl:w-auto"
-              options={[
-                { value: "tout", label: "Tous", count: statTotal },
-                { value: "relancer", label: "À relancer", count: statRelancer },
-                { value: "bloques", label: "Bloqués", count: statBloques },
-                { value: "ouverts", label: "Ouverts", count: statOuverts },
-              ]}
-            />
-
-            {/* Right Tools Row */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
-              {/* Search text input */}
-              <div className="relative min-w-[220px] flex-1 sm:flex-initial">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Search className="h-3.5 w-3.5" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Code, ville, gérant..."
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200/60 pl-9 pr-8 py-2.5 text-[10.5px] font-bold text-slate-700 placeholder-slate-400 outline-none focus:border-[#332151] focus:bg-white focus:ring-2 focus:ring-[#332151]/5 transition-all uppercase tracking-wider shadow-sm"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
+          {/* Active deep-link filters (clearable) */}
+          {hasChips && (
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedSubFilter === "bloques" && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E11D48]/10 px-3 py-1 text-[11px] font-bold text-[#E11D48]">
+                  Bloqués
+                  <button onClick={() => setSelectedSubFilter("tout")} className="rounded-full p-0.5 hover:bg-[#E11D48]/20" aria-label="Retirer le filtre">
+                    <X className="h-3 w-3" />
                   </button>
-                )}
-              </div>
-
-              {/* Phase filter (prebuilt Select) */}
-              <Select
-                value={selectedPhase}
-                options={PHASE_OPTIONS}
-                onChange={setSelectedPhase}
-                className="min-w-[170px]"
-              />
-
-              {/* Table / Kanban view toggle */}
-              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "tableau" | "kanban")} className="shrink-0">
-                <TabsList>
-                  <TabsTrigger value="tableau"><List className="h-3.5 w-3.5" /> Tableau</TabsTrigger>
-                  <TabsTrigger value="kanban"><KanbanIcon className="h-3.5 w-3.5" /> Kanban</TabsTrigger>
-                </TabsList>
-              </Tabs>
+                </span>
+              )}
+              {etapeFilter && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E34F2D]/10 px-3 py-1 text-[11px] font-bold text-[#E34F2D]">
+                  Phase : {stageLabel(etapeFilter)}
+                  <button onClick={() => setEtapeFilter(null)} className="rounded-full p-0.5 hover:bg-[#E34F2D]/20" aria-label="Retirer le filtre de phase">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
             </div>
-          </div>
-
-          {/* 4. CONDITIONAL PRESENTATION */}
-          {isLoading && dossiersList.length === 0 ? (
-            <SkeletonTable rows={8} cols={5} />
-          ) : (
-          <AnimatePresence mode="wait">
-            {viewMode === "tableau" ? (
-              <DossiersTable
-                displayedDossiers={displayedDossiers}
-                totalItems={totalItems}
-                startIndex={startIndex}
-                endIndex={endIndex}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                setCurrentPage={setCurrentPage}
-                goToPage={setCurrentPage}
-                onOpenDossier={onOpenDossier}
-                onAdvance={handleAdvance}
-                selection={selection}
-              />
-            ) : (
-              <DossiersKanban
-                filteredDossiers={filteredDossiers}
-                draggedId={draggedId}
-                activeDropCol={activeDropCol}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onOpenDossier={onOpenDossier}
-              />
-            )}
-          </AnimatePresence>
           )}
 
+          {isLoading && dossiersList.length === 0 ? (
+            <SkeletonTable rows={8} cols={6} />
+          ) : (
+            <AnimatePresence mode="wait">
+              {viewMode === "tableau" ? (
+                <DossiersTable
+                  displayedDossiers={displayedDossiers}
+                  totalItems={totalItems}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  goToPage={setCurrentPage}
+                  getRowId={rowKey}
+                  onOpenCentre={onOpenCentre}
+                  onHoverCentre={(id) => { void getDetail(id).catch(() => {}); }}
+                  selection={selection}
+                />
+              ) : (
+                <DossiersKanban
+                  filteredDossiers={filteredDossiers}
+                  draggedId={draggedId}
+                  activeDropCol={activeDropCol}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onOpenDossier={onOpenCentre}
+                />
+              )}
+            </AnimatePresence>
+          )}
         </div>
       </div>
 
@@ -277,4 +271,3 @@ export default function DossiersView({ onOpenDossier, setMobileMenuOpen }: Dossi
     </div>
   );
 }
-

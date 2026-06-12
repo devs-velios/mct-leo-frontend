@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import DossierDetailsView from "@/components/DossierDetailsView";
+import DossierDetailSkeleton from "@/components/dossier-details/DossierDetailSkeleton";
 import { useDossiersContext } from "@/lib/features/dossiers";
 import { useCentresContext } from "@/lib/features/centres";
 
@@ -20,15 +21,7 @@ const TAB_PATHS: Record<string, string> = {
  */
 export default function DossierDetailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex-1 flex items-center justify-center bg-[#F5F5F7]">
-          <div className="text-slate-400 font-bold text-xs uppercase tracking-widest animate-pulse">
-            Chargement du dossier...
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<DossierDetailSkeleton />}>
       <DossierDetailPageInner />
     </Suspense>
   );
@@ -86,13 +79,7 @@ function DossierDetailPageInner() {
   }
 
   if (!centreId) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F5F5F7]">
-        <div className="text-slate-400 font-bold text-xs uppercase tracking-widest animate-pulse">
-          Chargement du dossier...
-        </div>
-      </div>
-    );
+    return <DossierDetailSkeleton />;
   }
 
   return (

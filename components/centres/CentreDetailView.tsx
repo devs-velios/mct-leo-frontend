@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, MapPin, FolderOpen, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, FolderOpen, Pencil, Trash2, Building2 } from "lucide-react";
 import { useCentresContext, type UpdateCentrePayload } from "@/lib/features/centres";
 import { useDeleteCentre } from "@/lib/features/useDeleteCentre";
 import { useDialog } from "@/components/ui/DialogProvider";
@@ -71,7 +71,7 @@ export default function CentreDetailView({
   /** Navigate to the MCT map (optionally focused on this centre). */
   onViewOnMap?: () => void;
 }) {
-  const { detail: ctxDetail, detailStatus, ensureDetail, update } = useCentresContext();
+  const { detail: ctxDetail, detailStatus, ensureDetail, update, centres } = useCentresContext();
   const deleteCentre = useDeleteCentre(); // deletes the centre + refreshes both caches
   const { confirm } = useDialog();
 
@@ -149,11 +149,37 @@ export default function CentreDetailView({
   }
 
   if (!detail) {
+    // Seed the header from the list cache so the centre identity shows instantly,
+    // with a structured skeleton for the sections still loading (no blank screen).
+    const seed = centres.find((x) => x.id === centreId);
     return (
-      <div className="flex flex-1 items-center justify-center bg-[#F5F5F7]">
-        <span className="animate-pulse text-xs font-bold uppercase tracking-widest text-slate-400">
-          Chargement du centre…
-        </span>
+      <div className="flex-1 overflow-y-auto bg-[#F5F5F7] custom-scrollbar">
+        <div className="mx-auto max-w-[1100px] space-y-4 p-4 sm:p-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#332151] transition-colors hover:bg-slate-50"
+              aria-label="Retour"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#E34F2D]">Fiche du centre</p>
+              {seed?.enseigne || seed?.code_centre ? (
+                <h1 className="truncate font-serif-mct text-lg font-bold text-[#332151]">
+                  {seed?.enseigne ?? seed?.code_centre}
+                </h1>
+              ) : (
+                <div className="mt-1 h-5 w-40 animate-pulse rounded-md bg-slate-200/70" />
+              )}
+            </div>
+          </div>
+          <div className="h-28 animate-pulse rounded-3xl border border-slate-100 bg-white" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="h-48 animate-pulse rounded-3xl border border-slate-100 bg-white" />
+            <div className="h-48 animate-pulse rounded-3xl border border-slate-100 bg-white" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -242,36 +268,56 @@ export default function CentreDetailView({
         {/* Dossiers + Pièces side by side */}
         <div className="grid gap-4 lg:grid-cols-3">
           <Section title={`Dossiers du centre (${detail.dossiers.length})`} className="lg:col-span-2">
-            {detail.dossiers.length === 0 ? (
-              <p className="text-sm font-medium text-[#5A5A7A]">Aucun dossier pour ce centre.</p>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {detail.dossiers.map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => onOpenDossier?.(d.id)}
-                    className="group flex w-full items-center justify-between gap-3 py-2.5 text-left transition-colors first:pt-0 last:pb-0 hover:text-[#E34F2D]"
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <FolderOpen className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[#E34F2D]" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-[#332151] group-hover:text-[#E34F2D]">
-                          {STAGE_LABEL[d.etape_pipeline] ?? d.etape_pipeline}
-                        </p>
-                        <p className="text-[11px] text-[#5A5A7A]">{d.type_dossier} · créé le {frDate(d.created_at)}</p>
-                      </div>
+            {(() => {
+              // A centre holds one "Centre" dossier + N "Contrôleur" dossiers. Show the
+              // Centre dossier first (accented), then one card per contrôleur, then an
+              // "add a contrôleur dossier" action.
+              const centreDossier = detail.dossiers.find((d) => d.type_dossier === "centre");
+              const controleurs = detail.dossiers.filter((d) => d.type_dossier !== "centre");
+              const card = (d: (typeof detail.dossiers)[number], isCentre: boolean) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => onOpenDossier?.(d.id)}
+                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left transition-all hover:shadow-sm ${
+                    isCentre ? "border-[#332151]/20 bg-[#332151]/[0.03] hover:border-[#332151]/40" : "border-slate-100 bg-white hover:border-[#E34F2D]/30"
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                        isCentre ? "bg-[#332151]/10 text-[#332151]" : "bg-slate-100 text-[#5A5A7A] group-hover:bg-[#E34F2D]/10 group-hover:text-[#E34F2D]"
+                      }`}
+                    >
+                      {isCentre ? <Building2 className="h-4 w-4" /> : <FolderOpen className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-[#332151]">
+                        {isCentre ? "Dossier centre" : "Dossier contrôleur"}
+                      </p>
+                      <p className="truncate text-[11px] text-[#5A5A7A]">
+                        {STAGE_LABEL[d.etape_pipeline] ?? d.etape_pipeline} · créé le {frDate(d.created_at)}
+                      </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#332151]">
-                        {STATUT_LABEL[d.statut_ouverture] ?? d.statut_ouverture}
-                      </span>
-                      <ArrowRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#E34F2D]" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#332151]">
+                      {STATUT_LABEL[d.statut_ouverture] ?? d.statut_ouverture}
+                    </span>
+                    <ArrowRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#E34F2D]" />
+                  </div>
+                </button>
+              );
+              return (
+                <div className="space-y-2.5">
+                  {detail.dossiers.length === 0 && (
+                    <p className="text-sm font-medium text-[#5A5A7A]">Aucun dossier pour ce centre.</p>
+                  )}
+                  {centreDossier && card(centreDossier, true)}
+                  {controleurs.map((d) => card(d, false))}
+                </div>
+              );
+            })()}
           </Section>
 
           <Section title="Pièces">
@@ -327,6 +373,7 @@ export default function CentreDetailView({
           country: c.country ?? "",
         }}
       />
+
     </div>
   );
 }

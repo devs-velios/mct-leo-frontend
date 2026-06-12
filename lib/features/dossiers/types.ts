@@ -49,6 +49,12 @@ export interface Dossier {
   dossierId?: string; // real dossier UUID (for advance-stage)
   etape?: string; // micro status (etape_pipeline)
   macro?: string; // macro status (statut_ouverture)
+  // ── Enriched fields (joined in the view from the centres list + pipeline catalog) ──
+  typeDossier?: string; // "centre" | "controleur" — tells the centre dossier apart from controller dossiers
+  typeContrat?: string; // R / P
+  activites?: string[]; // VL / CL / PL
+  responsableRole?: string | null; // owning role for the current phase
+  nbDossiers?: number; // total dossiers held by the centre
 }
 
 export type FetchStatus = "idle" | "loading" | "loaded" | "error";

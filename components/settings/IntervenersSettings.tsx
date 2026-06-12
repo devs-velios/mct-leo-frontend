@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Phone } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { useIntervenersContext, CATEGORY_LABEL, type Intervener } from "@/lib/features/interveners";
+import { useDepartmentsContext } from "@/lib/features/departments";
 import { useRole } from "@/lib/features/auth/RoleProvider";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonTable } from "@/components/ui/Skeleton";
@@ -15,7 +16,8 @@ import { BulkActionBar } from "@/components/ui/bulk-action-bar";
 import IntervenerModal, { type IntervenerFormValues } from "./IntervenerModal";
 
 export default function IntervenersSettings({ readOnly = false }: { readOnly?: boolean }) {
-  const { interveners, categories, isLoading, status, error, ensureLoaded, create, update, remove } = useIntervenersContext();
+  const { interveners, categories, categoryOptions: categoryCatalog, isLoading, status, error, ensureLoaded, create, update, remove } = useIntervenersContext();
+  const { departments, ensureLoaded: ensureDepartments } = useDepartmentsContext();
   const { canWrite } = useRole();
   // Whitelist page is consultation-only; gate every write control behind this.
   const canEdit = canWrite && !readOnly;
@@ -28,6 +30,10 @@ export default function IntervenersSettings({ readOnly = false }: { readOnly?: b
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+  useEffect(() => { ensureDepartments(); }, [ensureDepartments]);
+
+  // Map a département code → its name, so the table shows "Bouches-du-Rhône" not "13".
+  const deptName = useMemo(() => new Map(departments.map((d) => [d.code, d.name])), [departments]);
 
   const rows = useMemo(
     () => (categoryFilter ? interveners.filter((i) => i.category === categoryFilter) : interveners),
@@ -40,10 +46,10 @@ export default function IntervenersSettings({ readOnly = false }: { readOnly?: b
     await Promise.all([...new Set(selection.selectedIds)].map((id) => remove(id).catch(() => {})));
   };
 
-  const categoryOptions = useMemo(
-    () => [{ value: "", label: "Toutes les catégories" }, ...categories.map((c) => ({ value: c, label: CATEGORY_LABEL[c] ?? c }))],
-    [categories],
-  );
+  const categoryOptions = useMemo(() => {
+    const values = categoryCatalog.length ? categoryCatalog.map((c) => c.value) : categories;
+    return [{ value: "", label: "Toutes les catégories" }, ...values.map((c) => ({ value: c, label: CATEGORY_LABEL[c] ?? c }))];
+  }, [categoryCatalog, categories]);
 
   const openCreate = () => { setModalMode("create"); setEditing(null); setModalOpen(true); };
   const openEdit = (i: Intervener) => { setModalMode("edit"); setEditing(i); setModalOpen(true); };
@@ -157,16 +163,17 @@ export default function IntervenersSettings({ readOnly = false }: { readOnly?: b
               {
                 id: "sectors",
                 header: "Départements",
-                width: "minmax(140px,1fr)",
-                cell: (i) =>
-                  i.sectors.length ? (
-                    <span className="text-[11px] font-semibold text-[#5A5A7A]">
-                      {i.sectors.slice(0, 6).join(", ")}
-                      {i.sectors.length > 6 && <span className="text-slate-400"> +{i.sectors.length - 6}</span>}
+                width: "minmax(160px,1.2fr)",
+                cell: (i) => {
+                  if (!i.sectors.length) return <span className="text-[11px] text-slate-400">—</span>;
+                  const names = i.sectors.map((c) => deptName.get(c) ?? c);
+                  return (
+                    <span className="text-[11px] font-semibold text-[#5A5A7A]" title={names.join(", ")}>
+                      {names.slice(0, 3).join(", ")}
+                      {names.length > 3 && <span className="text-slate-400"> +{names.length - 3}</span>}
                     </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-400">—</span>
-                  ),
+                  );
+                },
               },
               {
                 id: "activities",
@@ -213,6 +220,8 @@ export default function IntervenersSettings({ readOnly = false }: { readOnly?: b
         open={modalOpen}
         mode={modalMode}
         intervener={editing}
+        categoryOptions={categoryCatalog}
+        departments={departments}
         submitting={submitting}
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}

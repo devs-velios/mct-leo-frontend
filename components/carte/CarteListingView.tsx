@@ -2,26 +2,33 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ChevronRight, Compass, Menu, Plus, Minus, RotateCcw, CheckCircle, Map, Layers, PenTool, UserCheck, FolderPlus, Activity, Phone, Mail } from "lucide-react";
+import { MapPin, ChevronRight, Compass, Menu, Plus, Minus, RotateCcw, BadgeCheck, MapPinned, UserCheck, Phone, Mail, ArrowRight } from "lucide-react";
 import { REGIONS } from "./carteData";
 import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
+import { DataTable } from "@/components/ui/data-table";
+import { CentreCell, VilleCell } from "@/components/ui/centre-cell";
 import { na } from "@/lib/utils";
 import { type CentreDetail } from "@/lib/features/centres";
 import { type Center, hoveredCentreInfo, carteStats, centersInRegion } from "@/lib/features/carte";
 
 interface Counts {
   total: number;
-  signature: number;
   onboarding: number;
   depot: number;
   ouvert: number;
-  suivi: number;
+}
+
+interface PhaseTab {
+  value: string;
+  label: string;
+  count: number;
 }
 
 interface CarteListingViewProps {
   filteredCenters: Center[];
   centers: Center[];
   counts: Counts;
+  phaseTabs: PhaseTab[];
   selectedFilter: string;
   setSelectedFilter: (value: string) => void;
   hoveredCenter: Center | null;
@@ -40,68 +47,12 @@ interface Cluster {
   centers: Center[];
 }
 
-// Group points that are closer than a threshold distance
-const FILTER_TABS = [
-  {
-    key: "Toutes phases",
-    label: "Toutes phases",
-    countKey: "total" as const,
-    icon: Layers,
-    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#332151]",
-    dotColor: "bg-[#E34F2D]"
-  },
-  {
-    key: "Signature",
-    label: "Signature",
-    countKey: "signature" as const,
-    icon: PenTool,
-    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#332151]",
-    dotColor: "bg-[#E34F2D]"
-  },
-  {
-    key: "Onboarding",
-    label: "Onboarding",
-    countKey: "onboarding" as const,
-    icon: UserCheck,
-    activeColor: "bg-gradient-to-r from-[#E34F2D] to-[#EA5835] text-white shadow-[0_8px_20px_-4px_rgba(234,91,45,0.3)]",
-    textColor: "text-[#E34F2D]",
-    dotColor: "bg-[#E34F2D]"
-  },
-  {
-    key: "Dépôt agrément",
-    label: "Dépôt agrément",
-    countKey: "depot" as const,
-    icon: FolderPlus,
-    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#332151]",
-    dotColor: "bg-[#E34F2D]"
-  },
-  {
-    key: "Ouvert",
-    label: "Ouvert",
-    countKey: "ouvert" as const,
-    icon: CheckCircle,
-    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#332151]",
-    dotColor: "bg-[#E34F2D]"
-  },
-  {
-    key: "Suivi",
-    label: "Suivi",
-    countKey: "suivi" as const,
-    icon: Activity,
-    activeColor: "bg-gradient-to-r from-[#332151] to-[#423E82] text-white shadow-[0_8px_20px_-4px_rgba(45,42,86,0.3)]",
-    textColor: "text-[#332151]",
-    dotColor: "bg-[#E34F2D]"
-  }
-];
 
 export default function CarteListingView({
   filteredCenters,
   centers,
   counts,
+  phaseTabs,
   selectedFilter,
   setSelectedFilter,
   hoveredCenter,
@@ -195,8 +146,8 @@ export default function CarteListingView({
     });
   };
 
-  // Coverage stats + hovered-region count derive from the carte feature selectors.
-  const stats = useMemo(() => carteStats(filteredCenters), [filteredCenters]);
+  // KPI coverage is network-wide (independent of the active phase filter).
+  const networkStats = useMemo(() => carteStats(centers), [centers]);
   const centersInHoveredRegion = useMemo(
     () => centersInRegion(filteredCenters, hoveredRegion),
     [hoveredRegion, filteredCenters],
@@ -237,19 +188,20 @@ export default function CarteListingView({
 
       {/* Statistics Header Cards (minimal) */}
       <div className="p-4 sm:p-6 pb-2 shrink-0">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { title: "Total localisations", value: String(counts.total), icon: Map },
-            { title: "Sites actifs", value: String(stats.activeSites), icon: CheckCircle },
-            { title: "Régions couvertes", value: String(stats.coverageRegions), icon: Compass },
+            { title: "Total centres", value: String(counts.total), icon: MapPinned },
+            { title: "Centres actifs", value: String(counts.ouvert), icon: BadgeCheck },
+            { title: "Centres en onboarding", value: String(counts.onboarding), icon: UserCheck },
+            { title: "Régions couvertes", value: String(networkStats.coverageRegions), icon: Compass },
           ].map(({ title, value, icon: Icon }) => (
             <div key={title} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">{title}</p>
                 <h3 className="mt-1 text-2xl font-bold text-[#332151]">{value}</h3>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#332151]">
-                <Icon className="h-5 w-5" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#332151]">
+                <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
             </div>
           ))}
@@ -262,12 +214,7 @@ export default function CarteListingView({
           <ResponsiveTabs
             value={selectedFilter}
             onValueChange={setSelectedFilter}
-            options={FILTER_TABS.map((tab) => ({
-              value: tab.key,
-              label: tab.label,
-              icon: tab.icon,
-              count: counts[tab.countKey],
-            }))}
+            options={phaseTabs.map((tab) => ({ value: tab.value, label: tab.label, count: tab.count }))}
           />
         </div>
       </div>
@@ -419,9 +366,9 @@ export default function CarteListingView({
                           <circle
                             cx={center.x}
                             cy={center.y}
-                            r={radius * 1.5}
+                            r={radius * 1.15}
                             fill={markerColor}
-                            className="opacity-15 pointer-events-none"
+                            className="opacity-10 pointer-events-none"
                             style={{ transformOrigin: `${center.x}px ${center.y}px` }}
                           />
                         )}
@@ -430,9 +377,9 @@ export default function CarteListingView({
                           <circle
                             cx={center.x}
                             cy={center.y}
-                            r={radius * 1.8}
+                            r={radius * 1.4}
                             fill={markerColor}
-                            opacity={0.25}
+                            opacity={0.2}
                             className="transition-all duration-200"
                           />
                         )}
@@ -593,36 +540,43 @@ export default function CarteListingView({
                     </h3>
                   </div>
                 </div>
-                {onboardingCenters.length === 0 ? (
-                  <p className="text-sm font-medium text-[#5A5A7A]">Aucun centre en onboarding.</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {onboardingCenters.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => onOpenDossier?.(c.id)}
-                        className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-left transition-colors hover:border-[#E34F2D]/30 hover:bg-white"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-[#332151] group-hover:text-[#E34F2D]">
-                            {c.enseigne || c.code || c.id}
-                          </p>
-                          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#5A5A7A]">
-                            {c.code && <span className="font-mono">{c.code}</span>}
-                            {c.code && c.ville && <span className="text-slate-300">·</span>}
-                            {c.ville && (
-                              <span className="inline-flex items-center gap-0.5">
-                                <MapPin className="h-3 w-3 opacity-60" /> {c.ville}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#E34F2D]" />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <DataTable<Center>
+                  data={onboardingCenters}
+                  getRowId={(c) => c.id}
+                  minWidth="640px"
+                  hideToolbar
+                  bare
+                  onRowClick={(c) => onOpenDossier?.(c.id)}
+                  emptyMessage="Aucun centre en onboarding."
+                  columns={[
+                    {
+                      id: "centre",
+                      header: "Centre",
+                      width: "minmax(220px,1.6fr)",
+                      cell: (c) => <CentreCell name={c.enseigne} code={c.code} />,
+                    },
+                    {
+                      id: "ville",
+                      header: "Ville",
+                      width: "minmax(140px,1fr)",
+                      cell: (c) => <VilleCell ville={c.ville} />,
+                    },
+                    {
+                      id: "detail",
+                      header: "Détail",
+                      width: "170px",
+                      align: "center",
+                      cell: (c) => (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onOpenDossier?.(c.id); }}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#E34F2D]/10 px-3 py-1.5 text-[11px] font-semibold text-[#E34F2D] transition-colors hover:bg-[#E34F2D]/20"
+                        >
+                          Voir les détails <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      ),
+                    },
+                  ]}
+                />
               </div>
             );
           })()}

@@ -54,7 +54,6 @@ export default function RemindersByDueDate() {
 
   return (
     <Panel
-      eyebrow="Relances"
       title="Rappels par échéance"
       subtitle="Rappels en attente, regroupés par date d'envoi"
       actions={

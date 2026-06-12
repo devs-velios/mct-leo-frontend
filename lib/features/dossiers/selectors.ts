@@ -67,12 +67,14 @@ export function dossierStats(rows: Dossier[]) {
 /** Apply the phase + free-text search + sub-filter tab to the pipeline rows. */
 export function filterDossiers(
   rows: Dossier[],
-  opts: { phase?: string; search?: string; subFilter?: DossierSubFilter },
+  opts: { phase?: string; search?: string; subFilter?: DossierSubFilter; villes?: string[]; etape?: string },
 ): Dossier[] {
-  const { phase = "all", search = "", subFilter = "tout" } = opts;
+  const { phase = "all", search = "", subFilter = "tout", villes = [], etape } = opts;
   const query = search.trim().toLowerCase();
   return rows.filter((item) => {
     if (phase !== "all" && item.phase !== phase) return false;
+    if (etape && item.etape !== etape) return false;
+    if (villes.length > 0 && !villes.includes(item.ville)) return false;
     if (query) {
       const hit =
         item.id.toLowerCase().includes(query) ||

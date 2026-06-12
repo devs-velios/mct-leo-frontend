@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import DossiersView from "@/components/DossiersView";
 import { useDashboard } from "../layout";
@@ -9,10 +10,13 @@ export default function DossiersPage() {
   const router = useRouter();
 
   return (
-    <DossiersView
-      // The Dossiers list opens the DOSSIER detail page (file), not the centre profile.
-      onOpenDossier={(dossierId) => router.push(`/dashboard/dossiers/${dossierId}`)}
-      setMobileMenuOpen={setMobileMenuOpen}
-    />
+    // DossiersView reads ?statut / ?etape via useSearchParams → needs a Suspense boundary.
+    <Suspense fallback={null}>
+      <DossiersView
+        // Clicking a row opens the CENTRE profile (not a dossier view).
+        onOpenCentre={(centreId) => router.push(`/dashboard/centres/${centreId}`)}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
+    </Suspense>
   );
 }

@@ -7,13 +7,14 @@ import { type CentreDetail, type CentreListItem } from "./types";
 // ── Centres list filter (statut + activités + free-text) ───────────────────────
 export function filterCentres(
   centres: CentreListItem[],
-  opts: { search?: string; statut?: string[]; activites?: string[] },
+  opts: { search?: string; statut?: string[]; activites?: string[]; villes?: string[] },
 ): CentreListItem[] {
-  const { search = "", statut = [], activites = [] } = opts;
+  const { search = "", statut = [], activites = [], villes = [] } = opts;
   const q = search.trim().toLowerCase();
   return centres.filter((c) => {
     if (statut.length > 0 && !statut.includes(c.statut_ouverture)) return false;
     if (activites.length > 0 && !(c.activites ?? []).some((a) => activites.includes(a))) return false;
+    if (villes.length > 0 && !villes.includes(c.ville ?? "")) return false;
     if (!q) return true;
     return [c.code_centre, c.enseigne, c.ville].some((x) => (x ?? "").toLowerCase().includes(q));
   });

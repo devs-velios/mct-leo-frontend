@@ -67,7 +67,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   // Determine activeTab based on pathname
   let activeTab = "Dashboard";
-  if (pathname.includes("/centres")) activeTab = "Centres";
+  if (pathname.includes("/direction")) activeTab = "Vue Direction";
+  else if (pathname.includes("/centres")) activeTab = "Centres";
   else if (pathname.includes("/validations")) activeTab = "Validations";
   else if (pathname.includes("/approbations")) activeTab = "Approbations";
   else if (pathname.includes("/dossiers")) activeTab = "Dossiers";
@@ -90,6 +91,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const handleTabChange = (tab: string) => {
     if (tab === "Dashboard") router.push("/dashboard");
+    else if (tab === "Vue Direction") router.push("/dashboard/direction");
     else if (tab === "Centres") router.push("/dashboard/centres");
     else if (tab === "Validations") router.push("/dashboard/validations");
     else if (tab === "Approbations") router.push("/dashboard/approbations");

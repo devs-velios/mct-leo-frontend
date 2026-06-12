@@ -110,6 +110,17 @@ export function useCentres() {
       if (cached) { dispatch({ type: "DETAIL_FROM_CACHE", detail: cached }); return; }
       const pending = detailInFlightRef.current.get(id);
       if (pending) return pending;
+      // Reuse an in-flight hover prefetch (getDetail) instead of firing a 2nd fetch,
+      // so clicking a row the user just hovered resolves from that single request.
+      const prefetch = getInFlightRef.current.get(id);
+      if (prefetch) {
+        const reused = prefetch
+          .then((d) => { if (mountedRef.current) dispatch({ type: "DETAIL_FROM_CACHE", detail: d }); })
+          .catch(() => {})
+          .finally(() => { detailInFlightRef.current.delete(id); });
+        detailInFlightRef.current.set(id, reused);
+        return reused;
+      }
     }
     const p = loadDetail(id).finally(() => { detailInFlightRef.current.delete(id); });
     detailInFlightRef.current.set(id, p);

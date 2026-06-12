@@ -21,6 +21,16 @@ export interface IntervenersListResponse {
   categories: string[];
 }
 
+/** A routing category from GET /api/interveners/categories (value + helper text). */
+export interface IntervenerCategory {
+  value: string;
+  description: string;
+}
+
+export interface IntervenerCategoriesResponse {
+  categories: IntervenerCategory[];
+}
+
 export interface CreateIntervenerPayload {
   phone_number: string;
   name: string;
@@ -46,6 +56,8 @@ export const ACTIVITY_VALUES = ["VL", "CL", "PL"] as const;
 export interface IntervenersState {
   list: Intervener[];
   categories: string[];
+  /** Detailed categories (value + description) from /interveners/categories. */
+  categoryOptions: IntervenerCategory[];
   status: "idle" | "loading" | "loaded" | "error";
   error: string | null;
 }

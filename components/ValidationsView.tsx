@@ -3,8 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
-  AlertCircle,
-  Search,
   Eye,
   ShieldCheck,
   FolderOpen,
@@ -22,7 +20,6 @@ import MoveModal from "./validations/MoveModal";
 import {
   usePiecesContext,
   type ValidationItem,
-  type ConfFilter,
   queueItemToValidation,
   pieceTypeLabel,
   filterValidations,
@@ -30,12 +27,14 @@ import {
 } from "@/lib/features/pieces";
 import { useFoldersContext, friendlyFolder, destinationFolderOptions } from "@/lib/features/folders";
 import { useDriveContext } from "@/lib/features/drive";
+import { useCentresContext } from "@/lib/features/centres";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
-import { ResponsiveTabs } from "@/components/ui/responsive-tabs";
 import { DataTable } from "@/components/ui/data-table";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
+import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,12 +59,26 @@ const STATUS_TONE: Record<string, string> = {
   "Rejeté": "bg-rose-50 text-rose-700",
 };
 
+// Filter-button options.
+const STATUT_OPTIONS: MultiSelectOption[] = [
+  { value: "À identifier", label: "À identifier" },
+  { value: "À valider", label: "À valider" },
+  { value: "Validé", label: "Validés" },
+  { value: "Rejeté", label: "Rejetés" },
+];
+const CONF_OPTIONS: MultiSelectOption[] = [
+  { value: "high", label: "Fiable (> 90%)" },
+  { value: "low", label: "Faible (< 70%)" },
+];
+
 export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: ValidationsViewProps) {
   // Backend validation queue: already joined with centre info + a real workflow statut.
   const { queue, isQueueLoading: isLoading, ensureQueue, verify, bulkVerify, move, rename, reject } = usePiecesContext();
   const { folders, ensureLoaded: ensureFolders } = useFoldersContext();
   // Live Drive root listing — the actual folders a piece can be moved into.
   const { byPath: driveByPath, browse: driveBrowse } = useDriveContext();
+  // Warm the centre detail cache on hover so opening a piece's centre is instant.
+  const { getDetail: prefetchCentre } = useCentresContext();
   const { prompt, confirm } = useDialog();
   const [validationsList, setValidationsList] = useState<ValidationItem[]>([]);
 
@@ -75,9 +88,10 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   useEffect(() => {
     setValidationsList(queue.map(queueItemToValidation));
   }, [queue]);
-  const [selectedTab, setSelectedTab] = useState("tout"); // tout, à valider, à identifier, kbis, assurance, pièce id
-  const [selectedConfFilter, setSelectedConfFilter] = useState<ConfFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statutSel, setStatutSel] = useState<string[]>([]);
+  const [confSel, setConfSel] = useState<string[]>([]);
+  const [docTypeSel, setDocTypeSel] = useState<string[]>([]);
   const [sort, setSort] = useState<{ key: "recuLe" | "confIA" | "status"; order: "asc" | "desc" }>({ key: "recuLe", order: "desc" });
 
   // Route a message to a success or error toast based on its wording.
@@ -103,16 +117,23 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     [folders, driveByPath],
   );
 
-  // Reset page when tab/filters change
+  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTab, selectedConfFilter, searchQuery]);
+  }, [statutSel, confSel, docTypeSel, searchQuery]);
+
+  // Distinct document types present (feeds the "Type de document" filter button).
+  const docTypeOptions = useMemo<MultiSelectOption[]>(() => {
+    const seen = [...new Set(validationsList.map((v) => v.docType).filter(Boolean))];
+    return seen.sort((a, b) => pieceTypeLabel(a).localeCompare(pieceTypeLabel(b))).map((t) => ({ value: t, label: pieceTypeLabel(t) }));
+  }, [validationsList]);
 
   // Filtering rules live in the pieces feature (single source of truth).
   const filteredValidations = filterValidations(validationsList, {
     search: searchQuery,
-    tab: selectedTab,
-    conf: selectedConfFilter,
+    statuts: statutSel,
+    confs: confSel,
+    docTypes: docTypeSel,
   });
 
   // Actions — all routed through the shared pieces cache context.
@@ -213,6 +234,30 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
   const endIndex = startIndex + itemsPerPage;
   const displayedItems = sortedValidations.slice(startIndex, endIndex);
 
+  // Row selection (per-row + select-all checkboxes), scoped to the filtered set.
+  const selection = useRowSelection(sortedValidations.map((v) => String(v.id)));
+
+  // Bulk-validate the SELECTED rows (pending pieces only) — "validate clusters in bulk".
+  const handleBulkValidateSelected = async () => {
+    const ids = new Set(selection.selectedIds);
+    const pieceIds = sortedValidations
+      .filter((v) => ids.has(String(v.id)) && v.pieceId && (v.status === "À valider" || v.status === "À identifier"))
+      .map((v) => v.pieceId!);
+    if (pieceIds.length === 0) {
+      notify("Aucune pièce en attente dans la sélection.");
+      return;
+    }
+    const ok = await confirm({
+      title: `Valider ${pieceIds.length} pièce${pieceIds.length > 1 ? "s" : ""} ?`,
+      message: "Les pièces sélectionnées en attente seront validées, et les clients notifiés par WhatsApp.",
+      confirmLabel: "Valider la sélection",
+    });
+    if (!ok) return;
+    const done = await bulkVerify(pieceIds);
+    notify(`${done} pièce${done > 1 ? "s" : ""} validée${done > 1 ? "s" : ""}.`);
+    selection.clear();
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
 
@@ -230,7 +275,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
           </div>
 
           <h2 className="text-lg sm:text-2xl font-bold font-serif-mct text-[#332151] tracking-tight">
-            À traiter
+            Validations
           </h2>
           <p className="mt-0.5 text-xs text-[#5A5A7A]">
             Tous les documents entrants nécessitant une validation.
@@ -243,88 +288,71 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
         <div className="max-w-[1400px] mx-auto space-y-6">
 
 
-          {/* Filter bar — status tabs + AI confidence chips (no Advanced Filters block) */}
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <ResponsiveTabs
-              value={selectedTab}
-              onValueChange={setSelectedTab}
-              className="w-full lg:w-auto"
-              options={[
-                { value: "tout", label: "Tous" },
-                { value: "À identifier", label: "À identifier" },
-                { value: "À valider", label: "À valider" },
-                { value: "Validé", label: "Validés" },
-                { value: "Rejeté", label: "Rejetés" },
-              ]}
+          {/* Search + filter buttons (shared toolbar, identical to Centres) */}
+          <TableToolbar
+            search={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Rechercher une pièce…"
+          >
+            <MultiSelect
+              options={STATUT_OPTIONS}
+              selected={statutSel}
+              onChange={setStatutSel}
+              placeholder="Statut"
+              searchPlaceholder="Rechercher un statut…"
+              emptyText="Aucun statut."
             />
-
-            <div className="flex w-fit shrink-0 items-center gap-1.5 rounded-xl bg-slate-100/60 p-1.5">
-              <button
-                onClick={() => setSelectedConfFilter(selectedConfFilter === "high" ? "all" : "high")}
-                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[10px] font-extrabold transition-all duration-150 ${
-                  selectedConfFilter === "high" ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:bg-white/50 hover:text-[#332151]"
-                }`}
+            <MultiSelect
+              options={CONF_OPTIONS}
+              selected={confSel}
+              onChange={setConfSel}
+              placeholder="Confiance"
+              searchPlaceholder="Rechercher…"
+              emptyText="Aucune option."
+            />
+            <MultiSelect
+              options={docTypeOptions}
+              selected={docTypeSel}
+              onChange={setDocTypeSel}
+              placeholder="Type de document"
+              searchPlaceholder="Rechercher un type…"
+              emptyText="Aucun type."
+              listClassName="max-h-[220px]"
+            />
+            {bulkPending.length > 0 && (
+              <Button
+                size="sm"
+                onClick={handleBulkValidate}
+                className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
+                title="Valider toutes les pièces fiables en attente"
               >
-                <ShieldCheck className="h-3.5 w-3.5" /> <span>Conf. &gt; 90%</span>
-              </button>
-              <button
-                onClick={() => setSelectedConfFilter(selectedConfFilter === "low" ? "all" : "low")}
-                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[10px] font-extrabold transition-all duration-150 ${
-                  selectedConfFilter === "low" ? "bg-white text-[#332151] shadow-sm" : "text-[#5A5A7A] hover:bg-white/50 hover:text-[#332151]"
-                }`}
-              >
-                <AlertCircle className="h-3.5 w-3.5" /> <span>Conf. &lt; 70%</span>
-              </button>
-            </div>
-          </div>
+                <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables <span className="rounded bg-white/25 px-1.5 py-0.5 text-[10px] font-black">{bulkPending.length}</span>
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#332151]">
+                  <ArrowUpDown className="h-3.5 w-3.5" /> Trier
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[210px]">
+                <DropdownMenuLabel>Trier par</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={sort.key} onValueChange={(k) => setSort((s) => ({ ...s, key: k as typeof s.key }))}>
+                  <DropdownMenuRadioItem value="recuLe">Date de réception</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="confIA">Confiance IA</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="status">Statut</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={sort.order} onValueChange={(o) => setSort((s) => ({ ...s, order: o as "asc" | "desc" }))}>
+                  <DropdownMenuRadioItem value="desc">Décroissant</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="asc">Croissant</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableToolbar>
 
           {/* 3. Validations table */}
           <div className="bg-white rounded-3xl shadow-sm border border-slate-100/50 overflow-hidden">
-
-            {/* Search + sort toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher une pièce…"
-                  className="pl-9"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                {bulkPending.length > 0 && (
-                  <Button
-                    size="sm"
-                    onClick={handleBulkValidate}
-                    className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
-                    title="Valider toutes les pièces fiables en attente"
-                  >
-                    <ShieldCheck className="h-3.5 w-3.5" /> Valider fiables <span className="rounded bg-white/25 px-1.5 py-0.5 text-[10px] font-black">{bulkPending.length}</span>
-                  </Button>
-                )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold text-[#332151]">
-                    <ArrowUpDown className="h-3.5 w-3.5" /> Trier
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[210px]">
-                  <DropdownMenuLabel>Trier par</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup value={sort.key} onValueChange={(k) => setSort((s) => ({ ...s, key: k as typeof s.key }))}>
-                    <DropdownMenuRadioItem value="recuLe">Date de réception</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="confIA">Confiance IA</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="status">Statut</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuRadioGroup value={sort.order} onValueChange={(o) => setSort((s) => ({ ...s, order: o as "asc" | "desc" }))}>
-                    <DropdownMenuRadioItem value="desc">Décroissant</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="asc">Croissant</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              </div>
-            </div>
 
             {isLoading && validationsList.length === 0 ? (
               <div className="p-6"><SkeletonCards count={6} /></div>
@@ -333,47 +361,45 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                 <DataTable<ValidationItem>
                   data={displayedItems}
                   getRowId={(item) => String(item.id)}
-                  minWidth="820px"
+                  minWidth="900px"
                   hideToolbar
                   bare
+                  selection={selection}
                   onRowClick={(item) => { if (item.centreId) onOpenDossier?.(item.centreId); }}
+                  onRowHover={(item) => { if (item.centreId) void prefetchCentre(item.centreId).catch(() => {}); }}
                   emptyMessage="Aucun document ne correspond à vos filtres."
                   columns={[
                     {
                       id: "piece",
                       header: "Pièce",
-                      width: "minmax(260px,1.6fr)",
-                      cell: (item) => {
-                        const ville = item.detail.includes("—") ? item.detail.split("—").pop()?.trim() : "";
-                        return (
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">{item.nom}</p>
-                            <p className="mt-0.5 text-[11px] text-slate-500">
-                              <span className="font-medium text-[#5A5A7A]">{pieceTypeLabel(item.docType)}</span>
-                              <span className="text-slate-300"> · </span>
-                              <span className="font-mono">{item.code}</span>
-                              {ville && <><span className="text-slate-300"> · </span>{ville}</>}
-                            </p>
-                            {item.fileName && (item.hasDrive && item.driveLink ? (
-                              <a
-                                href={item.driveLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                title="Ouvrir le fichier lié dans le Drive"
-                                className="mt-1 inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-[#5A5A7A] hover:text-[#E34F2D]"
-                              >
-                                <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{item.fileName}</span>
-                              </a>
-                            ) : (
-                              <span className="mt-1 block truncate font-mono text-[11px] text-slate-400">{item.fileName}</span>
-                            ))}
-                            {item.status === "Rejeté" && item.rejetRaison && (
-                              <p className="mt-0.5 text-[11px] italic text-rose-500/90">Rejet : {item.rejetRaison}</p>
-                            )}
-                          </div>
-                        );
-                      },
+                      width: "minmax(280px,2fr)",
+                      cell: (item) => (
+                        <div className="min-w-0">
+                          {/* line 1 — garage / centre name */}
+                          <p className="truncate text-sm font-semibold text-[#332151] transition-colors group-hover:text-[#E34F2D]">{item.nom}</p>
+                          {/* line 2 — document type (readable label) */}
+                          <p className="truncate text-[12px] font-medium text-[#5A5A7A]">{pieceTypeLabel(item.docType)}</p>
+                          {item.fileName && (item.hasDrive && item.driveLink ? (
+                            <a
+                              href={item.driveLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title="Ouvrir le fichier lié dans le Drive"
+                              className="mt-0.5 inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-[#5A5A7A] hover:text-[#E34F2D]"
+                            >
+                              <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{item.fileName}</span>
+                            </a>
+                          ) : (
+                            <span className="mt-0.5 block truncate font-mono text-[11px] text-slate-400">{item.fileName}</span>
+                          ))}
+                          {item.status === "Rejeté" && item.rejetRaison && (
+                            <p className="mt-0.5 text-[11px] italic text-rose-500/90">Rejet : {item.rejetRaison}</p>
+                          )}
+                          {/* small bottom — centre number / reference */}
+                          <span className="mt-1 block font-mono text-[10px] text-slate-400">{item.code}</span>
+                        </div>
+                      ),
                     },
                     {
                       id: "statut",
@@ -512,6 +538,23 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
 
         </div>
       </div>
+
+      {/* Bulk validation bar — appears when rows are selected. */}
+      {selection.count > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+          <span className="text-xs font-bold text-[#332151]">{selection.count} sélectionné{selection.count > 1 ? "s" : ""}</span>
+          <Button
+            size="sm"
+            onClick={handleBulkValidateSelected}
+            className="gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" /> Valider la sélection
+          </Button>
+          <button onClick={selection.clear} className="text-xs font-bold text-[#5A5A7A] transition-colors hover:text-[#332151]">
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* 4. Modal: Rejection Form Dialog */}
       <RejectModal

@@ -3,7 +3,7 @@
 import { Menu } from "lucide-react";
 import IntervenersSettings from "@/components/settings/IntervenersSettings";
 
-/** Whitelist (internal interveners) — read-only consultation. No add / edit / delete. */
+/** Whitelist (internal interveners) — full management (write actions gated by role). */
 export default function WhitelistView({ setMobileMenuOpen }: { setMobileMenuOpen?: (o: boolean) => void }) {
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden bg-[#F5F5F7]">
@@ -16,12 +16,12 @@ export default function WhitelistView({ setMobileMenuOpen }: { setMobileMenuOpen
         </div>
         <div>
           <h1 className="font-serif-mct text-base sm:text-xl font-bold text-[#332151]">Whitelist</h1>
-          <p className="text-xs text-[#5A5A7A]">Intervenants internes — consultation (lecture seule).</p>
+          <p className="text-xs text-[#5A5A7A]">Intervenants internes — ajout aux groupes WhatsApp et notifications.</p>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto bg-slate-50/30 p-4 custom-scrollbar lg:p-6">
-        <IntervenersSettings readOnly />
+        <IntervenersSettings />
       </div>
     </div>
   );

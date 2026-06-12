@@ -12,6 +12,10 @@ export interface Center {
   ville: string;
   gerant: string;
   phase: "Signature" | "Onboarding" | "Dépôt" | "Ouvert" | "Suivi";
+  // Pipeline phase (etape_pipeline) — the single phase reference shared with the
+  // funnel / Dossiers; the map filter uses this, not the macro `phase` above.
+  etape?: string;
+  statut?: string; // statut_ouverture (macro)
   joursInactif: number;
   contact: string;
   email: string;
@@ -71,6 +75,7 @@ export interface CentreApiGeo {
   enseigne: string | null;
   ville: string | null;
   statut_ouverture: string;
+  etape_pipeline?: string | null;
   latitude: number | null;
   longitude: number | null;
   contacts_clients?: Record<string, unknown>;
@@ -90,6 +95,8 @@ export function centresToCarte(list: CentreApiGeo[]): Center[] {
         ville: c.ville ?? "",
         gerant: "",
         phase: STATUT_PHASE_CARTE[c.statut_ouverture] ?? "Onboarding",
+        etape: c.etape_pipeline ?? undefined,
+        statut: c.statut_ouverture,
         joursInactif: 0,
         contact: vals.find((v) => /\d{8,}/.test(v.replace(/\D/g, ""))) ?? "",
         email: vals.find((v) => v.includes("@")) ?? "",
@@ -147,28 +154,31 @@ export async function enrichCentresWithCoords(centres: CentreListItem[]): Promis
 }
 
 // ── Phase filter + counts ──────────────────────────────────────────────────────
-const FILTER_PHASE: Record<string, Center["phase"]> = {
-  Signature: "Signature",
-  Onboarding: "Onboarding",
-  "Dépôt agrément": "Dépôt",
-  Ouvert: "Ouvert",
-  Suivi: "Suivi",
-};
+// The map filter is keyed on the pipeline phase (etape_pipeline) — the same
+// reference as the funnel / Dossiers — instead of the old macro statuses.
+export const ALL_PHASES = "all";
 
 export function filterCentresByPhase(centers: Center[], filter: string): Center[] {
-  if (filter === "Toutes phases") return centers;
-  const phase = FILTER_PHASE[filter];
-  return phase ? centers.filter((c) => c.phase === phase) : centers;
+  if (!filter || filter === ALL_PHASES) return centers;
+  return centers.filter((c) => c.etape === filter);
+}
+
+/** Count map pins per pipeline phase (etape name → count), plus total. */
+export function centreEtapeCounts(centers: Center[]): Record<string, number> {
+  const counts: Record<string, number> = { [ALL_PHASES]: centers.length };
+  for (const c of centers) {
+    if (!c.etape) continue;
+    counts[c.etape] = (counts[c.etape] ?? 0) + 1;
+  }
+  return counts;
 }
 
 export function centreCounts(centers: Center[]) {
   return {
     total: centers.length,
-    signature: centers.filter((c) => c.phase === "Signature").length,
     onboarding: centers.filter((c) => c.phase === "Onboarding").length,
     depot: centers.filter((c) => c.phase === "Dépôt").length,
     ouvert: centers.filter((c) => c.phase === "Ouvert").length,
-    suivi: centers.filter((c) => c.phase === "Suivi").length,
   };
 }
 

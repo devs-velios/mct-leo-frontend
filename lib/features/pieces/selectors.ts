@@ -14,6 +14,7 @@ export interface ValidationItem {
   code: string;
   nom: string;
   detail: string;
+  ville?: string | null; // centre city (own column + city filter)
   docType: string;
   fileName?: string | null; // the linked uploaded file name
   status: "À identifier" | "À valider" | "Validé" | "Rejeté";
@@ -55,6 +56,7 @@ export function queueItemToValidation(q: QueuePiece, index: number): ValidationI
     code: q.code_centre ?? "—",
     nom: q.enseigne ?? q.code_centre ?? "—",
     detail: [q.enseigne, q.ville].filter(Boolean).join(" — "),
+    ville: q.ville ?? null,
     docType: q.type_piece,
     fileName: q.nom_fichier,
     status: resolveStatus(q),
@@ -94,6 +96,7 @@ export function pieceToValidation(p: Piece, index: number, centre?: PieceCentreR
     code: centre?.code_centre ?? "—",
     nom: centre?.enseigne ?? centre?.code_centre ?? "—",
     detail: [centre?.enseigne, centre?.ville].filter(Boolean).join(" — "),
+    ville: centre?.ville ?? null,
     docType: p.type_piece,
     fileName: p.nom_fichier_origine ?? p.nom_fichier_canonique,
     status,
@@ -131,6 +134,42 @@ const DOC_LABEL: Record<string, string> = {
 export const pieceTypeLabel = (t?: string) =>
   !t ? "—" : DOC_LABEL[t] ?? t.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
+// ── Piece categories (for grouping the document checklist) ─────────────────────
+const PIECE_CATEGORY: Record<string, string> = {
+  kbis: "Société & légal",
+  liasse: "Société & légal",
+  piece_identite: "Identité",
+  piece_identite_exploitant: "Identité",
+  piece_identite_responsable_legal: "Identité",
+  attestation_formation_exploitant: "Identité",
+  plan_masse: "Site & plans",
+  cadastre: "Site & plans",
+  attestation_voirie_lourde: "Site & plans",
+  attestation_planeite: "Site & plans",
+  manuel_procedures: "Technique & conformité",
+  attestation_conformite_logiciel: "Technique & conformité",
+  references_techniques: "Technique & conformité",
+  recepisse_cofrac: "Technique & conformité",
+  rapport_audit_initial: "Audit & agrément",
+  agrement_prefectoral: "Audit & agrément",
+  assurance: "Assurance",
+  autre: "Autre",
+};
+
+/** Stable display order for the checklist categories. */
+export const PIECE_CATEGORY_ORDER = [
+  "Société & légal",
+  "Identité",
+  "Site & plans",
+  "Technique & conformité",
+  "Audit & agrément",
+  "Assurance",
+  "Autre",
+];
+
+/** Category a piece type belongs to (falls back to "Autre"). */
+export const pieceCategory = (t?: string) => (t && PIECE_CATEGORY[t]) || "Autre";
+
 // Reasons offered in the rejection modal dropdown.
 export const REJECT_REASONS = [
   "Document non conforme ou illisible",
@@ -149,11 +188,18 @@ export type ConfFilter = "all" | "high" | "low";
 /** Apply the free-text search + status tab + confidence band to the queue rows. */
 export function filterValidations(
   items: ValidationItem[],
-  opts: { search?: string; tab?: string; conf?: ConfFilter },
+  opts: { search?: string; statuts?: string[]; confs?: string[]; docTypes?: string[] },
 ): ValidationItem[] {
-  const { search = "", tab = "tout", conf = "all" } = opts;
+  const { search = "", statuts = [], confs = [], docTypes = [] } = opts;
   const query = search.trim().toLowerCase();
   return items.filter((item) => {
+    if (statuts.length > 0 && !statuts.includes(item.status)) return false;
+    if (docTypes.length > 0 && !docTypes.includes(item.docType)) return false;
+    if (confs.length > 0) {
+      const hi = confs.includes("high") && item.confIA >= CONF_HIGH;
+      const lo = confs.includes("low") && item.confIA < CONF_LOW;
+      if (!hi && !lo) return false;
+    }
     if (query) {
       const hit =
         item.code.toLowerCase().includes(query) ||
@@ -161,9 +207,6 @@ export function filterValidations(
         item.detail.toLowerCase().includes(query);
       if (!hit) return false;
     }
-    if (tab !== "tout" && item.status !== tab) return false;
-    if (conf === "high" && item.confIA < CONF_HIGH) return false;
-    if (conf === "low" && item.confIA >= CONF_LOW) return false;
     return true;
   });
 }

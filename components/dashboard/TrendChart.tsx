@@ -5,103 +5,113 @@ import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
 } from "recharts";
+import { startOfDay, endOfDay, subDays } from "date-fns";
 import { Panel, EmptyState } from "./Panel";
-import { useDossiersContext, TREND_PERIODS as PERIODS, dossiersTrend, type TrendPeriodKey as PeriodKey } from "@/lib/features/dossiers";
+import { useDossiersContext } from "@/lib/features/dossiers";
+import { useCentresContext } from "@/lib/features/centres";
+import { creationTrend } from "@/lib/features/dashboard";
+import { DateRangePicker, type DateRange } from "@/components/ui/date-range-picker";
 
-const Tip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-[0_10px_35px_rgba(0,0,0,0.08)]">
-        <p className="mb-1 font-bold text-[#5A5A7A]">{label}</p>
-        <p className="text-sm font-extrabold text-[#E34F2D]">
-          Dossiers : <span className="text-[#332151]">{payload[0].value}</span>
-        </p>
-      </div>
-    );
-  }
-  return null;
+const SERIES = [
+  { key: "dossiers", label: "Nouveaux dossiers", color: "#E34F2D" },
+  { key: "centres", label: "Nouveaux centres", color: "#332151" },
+] as const;
+
+const Tip = ({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string }[]; label?: string }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-[0_10px_35px_rgba(0,0,0,0.08)]">
+      <p className="mb-1.5 font-bold text-[#5A5A7A]">{label}</p>
+      {SERIES.map((s) => {
+        const p = payload.find((x) => x.dataKey === s.key);
+        return (
+          <p key={s.key} className="flex items-center gap-1.5 font-semibold text-[#332151]">
+            <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+            {s.label} : <span className="font-extrabold">{p?.value ?? 0}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
 };
 
 export default function TrendChart() {
   const { dossiers, ensureLoaded } = useDossiersContext();
-  const [period, setPeriod] = useState<PeriodKey>("30d");
-  // Capture "now" once after mount so render stays pure (clock = external system).
-  const [now, setNow] = useState<number | null>(null);
+  const { centres, ensureList } = useCentresContext();
+  const [range, setRange] = useState<DateRange | null>(null);
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
-  // Reading the wall clock is a side effect; syncing it into state on mount is the
-  // sanctioned pattern (keeps render pure).
+  useEffect(() => { ensureList({ limit: 200 }); }, [ensureList]);
+  // Default to the last 30 days once mounted (wall clock is an external system).
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setNow(Date.now()); }, []);
+  useEffect(() => {
+    const now = new Date();
+    setRange({ start: startOfDay(subDays(now, 29)), end: endOfDay(now) });
+  }, []);
 
-  // Time-series bucketing lives in the dossiers feature (dossiersTrend selector).
-  const data = useMemo(
-    () => (now == null ? [] : dossiersTrend(dossiers, period, now)),
-    [dossiers, period, now],
-  );
+  const data = useMemo(() => {
+    if (!range?.start || !range?.end) return [];
+    return creationTrend(dossiers, centres, range.start.getTime(), range.end.getTime());
+  }, [dossiers, centres, range]);
 
-  const total = data.reduce((s, d) => s + d.dossiers, 0);
-  const max = Math.max(4, ...data.map((d) => d.dossiers));
+  const totalDossiers = data.reduce((s, d) => s + d.dossiers, 0);
+  const totalCentres = data.reduce((s, d) => s + d.centres, 0);
+  const max = Math.max(4, ...data.map((d) => Math.max(d.dossiers, d.centres)));
 
   return (
     <Panel
-      eyebrow="Tendance"
-      title="Nouveaux dossiers"
-      subtitle={`${total} dossier${total > 1 ? "s" : ""} sur la période`}
-      actions={
-        <div className="flex items-center gap-0.5 rounded-xl bg-slate-50 p-0.5">
-          {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setPeriod(p.key)}
-              className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors duration-150 ${
-                period === p.key
-                  ? "bg-white text-[#332151] shadow-sm"
-                  : "text-[#5A5A7A] hover:text-[#332151]"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      }
+      title="Évolution des créations"
+      subtitle={`${totalDossiers} dossier${totalDossiers > 1 ? "s" : ""} · ${totalCentres} centre${totalCentres > 1 ? "s" : ""} sur la période`}
+      actions={<DateRangePicker value={range} onChange={setRange} />}
     >
-      {total === 0 ? (
+      {totalDossiers === 0 && totalCentres === 0 ? (
         <EmptyState
           icon={TrendingUp}
-          message="Aucun nouveau dossier sur cette période"
-          hint="Essayez une période plus large ou créez un dossier."
+          message="Aucune création sur cette période"
+          hint="Élargissez la période ou créez un centre / dossier."
         />
       ) : (
         <motion.div
-          key={period}
+          key={`${range?.start?.getTime()}-${range?.end?.getTime()}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.25 }}
           className="h-72 w-full text-xs"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#E34F2D" stopOpacity={0.22} />
-                  <stop offset="100%" stopColor="#E34F2D" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis dataKey="name" stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 700 }} dy={10} interval="preserveStartEnd" />
               <YAxis stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 700 }} domain={[0, max]} allowDecimals={false} />
               <Tooltip content={<Tip />} cursor={{ stroke: "#5A5A7A", strokeWidth: 1, strokeDasharray: "4 4" }} />
-              <Area type="monotone" dataKey="dossiers" stroke="#E34F2D" strokeWidth={3} fill="url(#trendGrad)" activeDot={{ r: 6, stroke: "white", strokeWidth: 2, fill: "#E34F2D" }} />
-            </AreaChart>
+              <Legend
+                verticalAlign="top"
+                align="right"
+                height={28}
+                iconType="circle"
+                iconSize={8}
+                formatter={(v) => <span className="text-[11px] font-semibold text-[#5A5A7A]">{SERIES.find((s) => s.key === v)?.label ?? v}</span>}
+              />
+              {SERIES.map((s) => (
+                <Line
+                  key={s.key}
+                  type="monotone"
+                  dataKey={s.key}
+                  stroke={s.color}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5, stroke: "white", strokeWidth: 2, fill: s.color }}
+                />
+              ))}
+            </LineChart>
           </ResponsiveContainer>
         </motion.div>
       )}

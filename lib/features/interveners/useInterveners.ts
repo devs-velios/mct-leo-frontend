@@ -4,7 +4,7 @@
 
 import { useReducer, useCallback, useRef, useEffect } from "react";
 import { intervenersReducer, initialIntervenersState } from "./intervenersReducer";
-import { fetchInterveners, createIntervener, updateIntervener, deleteIntervener } from "./api";
+import { fetchInterveners, fetchIntervenerCategories, createIntervener, updateIntervener, deleteIntervener } from "./api";
 import { type CreateIntervenerPayload, type UpdateIntervenerPayload } from "./types";
 
 export function useInterveners() {
@@ -12,10 +12,23 @@ export function useInterveners() {
   const mountedRef = useRef(true);
   const statusRef = useRef(state.status);
   statusRef.current = state.status;
+  const categoriesLoadedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
+  }, []);
+
+  // The fixed category catalog (value + description) — loaded once for the form dropdown.
+  const ensureCategories = useCallback(async () => {
+    if (categoriesLoadedRef.current) return;
+    categoriesLoadedRef.current = true;
+    try {
+      const { categories } = await fetchIntervenerCategories();
+      if (mountedRef.current) dispatch({ type: "SET_CATEGORY_OPTIONS", categoryOptions: categories ?? [] });
+    } catch {
+      categoriesLoadedRef.current = false; // allow a retry
+    }
   }, []);
 
   const refresh = useCallback(async (category?: string) => {
@@ -34,9 +47,10 @@ export function useInterveners() {
 
   // Fetch once; reuse cached state on later mounts. force=true bypasses the guard.
   const ensureLoaded = useCallback(async (force = false) => {
+    void ensureCategories();
     if (!force && (statusRef.current === "loaded" || statusRef.current === "loading")) return;
     await refresh();
-  }, [refresh]);
+  }, [refresh, ensureCategories]);
 
   const create = useCallback(async (payload: CreateIntervenerPayload) => {
     const intervener = await createIntervener(payload);
@@ -63,11 +77,14 @@ export function useInterveners() {
   return {
     interveners: state.list,
     categories: state.categories,
+    /** Detailed categories (value + description) for the form dropdown. */
+    categoryOptions: state.categoryOptions,
     status: state.status,
     error: state.error,
     isLoading: state.status === "loading" || state.status === "idle",
     refresh,
     ensureLoaded,
+    ensureCategories,
     create,
     update,
     remove,

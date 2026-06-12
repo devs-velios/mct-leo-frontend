@@ -36,6 +36,8 @@ interface MultiSelectProps {
   className?: string;
   /** Extra classes for the dropdown panel (e.g. a width). Defaults to "w-56". */
   contentClassName?: string;
+  /** Extra classes for the scrollable option list (e.g. "max-h-[200px]" to cap visible rows). */
+  listClassName?: string;
   align?: "start" | "center" | "end";
   /** Show a "Tout effacer" action when there is an active selection. */
   clearable?: boolean;
@@ -50,6 +52,7 @@ export function MultiSelect({
   emptyText = "Aucun résultat.",
   className,
   contentClassName,
+  listClassName,
   align = "start",
   clearable = true,
 }: MultiSelectProps) {
@@ -92,10 +95,10 @@ export function MultiSelect({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align={align} className={cn("p-0", contentClassName ?? "w-56")}>
+      <PopoverContent align={align} className={cn("z-[120] p-0", contentClassName ?? "w-56")}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandList className={listClassName}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {

@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/features/auth/useAuth";
 
 export default function Login() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+
+  // Already signed in → skip the login screen.
+  useEffect(() => {
+    if (isAuthenticated) router.replace("/dashboard");
+  }, [isAuthenticated, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +57,7 @@ export default function Login() {
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#29265B] px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#332151] px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
       
       {/* Premium background decorative shapes */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -203,7 +208,7 @@ export default function Login() {
               className="relative overflow-hidden flex w-full items-center justify-center rounded-3xl bg-[#E34F2D] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#E34F2D]/20 transition-all duration-200 hover:bg-[#DF3714] hover:shadow-[#E34F2D]/30 disabled:opacity-85 cursor-pointer glow-effect"
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin text-white" />
+                "Connexion…"
               ) : isSuccess ? (
                 <motion.span 
                   initial={{ scale: 0.8 }} 

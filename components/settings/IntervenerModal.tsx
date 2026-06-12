@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserCog, X, Loader2 } from "lucide-react";
 import { SingleSelect } from "@/components/ui/single-select";
-import { CATEGORY_LABEL, ACTIVITY_VALUES, type Intervener } from "@/lib/features/interveners";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { CATEGORY_LABEL, ACTIVITY_VALUES, type Intervener, type IntervenerCategory } from "@/lib/features/interveners";
+import { type Department } from "@/lib/features/departments";
 
 export interface IntervenerFormValues {
   name: string;
@@ -15,12 +17,12 @@ export interface IntervenerFormValues {
   activities: string[];
 }
 
-const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label }));
-
 export default function IntervenerModal({
   open,
   mode,
   intervener,
+  categoryOptions,
+  departments,
   submitting,
   onClose,
   onSubmit,
@@ -28,37 +30,44 @@ export default function IntervenerModal({
   open: boolean;
   mode: "create" | "edit";
   intervener?: Intervener | null;
+  /** Live category catalog (value + description) from /interveners/categories. */
+  categoryOptions: IntervenerCategory[];
+  /** Department reference list for the sectors picker. */
+  departments: Department[];
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: IntervenerFormValues) => void;
 }) {
   const [v, setV] = useState<IntervenerFormValues>({ name: "", phone_number: "", role: "", category: "always", sectors: [], activities: [] });
-  const [sectorsText, setSectorsText] = useState("");
 
   useEffect(() => {
     if (!open) return;
-    const sectors = intervener?.sectors ?? [];
     setV({
       name: intervener?.name ?? "",
       phone_number: intervener?.phone_number ?? "",
       role: intervener?.role ?? "",
       category: intervener?.category ?? "always",
-      sectors,
+      sectors: intervener?.sectors ?? [],
       activities: intervener?.activities ?? [],
     });
-    setSectorsText(sectors.join(", "));
   }, [open, intervener]);
 
   const set = <K extends keyof IntervenerFormValues>(k: K, val: IntervenerFormValues[K]) => setV((s) => ({ ...s, [k]: val }));
   const toggleActivity = (a: string) =>
     setV((s) => ({ ...s, activities: s.activities.includes(a) ? s.activities.filter((x) => x !== a) : [...s.activities, a] }));
 
+  // Category dropdown (live catalog, fallback to static labels) + the helper text.
+  const catOpts = categoryOptions.length
+    ? categoryOptions.map((c) => ({ value: c.value, label: CATEGORY_LABEL[c.value] ?? c.value }))
+    : Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label }));
+  const catDescription = categoryOptions.find((c) => c.value === v.category)?.description;
+  // Department options: show "code · name", store the code.
+  const deptOptions = departments.map((d) => ({ value: d.code, label: `${d.code} · ${d.name}` }));
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!v.name.trim() || !v.phone_number.trim()) return;
-    // Parse the department codes from the free-text field.
-    const sectors = sectorsText.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
-    onSubmit({ ...v, name: v.name.trim(), phone_number: v.phone_number.trim(), role: v.role.trim(), sectors });
+    onSubmit({ ...v, name: v.name.trim(), phone_number: v.phone_number.trim(), role: v.role.trim() });
   };
 
   return (
@@ -100,20 +109,26 @@ export default function IntervenerModal({
                 <Field label="Fonction" value={v.role} onChange={(val) => set("role", val)} placeholder="Commercial Sud" />
                 <div>
                   <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Catégorie</label>
-                  <SingleSelect value={v.category} onChange={(val) => set("category", val)} options={CATEGORY_OPTIONS} placeholder="Catégorie" className="w-full" fullWidth />
+                  <SingleSelect value={v.category} onChange={(val) => set("category", val)} options={catOpts} placeholder="Catégorie" className="w-full" fullWidth />
+                  {catDescription && <p className="mt-1 text-[10px] leading-snug text-slate-400">{catDescription}</p>}
                 </div>
               </div>
 
-              {/* Sectors */}
+              {/* Sectors — departments multi-select (shows name, stores the code) */}
               <div>
                 <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Départements couverts</label>
-                <input
-                  value={sectorsText}
-                  onChange={(e) => setSectorsText(e.target.value)}
-                  placeholder="13, 83, 2A, 2B…"
-                  className="w-full rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-2.5 text-sm text-[#1A1A1A] outline-none transition-all focus:border-[#E34F2D] focus:bg-white focus:ring-2 focus:ring-[#E34F2D]/20"
+                <MultiSelect
+                  options={deptOptions}
+                  selected={v.sectors}
+                  onChange={(vals) => set("sectors", vals)}
+                  placeholder="Sélectionner des départements"
+                  searchPlaceholder="Rechercher un département…"
+                  emptyText="Aucun département."
+                  className="w-full"
+                  contentClassName="w-[min(360px,90vw)]"
+                  listClassName="max-h-[240px]"
                 />
-                <p className="mt-1 text-[10px] text-slate-400">Codes département séparés par des virgules.</p>
+                <p className="mt-1 text-[10px] text-slate-400">Utile pour les catégories « Commercial » et « Auditeur ».</p>
               </div>
 
               {/* Activities */}

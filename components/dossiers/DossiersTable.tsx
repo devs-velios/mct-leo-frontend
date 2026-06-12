@@ -1,25 +1,32 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronRight, MapPin, Calendar } from "lucide-react";
+import { ArrowRight, OctagonAlert } from "lucide-react";
 import { type Dossier } from "@/lib/features/dossiers";
+import { RESPONSABLE_ROLES } from "@/lib/features/pipeline";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { VilleCell } from "@/components/ui/centre-cell";
+import { Button } from "@/components/ui/button";
 import { type RowSelection } from "@/components/hooks/useRowSelection";
 
 interface DossiersTableProps {
   displayedDossiers: Dossier[];
   totalItems: number;
-  startIndex: number;
-  endIndex: number;
   currentPage: number;
   totalPages: number;
-  setCurrentPage: (updater: (prev: number) => number) => void;
   goToPage: (page: number) => void;
-  onOpenDossier?: (id: string) => void;
-  onAdvance?: (dossierId: string, direction: "next" | "back") => void;
-  /** When provided, renders a selection column with select-all + per-row checkboxes. */
+  getRowId: (row: Dossier) => string;
+  /** Clicking a row / the detail button opens the CENTRE profile. */
+  onOpenCentre?: (centreId: string) => void;
+  /** Hovering a row — warms the centre detail cache for a snappy open. */
+  onHoverCentre?: (centreId: string) => void;
   selection?: RowSelection;
 }
+
+const TYPE_DOSSIER_LABEL: Record<string, string> = { centre: "Centre", controleur: "Contrôleur" };
+const ROLE_LABEL: Record<string, string> = Object.fromEntries(RESPONSABLE_ROLES.map((r) => [r.value, r.label]));
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function DossiersTable({
   displayedDossiers,
@@ -27,75 +34,141 @@ export default function DossiersTable({
   currentPage,
   totalPages,
   goToPage,
-  onOpenDossier,
+  getRowId,
+  onOpenCentre,
+  onHoverCentre,
   selection,
 }: DossiersTableProps) {
-  const open = (item: Dossier) => onOpenDossier?.(item.dossierId ?? item.id);
+  const open = (item: Dossier) => onOpenCentre?.(item.id);
 
   const columns: DataTableColumn<Dossier>[] = [
     {
       id: "centre",
       header: "Centre",
-      width: "minmax(220px,1.4fr)",
+      width: "minmax(200px,1.4fr)",
       cell: (item) => (
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold leading-tight text-[#332151] transition-colors group-hover:text-[#E34F2D]">
             {item.centre}
           </p>
-          <span className="mt-1 block font-mono text-[10px] font-normal text-[#5A5A7A]">
-            {item.code ?? item.id}
-          </span>
+          <span className="mt-0.5 block font-mono text-[10px] font-normal text-[#5A5A7A]">{item.code ?? item.id}</span>
         </div>
       ),
+    },
+    {
+      id: "type",
+      header: "Type",
+      width: "120px",
+      cell: (item) =>
+        item.typeDossier ? (
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${
+              item.typeDossier === "centre" ? "bg-[#332151]/10 text-[#332151]" : "bg-slate-100 text-[#5A5A7A]"
+            }`}
+          >
+            {TYPE_DOSSIER_LABEL[item.typeDossier] ?? cap(item.typeDossier)}
+          </span>
+        ) : (
+          <span className="text-[11px] text-slate-400">—</span>
+        ),
     },
     {
       id: "ville",
       header: "Ville",
       width: "minmax(120px,1fr)",
-      cell: (item) => (
-        <span className="inline-flex items-center gap-1.5 text-xs font-normal text-[#5A5A7A]">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-          {item.ville || "Non disponible"}
-        </span>
-      ),
+      cell: (item) => <VilleCell ville={item.ville} />,
     },
     {
       id: "phase",
       header: "Phase",
-      width: "160px",
+      width: "170px",
+      cell: (item) => {
+        const blocked = item.macro === "bloque" || item.joursInactif >= 14;
+        return (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#332151]">
+              {item.phase === "Dépôt" ? "Dépôt agrément" : item.phase}
+            </span>
+            {blocked && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#E11D48]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#E11D48]" title="Dossier bloqué">
+                <OctagonAlert className="h-3 w-3" /> Bloqué
+              </span>
+            )}
+          </span>
+        );
+      },
+    },
+    {
+      id: "inactivite",
+      header: "Inactivité",
+      width: "100px",
+      align: "center",
       cell: (item) => (
-        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#332151]">
-          {item.phase === "Dépôt" ? "Dépôt agrément" : item.phase}
+        <span className={`text-xs font-medium tabular-nums ${item.joursInactif >= 5 ? "text-[#E11D48]" : "text-[#5A5A7A]"}`}>
+          {item.joursInactif} j
         </span>
       ),
     },
     {
-      id: "createdAt",
-      header: "Créé le",
+      id: "contrat",
+      header: "Contrat",
+      width: "90px",
+      align: "center",
+      cell: (item) =>
+        item.typeContrat ? (
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${
+              item.typeContrat === "R" ? "bg-[#332151]/10 text-[#332151]" : "bg-[#E34F2D]/10 text-[#E34F2D]"
+            }`}
+          >
+            {item.typeContrat}
+          </span>
+        ) : (
+          <span className="text-[11px] text-slate-400">—</span>
+        ),
+    },
+    {
+      id: "activites",
+      header: "Activités",
+      width: "130px",
+      cell: (item) =>
+        item.activites && item.activites.length > 0 ? (
+          <span className="text-[11px] font-normal text-[#5A5A7A]">{item.activites.join(" · ")}</span>
+        ) : (
+          <span className="text-[11px] text-slate-400">—</span>
+        ),
+    },
+    {
+      id: "responsable",
+      header: "Responsable",
       width: "150px",
       cell: (item) => (
-        <span className="flex items-center gap-1.5 text-xs font-normal text-[#5A5A7A]">
-          <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-          {item.signatureDate || "Non disponible"}
+        <span className="text-[11px] font-normal text-[#5A5A7A]">
+          {item.responsableRole ? ROLE_LABEL[item.responsableRole] ?? item.responsableRole : "—"}
         </span>
       ),
     },
     {
-      id: "action",
-      header: "Action",
-      width: "80px",
-      align: "right",
+      id: "nbDossiers",
+      header: "Dossiers",
+      width: "90px",
+      align: "center",
+      cell: (item) => <span className="text-xs font-medium tabular-nums text-[#332151]">{item.nbDossiers ?? "—"}</span>,
+    },
+    {
+      id: "detail",
+      header: "Détail",
+      width: "180px",
+      align: "center",
       cell: (item) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            open(item);
-          }}
-          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-[#E34F2D]/10 hover:text-[#E34F2D] group-hover:text-[#E34F2D]"
-          title="Ouvrir le dossier"
+        <Button
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); open(item); }}
+          className="gap-1.5 text-[11px] font-semibold bg-[#E34F2D]/10 text-[#E34F2D] shadow-none hover:bg-[#E34F2D]/20 hover:text-[#E34F2D]"
         >
-          <ChevronRight className="h-[18px] w-[18px]" />
-        </button>
+          Voir les détails
+          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </Button>
       ),
     },
   ];
@@ -107,38 +180,21 @@ export default function DossiersTable({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100/50 flex flex-col justify-between overflow-hidden"
+      className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100/50 overflow-hidden p-4 sm:p-6"
     >
-      {/* Cards Header Section */}
-      <div className="p-6 border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h4 className="text-base font-extrabold font-serif-mct text-[#332151]">{totalItems} dossiers</h4>
-          <p className="text-[10px] text-[#5A5A7A] mt-0.5">
-            Suivi des centres et validation de l'onboarding technique.
-          </p>
-        </div>
-      </div>
-
-      <div className="p-4 sm:p-6">
-        <DataTable<Dossier>
-          data={displayedDossiers}
-          columns={columns}
-          getRowId={(item) => item.id}
-          minWidth="760px"
-          selection={selection}
-          onRowClick={open}
-          hideToolbar
-          bare
-          emptyMessage="Aucun dossier ne correspond à vos filtres."
-          pagination={{
-            page: currentPage,
-            totalPages,
-            totalItems,
-            numbered: true,
-            onPageChange: goToPage,
-          }}
-        />
-      </div>
+      <DataTable<Dossier>
+        data={displayedDossiers}
+        columns={columns}
+        getRowId={getRowId}
+        minWidth="1320px"
+        selection={selection}
+        onRowClick={open}
+        onRowHover={onHoverCentre ? (item) => onHoverCentre(item.id) : undefined}
+        hideToolbar
+        bare
+        emptyMessage="Aucun dossier ne correspond à vos filtres."
+        pagination={{ page: currentPage, totalPages, totalItems, numbered: true, onPageChange: goToPage }}
+      />
     </motion.div>
   );
 }
