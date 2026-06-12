@@ -131,12 +131,11 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
       width: "minmax(220px,1.6fr)",
       cell: (s) => {
         const text = s.final_answer ?? s.draft_answer;
+        // First two lines only (markdown symbols stripped) — full formatted text in the eye modal.
+        const preview = (text ?? "").replace(/[*_#`>~]/g, "").replace(/\s+/g, " ").trim();
         return (
           <div className="min-w-0">
-            {/* Formatted preview (markdown), capped so rows stay compact — full text via the eye button. */}
-            <div className="max-h-[3.75rem] overflow-hidden text-[#1A1A1A] [&_*]:!text-xs [&_*]:!leading-relaxed" title={text}>
-              <Markdown>{text}</Markdown>
-            </div>
+            <p className="line-clamp-2 text-xs leading-relaxed text-[#1A1A1A]" title={text}>{preview}</p>
             {isPending && s.sensitive_reason && (
               <span className="mt-1 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
                 <ShieldAlert className="h-2.5 w-2.5" /> {s.sensitive_reason}
