@@ -188,6 +188,10 @@ export default function CentreDetailView({
   const responsable = (c.contacts_clients?.responsable as string | undefined) ?? null;
   const name = c.enseigne ?? c.code_centre;
   const addressParts = [c.street, c.street2, c.zip, c.ville, c.region, c.country].filter(Boolean);
+  // Defensive: the backend can omit these on some payloads (e.g. a lighter response
+  // after a PATCH). Reading .length / .present on undefined would crash the page.
+  const dossiers = detail.dossiers ?? [];
+  const piecesStats = detail.pieces_stats ?? { present: 0, missing: 0, verified: 0 };
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#F5F5F7] custom-scrollbar">
@@ -267,13 +271,13 @@ export default function CentreDetailView({
 
         {/* Dossiers + Pièces side by side */}
         <div className="grid gap-4 lg:grid-cols-3">
-          <Section title={`Dossiers du centre (${detail.dossiers.length})`} className="lg:col-span-2">
+          <Section title={`Dossiers du centre (${dossiers.length})`} className="lg:col-span-2">
             {(() => {
               // A centre holds one "Centre" dossier + N "Contrôleur" dossiers. Show the
               // Centre dossier first (accented), then one card per contrôleur, then an
               // "add a contrôleur dossier" action.
-              const centreDossier = detail.dossiers.find((d) => d.type_dossier === "centre");
-              const controleurs = detail.dossiers.filter((d) => d.type_dossier !== "centre");
+              const centreDossier = dossiers.find((d) => d.type_dossier === "centre");
+              const controleurs = dossiers.filter((d) => d.type_dossier !== "centre");
               const card = (d: (typeof detail.dossiers)[number], isCentre: boolean) => (
                 <button
                   key={d.id}
@@ -310,7 +314,7 @@ export default function CentreDetailView({
               );
               return (
                 <div className="space-y-2.5">
-                  {detail.dossiers.length === 0 && (
+                  {dossiers.length === 0 && (
                     <p className="text-sm font-medium text-[#5A5A7A]">Aucun dossier pour ce centre.</p>
                   )}
                   {centreDossier && card(centreDossier, true)}
@@ -323,9 +327,9 @@ export default function CentreDetailView({
           <Section title="Pièces">
             <div className="grid grid-cols-3 divide-x divide-slate-100">
               {[
-                { label: "Présentes", value: detail.pieces_stats.present },
-                { label: "Manquantes", value: detail.pieces_stats.missing },
-                { label: "Validées", value: detail.pieces_stats.verified },
+                { label: "Présentes", value: piecesStats.present },
+                { label: "Manquantes", value: piecesStats.missing },
+                { label: "Validées", value: piecesStats.verified },
               ].map((s) => (
                 <div key={s.label} className="px-1 text-center first:pl-0 last:pr-0">
                   <p className="text-xl font-bold tabular-nums text-[#332151]">{s.value}</p>
@@ -337,10 +341,10 @@ export default function CentreDetailView({
         </div>
 
         {/* Primary CTA — bottom right */}
-        {detail.dossiers.length > 0 && (
+        {dossiers.length > 0 && (
           <div className="flex justify-end pt-2">
             <button
-              onClick={() => onOpenDossier?.(detail.dossiers[detail.dossiers.length - 1].id)}
+              onClick={() => onOpenDossier?.(dossiers[dossiers.length - 1].id)}
               className="group inline-flex items-center gap-2 rounded-xl bg-[#E34F2D] px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#DF3714]"
             >
               Ouvrir le dossier

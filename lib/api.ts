@@ -17,9 +17,15 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
   const res = await fetch(`/api/leo/${path.replace(/^\/+/, "")}`, init);
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  // Tolerate non-JSON bodies (HTML error pages, gateway timeouts) instead of letting
+  // JSON.parse throw a raw SyntaxError that escapes the caller's error handling.
+  let data: unknown = null;
+  if (text) {
+    try { data = JSON.parse(text); } catch { data = null; }
+  }
   if (!res.ok) {
-    throw new ApiError(res.status, data?.message ?? `Request failed (${res.status})`);
+    const message = (data as { message?: string } | null)?.message ?? `Request failed (${res.status})`;
+    throw new ApiError(res.status, message);
   }
   return data as T;
 }
