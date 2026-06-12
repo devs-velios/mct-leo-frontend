@@ -133,19 +133,9 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
         const text = s.final_answer ?? s.draft_answer;
         return (
           <div className="min-w-0">
-            <div className="flex items-start gap-1.5">
-              {/* Formatted preview (markdown), capped so rows stay compact. */}
-              <div className="min-w-0 flex-1 max-h-[3.75rem] overflow-hidden text-[#1A1A1A] [&_*]:!text-xs [&_*]:!leading-relaxed" title={text}>
-                <Markdown>{text}</Markdown>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setViewing(s); }}
-                title="Voir la réponse complète"
-                aria-label="Voir la réponse complète"
-                className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5A5A7A] transition-colors hover:border-[#E34F2D]/40 hover:text-[#E34F2D]"
-              >
-                <Eye className="h-3.5 w-3.5" />
-              </button>
+            {/* Formatted preview (markdown), capped so rows stay compact — full text via the eye button. */}
+            <div className="max-h-[3.75rem] overflow-hidden text-[#1A1A1A] [&_*]:!text-xs [&_*]:!leading-relaxed" title={text}>
+              <Markdown>{text}</Markdown>
             </div>
             {isPending && s.sensitive_reason && (
               <span className="mt-1 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
@@ -169,14 +159,31 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
           width: "120px",
           cell: (s) => statusBadge(s),
         },
-    isPending
-      ? {
-          id: "actions",
-          header: "Actions",
-          width: "120px",
-          align: "right",
-          cell: (s) => (
-            <div className="flex items-center justify-end gap-1.5">
+    ...(isPending
+      ? []
+      : [{
+          id: "revuLe",
+          header: "Revu le",
+          width: "130px",
+          cell: (s: RagSuggestion) => <span className="text-[11px] text-slate-400">{s.reviewed_at ? new Date(s.reviewed_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}</span>,
+        } as DataTableColumn<RagSuggestion>]),
+    {
+      id: "actions",
+      header: "Actions",
+      width: isPending ? "150px" : "80px",
+      align: "right",
+      cell: (s) => (
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={(e) => { e.stopPropagation(); setViewing(s); }}
+            title="Voir la réponse complète"
+            aria-label="Voir la réponse complète"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5A5A7A] transition hover:border-[#E34F2D]/40 hover:text-[#E34F2D] active:scale-95 cursor-pointer"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          {isPending && (
+            <>
               <button
                 onClick={(e) => { e.stopPropagation(); handleApprove(s); }}
                 title="Approuver & envoyer"
@@ -191,15 +198,11 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
               >
                 <X className="h-3.5 w-3.5" />
               </button>
-            </div>
-          ),
-        }
-      : {
-          id: "revuLe",
-          header: "Revu le",
-          width: "130px",
-          cell: (s) => <span className="text-[11px] text-slate-400">{s.reviewed_at ? new Date(s.reviewed_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}</span>,
-        },
+            </>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
