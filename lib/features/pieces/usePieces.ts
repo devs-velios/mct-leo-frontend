@@ -15,6 +15,7 @@ import {
   rejectPiece,
 } from "./api";
 import { type PiecesListParams } from "./types";
+import { invalidate, CACHE } from "@/lib/features/cacheBus";
 
 export function usePieces() {
   const [state, dispatch] = useReducer(piecesReducer, initialPiecesState);
@@ -87,6 +88,7 @@ export function usePieces() {
       const piece = await verifyPiece(id);
       if (mountedRef.current) dispatch({ type: "PIECE_UPDATED", piece });
       void refreshQueue(); // only the queue is rendered; reconcile it (no /pieces + /pieces/stats refetch)
+      invalidate(CACHE.dashboard, CACHE.centres); // "Documents à valider" KPI + centre pièces change
       return piece;
     } catch (err) {
       void refreshQueue(); // revert to backend truth on failure
@@ -124,6 +126,7 @@ export function usePieces() {
     try {
       const piece = await rejectPiece(id, reason);
       void refreshQueue(); // reconcile (rejected item now carries statut "rejete"); only the queue is rendered
+      invalidate(CACHE.dashboard, CACHE.centres);
       return piece;
     } catch (err) {
       await refreshQueue();

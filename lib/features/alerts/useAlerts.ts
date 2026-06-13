@@ -6,6 +6,7 @@ import { useReducer, useCallback, useRef, useEffect } from "react";
 import { alertsReducer, initialAlertsState } from "./alertsReducer";
 import { fetchAlerts, resolveAlert } from "./api";
 import { type AlertStatusFilter } from "./types";
+import { invalidate, CACHE } from "@/lib/features/cacheBus";
 
 export function useAlerts() {
   const [state, dispatch] = useReducer(alertsReducer, initialAlertsState);
@@ -63,6 +64,8 @@ export function useAlerts() {
     try {
       const result = await resolveAlert(id);
       void revalidate(); // reconcile with backend truth
+      // Resolving a blocage changes the centre's status + KPI counts elsewhere.
+      invalidate(CACHE.dashboard, CACHE.heatmap, CACHE.centres, CACHE.dossiers);
       return result;
     } catch (err) {
       await revalidate(); // roll back to backend state on failure

@@ -7,12 +7,17 @@ import { useReducer, useCallback, useRef, useEffect } from "react";
 import { heatmapReducer, initialHeatmapState } from "./heatmapReducer";
 import { fetchPipelineHeatmap } from "./api";
 import { type HeatmapQuery, type HeatmapThresholds } from "./types";
+import { useCacheInvalidation, CACHE } from "@/lib/features/cacheBus";
 
 export function useHeatmap() {
   const [state, dispatch] = useReducer(heatmapReducer, initialHeatmapState);
   const mountedRef = useRef(true);
   const statusRef = useRef(state.status);
   statusRef.current = state.status;
+  // Marked true when something elsewhere invalidates the heat map (e.g. a stage change),
+  // so the next ensureLoaded() refetches instead of serving the cached matrix.
+  const staleRef = useRef(false);
+  useCacheInvalidation(CACHE.heatmap, () => { staleRef.current = true; });
   // Mirror the active thresholds so refresh() reads the latest without re-creating itself.
   const thresholdsRef = useRef(state.thresholds);
   thresholdsRef.current = state.thresholds;
@@ -37,7 +42,8 @@ export function useHeatmap() {
 
   // Fetch once; reuse cached state on later mounts. force=true bypasses the guard.
   const ensureLoaded = useCallback(async (force = false) => {
-    if (!force && (statusRef.current === "loaded" || statusRef.current === "loading")) return;
+    if (!force && !staleRef.current && (statusRef.current === "loaded" || statusRef.current === "loading")) return;
+    staleRef.current = false;
     await refresh();
   }, [refresh]);
 

@@ -158,7 +158,7 @@ export default function UsersView({ setMobileMenuOpen, embedded }: UsersViewProp
       )}
 
       <div className={embedded ? "" : "flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50/30"}>
-        <div className="mx-auto w-full max-w-[1100px]">
+        <div className="mx-auto w-full max-w-[1400px]">
           {/* User directory — full-width table with an invite action in the header. */}
           <div className="overflow-hidden rounded-3xl border border-slate-100/80 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
             <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">

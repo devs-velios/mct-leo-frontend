@@ -192,7 +192,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
     const res = await prompt({
       title: "Renommer le fichier",
       submitLabel: "Renommer",
-      fields: [{ name: "newName", label: "Nouveau nom du fichier", defaultValue: `${item.docType}.pdf`, required: true }],
+      fields: [{ name: "newName", label: "Nouveau nom du fichier", defaultValue: item.fileName || `${item.docType}.pdf`, required: true }],
     });
     if (!res) return;
     try {

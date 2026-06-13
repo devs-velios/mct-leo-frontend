@@ -46,7 +46,7 @@ export default function AuditLogView({ setMobileMenuOpen }: { setMobileMenuOpen?
       </header>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 custom-scrollbar">
-        <div className="mx-auto w-full min-w-0 max-w-[1040px]">
+        <div className="mx-auto w-full min-w-0 max-w-[1400px]">
           {isLoading && entries.length === 0 ? (
             <SkeletonTable rows={10} cols={5} />
           ) : status === "error" ? (

@@ -6,6 +6,7 @@
 import { useReducer, useCallback, useEffect, useRef } from "react";
 import { dashboardReducer, initialDashboardState } from "./dashboardReducer";
 import { fetchDashboardStats } from "./api";
+import { useCacheInvalidation, CACHE } from "@/lib/features/cacheBus";
 
 const POLL_INTERVAL_MS = 60_000; // refresh every 60s
 
@@ -29,6 +30,10 @@ export function useDashboard({ poll = false }: { poll?: boolean } = {}) {
       }
     }
   }, []);
+
+  // The dashboard provider is always mounted (no per-page ensureLoaded), so invalidation
+  // refreshes the KPIs immediately rather than lazily.
+  useCacheInvalidation(CACHE.dashboard, () => { void refresh(); });
 
   useEffect(() => {
     mountedRef.current = true;

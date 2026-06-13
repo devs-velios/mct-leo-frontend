@@ -6,6 +6,7 @@ import { useReducer, useCallback, useRef, useEffect } from "react";
 import { dossiersReducer, initialDossiersState } from "./dossiersReducer";
 import { fetchDossiers, fetchDossier, advanceDossierStage } from "./api";
 import { type AdvancePayload, type DossierDetail } from "./types";
+import { useCacheInvalidation, invalidate, CACHE } from "@/lib/features/cacheBus";
 
 export function useDossiers() {
   const [state, dispatch] = useReducer(dossiersReducer, initialDossiersState);
@@ -13,6 +14,9 @@ export function useDossiers() {
   const statusRef = useRef(state.status);
   statusRef.current = state.status;
   const loadedKeyRef = useRef<string | null>(null);
+  // Set when invalidated elsewhere (e.g. a stage change) → next ensureLoaded refetches.
+  const staleRef = useRef(false);
+  useCacheInvalidation(CACHE.dossiers, () => { staleRef.current = true; });
   const lastParamsRef = useRef<{ stage?: string; centre_id?: string } | undefined>(undefined);
   // Dedup concurrent first-callers (components mounting in the same commit).
   const inFlightRef = useRef<Map<string, Promise<void>>>(new Map());
@@ -43,11 +47,12 @@ export function useDossiers() {
 
   const ensureLoaded = useCallback(async (params?: { stage?: string; centre_id?: string }, force = false) => {
     const key = JSON.stringify(params ?? {});
-    if (!force) {
+    if (!force && !staleRef.current) {
       if (loadedKeyRef.current === key && statusRef.current === "loaded") return;
       const pending = inFlightRef.current.get(key);
       if (pending) return pending; // a concurrent caller already started this fetch
     }
+    staleRef.current = false;
     loadedKeyRef.current = key;
     const p = refresh(params).finally(() => { inFlightRef.current.delete(key); });
     inFlightRef.current.set(key, p);
@@ -74,6 +79,8 @@ export function useDossiers() {
   const advance = useCallback(async (dossierId: string, payload: AdvancePayload) => {
     const result = await advanceDossierStage(dossierId, payload);
     await revalidate();
+    // A stage change ripples into other views → mark them stale (refetch on next visit).
+    invalidate(CACHE.heatmap, CACHE.dashboard, CACHE.centres);
     return result;
   }, [revalidate]);
 

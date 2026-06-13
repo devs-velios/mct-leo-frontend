@@ -19,10 +19,14 @@ import {
   type CentreListItem,
   type CentreDetail,
 } from "./types";
+import { useCacheInvalidation, invalidate, CACHE } from "@/lib/features/cacheBus";
 
 export function useCentres() {
   const [state, dispatch] = useReducer(centresReducer, initialCentresState);
   const mountedRef = useRef(true);
+  // Set when invalidated elsewhere → next ensureList refetches the list slice.
+  const listStaleRef = useRef(false);
+  useCacheInvalidation(CACHE.centres, () => { listStaleRef.current = true; });
   // Mirror the list status in a ref so the cache-guard reads the latest value
   // without re-creating callbacks on every status change.
   const statusRef = useRef(state.listStatus);
@@ -65,11 +69,12 @@ export function useCentres() {
     force = false,
   ) => {
     const key = JSON.stringify(params ?? {});
-    if (!force) {
+    if (!force && !listStaleRef.current) {
       if (statusRef.current === "loaded") return;
       const pending = listInFlightRef.current.get(key);
       if (pending) return pending; // a concurrent caller already started this fetch
     }
+    listStaleRef.current = false;
     const p = loadList(params).finally(() => { listInFlightRef.current.delete(key); });
     listInFlightRef.current.set(key, p);
     return p;
@@ -166,6 +171,8 @@ export function useCentres() {
     const result = await createCentre(payload);
     // Re-pull the list (same slice) from the backend after creation.
     revalidateList();
+    // A new centre (+ its dossier) shows up everywhere → refresh dependents.
+    invalidate(CACHE.dossiers, CACHE.dashboard, CACHE.heatmap);
     return result;
   }, [revalidateList]);
 
@@ -182,6 +189,7 @@ export function useCentres() {
     try {
       const result = await deleteCentre(id);
       void revalidateList(); // reconcile with backend
+      invalidate(CACHE.dossiers, CACHE.dashboard, CACHE.heatmap);
       return result;
     } catch (err) {
       await revalidateList();

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Menu, Send, X, Check, Sparkles, ShieldAlert, Loader2, Inbox, Eye } from "lucide-react";
+import { Menu, Send, X, Check, Sparkles, ShieldAlert, ShieldCheck, Loader2, Inbox, Eye } from "lucide-react";
 import { useRagContext, type RagSuggestion, type RagSuggestionFilter } from "@/lib/features/rag";
 import { useCentresContext } from "@/lib/features/centres";
 import { useDialog } from "@/components/ui/DialogProvider";
@@ -68,6 +68,48 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
     catch { toast.error("Échec du rejet."); refresh({ status: tab }); }
   };
 
+  // ── Edit-before-approve (in the answer modal) ──────────────────────────────────
+  // The operator can rewrite Léo's draft; the edited text is what gets sent + stored.
+  const [editText, setEditText] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const viewingPending = viewing?.status === "pending";
+
+  // Sync the editable draft whenever the modal opens on a new suggestion.
+  useEffect(() => {
+    setEditText(viewing ? (viewing.draft_answer ?? viewing.final_answer ?? "") : "");
+  }, [viewing]);
+
+  const handleApproveEdited = async () => {
+    if (!viewing) return;
+    setSavingEdit(true);
+    try {
+      // Pass the (possibly edited) text; the backend falls back to the draft if blank.
+      await approve(viewing.id, editText.trim() || null);
+      toast.success("Réponse approuvée et envoyée.");
+      setViewing(null);
+    } catch {
+      toast.error("Échec de l'approbation.");
+      refresh({ status: tab });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleRejectFromModal = async () => {
+    if (!viewing) return;
+    setSavingEdit(true);
+    try {
+      await reject(viewing.id);
+      toast.success("Réponse rejetée.");
+      setViewing(null);
+    } catch {
+      toast.error("Échec du rejet.");
+      refresh({ status: tab });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   // ── Bulk actions ─────────────────────────────────────────────────────────────
   const [bulkBusy, setBulkBusy] = useState(false);
   const runBulk = async (kind: "approve" | "reject") => {
@@ -108,11 +150,11 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
     {
       id: "centre",
       header: "Centre",
-      width: "minmax(150px,1fr)",
+      width: "minmax(170px,1fr)",
       cell: (s) => (
         <button
           onClick={(e) => { e.stopPropagation(); onOpenDossier?.(s.centre_id); }}
-          className="truncate text-left text-sm font-bold text-[#332151] transition-colors hover:text-[#E34F2D]"
+          className="block w-full truncate text-left text-sm font-bold text-[#332151] transition-colors hover:text-[#E34F2D]"
           title={centreLabel(s.centre_id)}
         >
           {centreLabel(s.centre_id)}
@@ -122,13 +164,13 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
     {
       id: "question",
       header: "Question du client",
-      width: "minmax(200px,1.4fr)",
+      width: "minmax(170px,1.2fr)",
       cell: (s) => <p className="line-clamp-2 text-xs leading-relaxed text-[#5A5A7A]" title={s.question}>{s.question}</p>,
     },
     {
       id: "answer",
       header: "Réponse de Léo",
-      width: "minmax(220px,1.6fr)",
+      width: "minmax(190px,1.4fr)",
       cell: (s) => {
         const text = s.final_answer ?? s.draft_answer;
         // First two lines only (markdown symbols stripped) — full formatted text in the eye modal.
@@ -149,7 +191,7 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
       ? {
           id: "recuLe",
           header: "Reçu le",
-          width: "130px",
+          width: "115px",
           cell: (s) => <span className="text-[11px] text-slate-400">{new Date(s.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>,
         }
       : {
@@ -169,14 +211,14 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
     {
       id: "actions",
       header: "Actions",
-      width: isPending ? "150px" : "80px",
+      width: isPending ? "240px" : "80px",
       align: "right",
       cell: (s) => (
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={(e) => { e.stopPropagation(); setViewing(s); }}
-            title="Voir la réponse complète"
-            aria-label="Voir la réponse complète"
+            title="Voir / modifier la réponse"
+            aria-label="Voir / modifier la réponse"
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5A5A7A] transition hover:border-[#E34F2D]/40 hover:text-[#E34F2D] active:scale-95 cursor-pointer"
           >
             <Eye className="h-4 w-4" />
@@ -184,18 +226,18 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
           {isPending && (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); handleApprove(s); }}
-                title="Approuver & envoyer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#332151] text-white transition hover:bg-[#E34F2D] active:scale-95 cursor-pointer"
-              >
-                <Send className="h-3.5 w-3.5" />
-              </button>
-              <button
                 onClick={(e) => { e.stopPropagation(); handleReject(s); }}
                 title="Rejeter"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-[#5A5A7A] transition hover:bg-rose-50 hover:text-rose-600 active:scale-95 cursor-pointer"
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-rose-600 active:scale-95 cursor-pointer"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3.5 w-3.5" /> Rejeter
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleApprove(s); }}
+                title="Approuver & envoyer"
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 active:scale-95 cursor-pointer"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" /> Approuver
               </button>
             </>
           )}
@@ -224,8 +266,8 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto bg-[#F5F5F7] p-4 lg:p-6">
-        <div className="mx-auto max-w-[1100px] space-y-5">
+      <div className="flex-1 overflow-y-auto bg-slate-50 p-4 lg:p-6">
+        <div className="mx-auto max-w-[1400px] space-y-5">
           {/* Tabs (dropdown on mobile) */}
           <ResponsiveTabs
             value={tab}
@@ -238,7 +280,8 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
           {loading && suggestions.length === 0 ? (
             <SkeletonTable rows={6} cols={5} />
           ) : (
-            <div className="rounded-3xl border border-slate-100/80 bg-white p-2 shadow-[0_2px_8px_rgba(0,0,0,0.005)]">
+            <div className="overflow-hidden rounded-3xl border border-slate-100/50 bg-white shadow-sm">
+              <div className="px-4 pt-2 sm:px-5">
               <DataTable<RagSuggestion>
                 data={suggestions}
                 getRowId={(s) => s.id}
@@ -265,6 +308,7 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
                   </div>
                 }
               />
+              </div>
             </div>
           )}
         </div>
@@ -328,13 +372,54 @@ export default function RagApprovalsView({ setMobileMenuOpen, onOpenDossier }: R
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A7A]">Question du client</p>
                 <p className="mt-1 text-sm font-semibold text-[#332151]">{viewing.question}</p>
               </div>
-              <div>
-                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">Réponse</p>
-                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                  <Markdown>{viewing.final_answer ?? viewing.draft_answer}</Markdown>
+              {viewingPending ? (
+                <div>
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">
+                    Réponse — modifiable avant envoi
+                  </p>
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    disabled={savingEdit}
+                    rows={12}
+                    className="w-full resize-y rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-[#1A1A1A] outline-none transition-all focus:border-[#E34F2D] focus:bg-white focus:ring-2 focus:ring-[#E34F2D]/20 disabled:opacity-60"
+                  />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Le texte envoyé au client correspond exactement à ce champ. La mise en forme Markdown est conservée.
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#E34F2D]">Réponse</p>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                    <Markdown>{viewing.final_answer ?? viewing.draft_answer}</Markdown>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Footer — only for pending: reject or approve the (edited) answer. */}
+            {viewingPending && (
+              <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4">
+                <button
+                  type="button"
+                  onClick={handleRejectFromModal}
+                  disabled={savingEdit}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-[#5A5A7A] transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                >
+                  <X className="h-3.5 w-3.5" /> Rejeter
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApproveEdited}
+                  disabled={savingEdit || !editText.trim()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-[0_4px_12px_rgba(16,185,129,0.2)] transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-60"
+                >
+                  {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  Approuver &amp; envoyer
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
