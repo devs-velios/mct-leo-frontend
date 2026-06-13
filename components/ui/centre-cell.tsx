@@ -19,7 +19,7 @@ interface CentreCellProps {
 export function CentreCell({ name, code }: CentreCellProps) {
   return (
     <div className="min-w-0">
-      <p className="truncate text-sm font-bold text-[#332151] group-hover:text-[#E34F2D] transition-colors">
+      <p className="truncate text-sm font-semibold text-[#332151] group-hover:text-[#E34F2D] transition-colors">
         {name || "—"}
       </p>
       {code && <p className="mt-0.5 font-mono text-[11px] text-slate-500">{code}</p>}

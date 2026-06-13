@@ -18,6 +18,7 @@ import {
   Clock,
   BellPlus,
   Loader2,
+  HardDrive,
   X
 } from "lucide-react";
 
@@ -49,9 +50,11 @@ interface DossierDetailsViewProps {
   onClose: () => void;
   onNavigateToTab?: (tab: string) => void;
   onSwitch?: (centreId: string) => void;
+  /** Open this dossier's centre profile (/dashboard/centres/:id). */
+  onOpenCentre?: (centreId: string) => void;
 }
 
-export default function DossierDetailsView({ dossierId, focusDossierId, onClose, onNavigateToTab, onSwitch }: DossierDetailsViewProps) {
+export default function DossierDetailsView({ dossierId, focusDossierId, onClose, onNavigateToTab, onSwitch, onOpenCentre }: DossierDetailsViewProps) {
   // Centre cache: upload re-pulls detail; getDetail serves the cached centre payload.
   const { getDetail, centres, ensureList, revalidateList } = useCentresContext();
   // WhatsApp chat: send a message / document through the real pipeline (Léo replies).
@@ -659,9 +662,20 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
 
           {/* DOCUMENTS CHECKLIST — full-width row below the columns */}
           <div className="lg:col-span-3 bg-white p-7 rounded-3xl border border-slate-100 shadow-sm">
-            <div className="border-b border-slate-100 pb-3 mb-5 flex items-center justify-between">
+            <div className="border-b border-slate-100 pb-3 mb-5 flex items-center justify-between gap-3">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">Documents Pièces</span>
-              <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Checklist Live</span>
+              <div className="flex items-center gap-3">
+                {/* Quick access to the Drive — these pièces are stored there. */}
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab?.("Drive")}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#332151] transition-colors hover:bg-slate-50"
+                  title="Ouvrir la gestion du Drive"
+                >
+                  <HardDrive className="h-3.5 w-3.5" /> Drive
+                </button>
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Checklist Live</span>
+              </div>
             </div>
             {/* Legend */}
             <div className="mb-4 flex flex-wrap items-center gap-3 text-[10px] font-semibold text-[#5A5A7A]">
@@ -764,7 +778,12 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
         </div>
       </div>
 
-      <CentreInfoModal open={centreInfoOpen} centre={raw?.centre ?? null} onClose={() => setCentreInfoOpen(false)} />
+      <CentreInfoModal
+        open={centreInfoOpen}
+        centre={raw?.centre ?? null}
+        onClose={() => setCentreInfoOpen(false)}
+        onOpenCentre={onOpenCentre ? () => { setCentreInfoOpen(false); onOpenCentre(dossierId); } : undefined}
+      />
 
       <AddReminderModal
         open={reminderOpen}

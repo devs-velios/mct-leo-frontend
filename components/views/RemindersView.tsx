@@ -10,6 +10,8 @@ import { pieceTypeLabel } from "@/lib/features/pieces";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
+import { CentreCell, VilleCell } from "@/components/ui/centre-cell";
 import { SingleSelect } from "@/components/ui/single-select";
 import { TableToolbar } from "@/components/ui/table-toolbar";
 import { CityFilter } from "@/components/ui/city-filter";
@@ -36,7 +38,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import ReminderCard from "@/components/ui/reminder-card";
 
 // Human-readable status (no raw enum values shown to the operator).
 const STATUS_LABEL: Record<string, string> = {
@@ -305,39 +306,105 @@ export default function RemindersView({ setMobileMenuOpen, onOpenDossier }: { se
               </DropdownMenu>
             </TableToolbar>
 
-            {sortedItems.length === 0 ? (
-              <div className="rounded-3xl border border-slate-100 bg-white p-10 text-center text-sm font-semibold text-[#5A5A7A]">
-                Aucun rappel ne correspond à vos filtres.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {sortedItems.map((r) => {
-                  const centre = centreByDossier.get(r.dossier_id);
-                  return (
-                    <ReminderCard
-                      key={r.id}
-                      centreName={centre?.enseigne ?? centre?.code_centre ?? "Dossier"}
-                      centreCode={centre?.code_centre}
-                      ville={centre?.ville}
-                      statusLabel={statusLabel(r.status)}
-                      statusTone={STATUS_TONE[r.status] ?? "bg-slate-500 text-white"}
-                      reason={reminderReason(r.piece_attendue)}
-                      kindLabel={KIND_LABEL[r.kind] ?? r.kind}
-                      dueType={dueTypeOf(r.escalation)}
-                      escalation={r.escalation}
-                      scheduledLabel={fmtDate(r.scheduled_at)}
-                      isPending={r.status === "pending"}
-                      canOpen={!!centre?.id}
-                      onOpen={() => centre?.id && onOpenDossier?.(centre.id)}
-                      onHover={() => { if (centre?.id) void getDetail(centre.id).catch(() => {}); }}
-                      onEdit={() => edit(r)}
-                      onStop={() => setConfirmAction({ reminder: r, kind: "stop" })}
-                      onDelete={() => setConfirmAction({ reminder: r, kind: "delete" })}
-                    />
-                  );
-                })}
-              </div>
-            )}
+            {/* Table — same design as the Centres page */}
+            <div className="bg-white rounded-3xl border border-slate-100/80 shadow-sm overflow-hidden p-4 sm:p-5">
+              <DataTable<Reminder>
+                data={sortedItems}
+                getRowId={(r) => r.id}
+                minWidth="900px"
+                hideToolbar
+                bare
+                onRowClick={(r) => { const c = centreByDossier.get(r.dossier_id); if (c?.id) onOpenDossier?.(c.id); }}
+                onRowHover={(r) => { const c = centreByDossier.get(r.dossier_id); if (c?.id) void getDetail(c.id).catch(() => {}); }}
+                emptyMessage="Aucun rappel ne correspond à vos filtres."
+                columns={[
+                  {
+                    id: "centre",
+                    header: "Centre",
+                    width: "minmax(200px,1.6fr)",
+                    cell: (r) => {
+                      const c = centreByDossier.get(r.dossier_id);
+                      return <CentreCell name={c?.enseigne ?? c?.code_centre ?? "Dossier"} code={c?.code_centre} />;
+                    },
+                  },
+                  {
+                    id: "ville",
+                    header: "Ville",
+                    width: "minmax(120px,1fr)",
+                    cell: (r) => <VilleCell ville={centreByDossier.get(r.dossier_id)?.ville} />,
+                  },
+                  {
+                    id: "motif",
+                    header: "Motif",
+                    width: "minmax(200px,1.4fr)",
+                    cell: (r) => {
+                      const due = dueTypeOf(r.escalation);
+                      return (
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-[#332151]">{reminderReason(r.piece_attendue)}</p>
+                          <span className="mt-0.5 inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#5A5A7A]">
+                            {KIND_LABEL[r.kind] ?? r.kind}
+                            {due && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{due}</span>}
+                          </span>
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    id: "statut",
+                    header: "Statut",
+                    width: "150px",
+                    cell: (r) => (
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${STATUS_TONE[r.status] ?? "bg-slate-100 text-slate-600"}`}>
+                        {statusLabel(r.status)}
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "date",
+                    header: "Date d'envoi",
+                    width: "170px",
+                    cell: (r) => <span className="text-xs text-[#5A5A7A]">{fmtDate(r.scheduled_at)}</span>,
+                  },
+                  {
+                    id: "actions",
+                    header: "Actions",
+                    width: "140px",
+                    align: "center",
+                    cell: (r) => (
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); edit(r); }}
+                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#332151]"
+                          title="Modifier"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        {r.status === "pending" && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setConfirmAction({ reminder: r, kind: "stop" }); }}
+                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+                            title="Arrêter"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setConfirmAction({ reminder: r, kind: "delete" }); }}
+                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
           </div>
         )}
       </div>

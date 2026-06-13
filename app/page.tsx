@@ -168,13 +168,12 @@ export default function Login() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5 ml-1">
+            <div className="mb-1.5 ml-1">
+              {/* Password reset is handled by an operateur from Paramètres → Utilisateurs
+                  (no self-service "forgot password" on the login screen). */}
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A7A]">
                 Mot de passe
               </label>
-              <a href="#" className="text-xs font-bold text-[#332151] hover:text-[#E34F2D] transition-colors duration-150">
-                Oublié ?
-              </a>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#5A5A7A]/50">

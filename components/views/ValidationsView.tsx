@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Eye,
@@ -12,7 +13,8 @@ import {
   ExternalLink,
   Menu,
   ArrowUpDown,
-  MoreHorizontal
+  MoreHorizontal,
+  HardDrive
 } from "lucide-react";
 import RejectModal from "@/components/validations/RejectModal";
 import PreviewModal, { type PreviewTarget } from "@/components/validations/PreviewModal";
@@ -31,6 +33,7 @@ import { useCentresContext } from "@/lib/features/centres";
 import { useDialog } from "@/components/ui/DialogProvider";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { DataTable } from "@/components/ui/data-table";
+import { CentreCell } from "@/components/ui/centre-cell";
 import { TableToolbar } from "@/components/ui/table-toolbar";
 import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
 import { useRowSelection } from "@/components/hooks/useRowSelection";
@@ -72,6 +75,7 @@ const CONF_OPTIONS: MultiSelectOption[] = [
 ];
 
 export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: ValidationsViewProps) {
+  const router = useRouter();
   // Backend validation queue: already joined with centre info + a real workflow statut.
   const { queue, isQueueLoading: isLoading, ensureQueue, verify, bulkVerify, move, rename, reject } = usePiecesContext();
   const { folders, ensureLoaded: ensureFolders } = useFoldersContext();
@@ -281,6 +285,16 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
             Tous les documents entrants nécessitant une validation.
           </p>
         </div>
+
+        {/* Quick access to Drive management (these documents live in the Drive). */}
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/drive")}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-[#332151] transition-colors hover:bg-slate-50"
+          title="Ouvrir la gestion du Drive"
+        >
+          <HardDrive className="h-4 w-4 text-[#332151]" /> Gérer le Drive
+        </button>
       </header>
 
       {/* Main content body with tables and filters */}
@@ -361,7 +375,7 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                 <DataTable<ValidationItem>
                   data={displayedItems}
                   getRowId={(item) => String(item.id)}
-                  minWidth="900px"
+                  minWidth="1000px"
                   hideToolbar
                   bare
                   selection={selection}
@@ -370,15 +384,13 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                   emptyMessage="Aucun document ne correspond à vos filtres."
                   columns={[
                     {
+                      // Column 1 — the piece itself: document type (name) + the Drive-linked file.
                       id: "piece",
                       header: "Pièce",
-                      width: "minmax(280px,2fr)",
+                      width: "minmax(240px,1.8fr)",
                       cell: (item) => (
                         <div className="min-w-0">
-                          {/* line 1 — garage / centre name */}
-                          <p className="truncate text-sm font-semibold text-[#332151] transition-colors group-hover:text-[#E34F2D]">{item.nom}</p>
-                          {/* line 2 — document type (readable label) */}
-                          <p className="truncate text-[12px] font-medium text-[#5A5A7A]">{pieceTypeLabel(item.docType)}</p>
+                          <p className="truncate text-sm font-semibold text-[#332151] transition-colors group-hover:text-[#E34F2D]">{pieceTypeLabel(item.docType)}</p>
                           {item.fileName && (item.hasDrive && item.driveLink ? (
                             <a
                               href={item.driveLink}
@@ -396,10 +408,15 @@ export default function ValidationsView({ setMobileMenuOpen, onOpenDossier }: Va
                           {item.status === "Rejeté" && item.rejetRaison && (
                             <p className="mt-0.5 text-[11px] italic text-rose-500/90">Rejet : {item.rejetRaison}</p>
                           )}
-                          {/* small bottom — centre number / reference */}
-                          <span className="mt-1 block font-mono text-[10px] text-slate-400">{item.code}</span>
                         </div>
                       ),
+                    },
+                    {
+                      // Column 2 — the centre: enseigne (name) + code_centre, shared CentreCell.
+                      id: "centre",
+                      header: "Centre",
+                      width: "minmax(160px,1.1fr)",
+                      cell: (item) => <CentreCell name={item.nom} code={item.code} />,
                     },
                     {
                       id: "statut",

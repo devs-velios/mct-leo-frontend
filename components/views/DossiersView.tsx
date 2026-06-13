@@ -71,7 +71,9 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
       dossiers.map((d) => {
         const base = dossierToRow(d);
         const centre = d.centre?.id ? centreById.get(d.centre.id) : undefined;
-        const last = centre?.last_activity_at ?? centre?.created_at ?? null;
+        // Days since last activity: centre's last message → centre creation → finally the
+        // dossier's own created_at, so a missing centre join never collapses this to a fake 0.
+        const last = centre?.last_activity_at ?? centre?.created_at ?? d.created_at ?? null;
         const joursInactif = last ? Math.max(0, Math.floor((now - new Date(last).getTime()) / DAY)) : 0;
         return {
           ...base,

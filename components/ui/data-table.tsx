@@ -15,7 +15,7 @@
  * links, action menus, etc. are all expressible without touching this file.
  */
 
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, useRef, useEffect, type ReactNode } from "react";
 import { motion, useReducedMotion, AnimatePresence, type Variants } from "framer-motion";
 import { ChevronDown, Download, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -155,6 +155,12 @@ export function DataTable<T>({
   emptyMessage = "Aucun résultat.",
 }: DataTableProps<T>) {
   const [internalPage, setInternalPage] = useState(1);
+  // Hover-intent prefetch: onRowHover (used to warm a row's detail cache) only fires after
+  // the cursor RESTS on a row briefly. Scanning/passing the mouse across a long list no
+  // longer fires a detail request per row — only deliberate hovers prefetch.
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelHover = () => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } };
+  useEffect(() => cancelHover, []); // clear any pending timer on unmount
   const [sortColId, setSortColId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -434,7 +440,8 @@ export function DataTable<T>({
                     <motion.div key={id} variants={shouldAnimate ? rowVariants : undefined}>
                       <div
                         onClick={onRowClick ? () => onRowClick(row) : undefined}
-                        onMouseEnter={onRowHover ? () => onRowHover(row) : undefined}
+                        onMouseEnter={onRowHover ? () => { cancelHover(); hoverTimer.current = setTimeout(() => onRowHover(row), 140); } : undefined}
+                        onMouseLeave={onRowHover ? cancelHover : undefined}
                         className={cn(
                           "group relative border-b border-border/20 px-3 py-3.5 transition-all duration-150",
                           selected ? "bg-muted/30" : "bg-muted/5 hover:bg-muted/20",

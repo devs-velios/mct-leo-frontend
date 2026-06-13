@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Store, OctagonAlert, FileCheck2, AlarmClock, Gauge } from "lucide-react";
 import { useDashboardContext } from "@/lib/features/dashboard/DashboardProvider";
-import { dashboardMetrics } from "@/lib/features/dashboard";
+import { dashboardMetrics, networkCompletion } from "@/lib/features/dashboard";
 import { usePiecesContext, queueItemToValidation } from "@/lib/features/pieces";
 import { useRemindersContext, remindersByDueBucket } from "@/lib/features/reminders";
 import { Stats, type StatItem } from "@/components/ui/stats";
@@ -24,7 +24,8 @@ export default function AnalyticsCards() {
   useEffect(() => { setNow(Date.now()); }, []);
 
   const fmt = (n: number | undefined) => (stats == null ? "" : String(n ?? 0));
-  const { piecesPending, pctVerified, openCentres } = dashboardMetrics(stats);
+  const { piecesPending, openCentres } = dashboardMetrics(stats);
+  const completion = networkCompletion(stats);
   const blocked = stats?.centres.by_statut?.bloque ?? 0;
 
   // Pending pieces with a low AI confidence (< 70 %) — derived from the live queue.
@@ -36,9 +37,10 @@ export default function AnalyticsCards() {
     [queue],
   );
 
-  // Reminders already past their send date.
-  const overdueReminders = useMemo(
-    () => (now == null ? 0 : remindersByDueBucket(reminders, now).buckets[0].value),
+  // Active reminders: pending ones still scheduled to fire (upcoming) — excludes the
+  // overdue bucket. Sum of all buckets after "En retard".
+  const activeReminders = useMemo(
+    () => (now == null ? 0 : remindersByDueBucket(reminders, now).buckets.slice(1).reduce((s, b) => s + b.value, 0)),
     [reminders, now],
   );
 
@@ -72,18 +74,17 @@ export default function AnalyticsCards() {
       onClick: () => router.push("/dashboard/validations"),
     },
     {
-      label: "Rappels en retard",
-      value: fmt(overdueReminders),
-      subtext: overdueReminders > 0 ? "à renvoyer rapidement" : "à jour",
+      label: "Rappels actifs",
+      value: fmt(activeReminders),
+      subtext: activeReminders > 0 ? "programmés à venir" : "aucun à venir",
       icon: AlarmClock,
-      danger: overdueReminders > 0,
       loading,
       onClick: () => router.push("/dashboard/rappels"),
     },
     {
       label: "Complétude réseau",
-      value: stats == null ? "" : `${pctVerified}%`,
-      subtext: "pièces validées / attendues",
+      value: stats == null ? "" : `${completion.pct}%`,
+      subtext: stats ? `${completion.active}/${completion.started} centres actifs` : undefined,
       icon: Gauge,
       loading,
       onClick: () => router.push("/dashboard/centres"),

@@ -24,3 +24,11 @@ export async function deleteUser(id: string): Promise<{ id: string; deleted: boo
   if (!res.ok) throw new Error(data?.error ?? `Échec de la suppression (${res.status})`);
   return data;
 }
+
+// Email the user a password-reset link (Supabase recovery, via the frontend server route).
+export async function resetUserPassword(id: string): Promise<{ sent: boolean; email: string }> {
+  const res = await fetch(`/api/users/${id}/reset-password`, { method: "POST", credentials: "same-origin" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error ?? `Échec de l'envoi (${res.status})`);
+  return data;
+}

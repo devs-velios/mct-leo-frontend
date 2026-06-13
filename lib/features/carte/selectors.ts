@@ -79,6 +79,16 @@ export interface CentreApiGeo {
   latitude: number | null;
   longitude: number | null;
   contacts_clients?: Record<string, unknown>;
+  last_activity_at?: string | null;
+  created_at?: string | null;
+}
+
+const DAY_MS = 86_400_000;
+
+/** Days since the centre's last activity (falls back to creation date). 0 if unknown. */
+function inactivityDays(c: { last_activity_at?: string | null; created_at?: string | null }): number {
+  const last = new Date(c.last_activity_at ?? c.created_at ?? "").getTime();
+  return Number.isNaN(last) ? 0 : Math.max(0, Math.floor((Date.now() - last) / DAY_MS));
 }
 
 /** Map real centres (with lat/long) → the map's Center shape, projecting coords to x/y. */
@@ -97,7 +107,7 @@ export function centresToCarte(list: CentreApiGeo[]): Center[] {
         phase: STATUT_PHASE_CARTE[c.statut_ouverture] ?? "Onboarding",
         etape: c.etape_pipeline ?? undefined,
         statut: c.statut_ouverture,
-        joursInactif: 0,
+        joursInactif: inactivityDays(c),
         contact: vals.find((v) => /\d{8,}/.test(v.replace(/\D/g, ""))) ?? "",
         email: vals.find((v) => v.includes("@")) ?? "",
         siret: "",

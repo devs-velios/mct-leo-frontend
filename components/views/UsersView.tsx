@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, UserPlus, AlertCircle, Check, Users, Trash2, ShieldCheck, Eye, X } from "lucide-react";
+import { Menu, UserPlus, AlertCircle, Check, Users, Trash2, ShieldCheck, Eye, X, KeyRound } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { useUsersContext, type AppUser } from "@/lib/features/users";
 import { useRole } from "@/lib/features/auth/RoleProvider";
@@ -28,7 +28,7 @@ interface UsersViewProps {
 }
 
 export default function UsersView({ setMobileMenuOpen, embedded }: UsersViewProps) {
-  const { invite, users, isLoading, status: listStatus, error, ensureLoaded, remove } = useUsersContext();
+  const { invite, users, isLoading, status: listStatus, error, ensureLoaded, remove, resetPassword } = useUsersContext();
   const { canWrite } = useRole(); // inviting/removing users is operateur-only on the backend
   const { confirm } = useDialog();
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -36,6 +36,7 @@ export default function UsersView({ setMobileMenuOpen, embedded }: UsersViewProp
   const [role, setRole] = useState<string>("operateur");
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
 
@@ -83,6 +84,27 @@ export default function UsersView({ setMobileMenuOpen, embedded }: UsersViewProp
     }
   };
 
+  // Forgot/reset password — handled here by an operateur (no self-service on login).
+  // Emails the user a Supabase password-recovery link.
+  const handleResetPassword = async (u: AppUser) => {
+    const ok = await confirm({
+      title: "Réinitialiser le mot de passe ?",
+      message: `Un email de réinitialisation sera envoyé à ${u.email ?? "cet utilisateur"} avec un lien pour définir un nouveau mot de passe.`,
+      confirmLabel: "Envoyer le lien",
+      cancelLabel: "Annuler",
+    });
+    if (!ok) return;
+    setResettingId(u.id);
+    try {
+      await resetPassword(u.id);
+      toast.success(`Email de réinitialisation envoyé à ${u.email ?? "l'utilisateur"}.`);
+    } catch (err) {
+      toast.error((err as Error).message || "Échec de l'envoi de l'email.");
+    } finally {
+      setResettingId(null);
+    }
+  };
+
   const userColumns: DataTableColumn<AppUser>[] = [
     {
       id: "user",
@@ -122,18 +144,29 @@ export default function UsersView({ setMobileMenuOpen, embedded }: UsersViewProp
       ? [{
           id: "actions",
           header: "",
-          width: "64px",
+          width: "112px",
           align: "right" as const,
           cell: (u: AppUser) => (
-            <button
-              onClick={() => handleRemove(u)}
-              disabled={removingId === u.id}
-              title="Retirer l'accès"
-              aria-label="Retirer l'accès"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#DF3714] transition-colors hover:border-[#DF3714]/30 hover:bg-[#DF3714]/5 disabled:opacity-40"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center justify-end gap-1.5">
+              <button
+                onClick={() => handleResetPassword(u)}
+                disabled={resettingId === u.id}
+                title="Réinitialiser le mot de passe"
+                aria-label="Réinitialiser le mot de passe"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#332151] transition-colors hover:border-[#332151]/30 hover:bg-[#332151]/5 disabled:opacity-40"
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => handleRemove(u)}
+                disabled={removingId === u.id}
+                title="Retirer l'accès"
+                aria-label="Retirer l'accès"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#DF3714] transition-colors hover:border-[#DF3714]/30 hover:bg-[#DF3714]/5 disabled:opacity-40"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ),
         } as DataTableColumn<AppUser>]
       : []),

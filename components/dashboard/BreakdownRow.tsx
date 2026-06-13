@@ -1,17 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { PieChart, BarChart3 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Cell,
-} from "recharts";
+import { PieChart } from "lucide-react";
 import { DonutChart } from "@/components/ui/donut-chart";
 import { Panel, EmptyState } from "./Panel";
 import { useCentresContext } from "@/lib/features/centres";
@@ -76,18 +66,6 @@ function Donut({ title, subtitle, segments, centerLabel }: { title: string; subt
   );
 }
 
-const ActiviteTip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-[0_10px_35px_rgba(0,0,0,0.08)]">
-      <p className="mb-1 font-bold text-[#332151]">{label}</p>
-      <p className="text-sm font-extrabold text-[#E34F2D]">
-        Centres : <span className="text-[#332151]">{payload[0].value}</span>
-      </p>
-    </div>
-  );
-};
-
 export default function BreakdownRow() {
   const { centres, ensureList } = useCentresContext();
   const { phases, ensureLoaded: ensurePipeline } = usePipelineContext();
@@ -109,38 +87,18 @@ export default function BreakdownRow() {
     color: CONTRAT_COLORS[i % CONTRAT_COLORS.length],
   }));
 
-  const activites = activiteBars(centres).map((b) => ({
-    ...b,
-    color: ACTIVITE_COLORS[b.activite] ?? ACTIVITE_FALLBACK[0],
+  // Activités as donut segments (a centre can combine several → total ≥ centre count).
+  const activiteSegs: Seg[] = activiteBars(centres).map((b, i) => ({
+    value: b.value,
+    label: b.activite,
+    color: ACTIVITE_COLORS[b.activite] ?? ACTIVITE_FALLBACK[i % ACTIVITE_FALLBACK.length],
   }));
-  const activitesTotal = activites.reduce((s, a) => s + a.value, 0);
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 lg:gap-5 xl:gap-6">
       <Donut title="Centres par statut" subtitle="Répartition du réseau" segments={statutSegs} centerLabel="Centres" />
       <Donut title="Type de contrat" subtitle="Réseau (R) / Partenaire (P)" segments={contratSegs} centerLabel="Centres" />
-
-      <Panel title="Activités" subtitle="VL / CL / PL — un centre peut en cumuler plusieurs">
-        {activitesTotal === 0 ? (
-          <EmptyState icon={BarChart3} message="Aucune activité renseignée" />
-        ) : (
-          <div className="h-44 w-full text-xs">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={activites} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis dataKey="activite" stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={6} interval={0} />
-                <YAxis stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 700 }} allowDecimals={false} />
-                <Tooltip content={<ActiviteTip />} cursor={{ fill: "#F8FAFC", opacity: 0.8 }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={56}>
-                  {activites.map((a) => (
-                    <Cell key={a.activite} fill={a.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </Panel>
+      <Donut title="Activités" subtitle="VL / CL / PL — un centre peut en cumuler plusieurs" segments={activiteSegs} centerLabel="Activités" />
     </div>
   );
 }

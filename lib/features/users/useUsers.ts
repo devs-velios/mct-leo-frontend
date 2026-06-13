@@ -4,7 +4,7 @@
 
 import { useReducer, useCallback, useRef, useEffect } from "react";
 import { usersReducer, initialUsersState } from "./usersReducer";
-import { inviteUser, fetchUsers, deleteUser } from "./api";
+import { inviteUser, fetchUsers, deleteUser, resetUserPassword } from "./api";
 import { type InviteUserPayload } from "./types";
 
 export function useUsers() {
@@ -53,6 +53,9 @@ export function useUsers() {
     }
   }, [refresh]);
 
+  // Email the user a password-reset link. Stateless action (no list change).
+  const resetPassword = useCallback((id: string) => resetUserPassword(id), []);
+
   return {
     users: state.list,
     status: state.status,
@@ -63,5 +66,6 @@ export function useUsers() {
     ensureLoaded,
     invite,
     remove,
+    resetPassword,
   };
 }

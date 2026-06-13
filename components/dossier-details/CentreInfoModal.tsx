@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2, X, MapPin } from "lucide-react";
+import { Building2, X, MapPin, Store, ArrowRight } from "lucide-react";
 import type { CentreFull } from "@/lib/features/centres";
 import { na } from "@/lib/utils";
 
@@ -35,10 +35,13 @@ export default function CentreInfoModal({
   open,
   centre,
   onClose,
+  onOpenCentre,
 }: {
   open: boolean;
   centre: CentreFull | null;
   onClose: () => void;
+  /** Navigate to the centre's full profile page. */
+  onOpenCentre?: () => void;
 }) {
   const contacts = (centre?.contacts_clients ?? {}) as Record<string, unknown>;
   const responsable = (contacts.responsable as string | undefined) ?? null;
@@ -112,6 +115,20 @@ export default function CentreInfoModal({
                 </p>
               </div>
             </section>
+
+            {/* Go to the centre's full profile page. */}
+            {onOpenCentre && (
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={onOpenCentre}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#332151] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#E34F2D]"
+                >
+                  <Store className="h-4 w-4" /> Voir la fiche du centre
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

@@ -46,26 +46,20 @@ export default function RemindersByDueDate() {
   // Due-date bucketing lives in the reminders feature; the view adds bar colours.
   const { data, total } = useMemo(() => {
     // Pass 0 before the clock is captured → all buckets render at zero (EmptyState shows).
-    const { buckets, total } = remindersByDueBucket(now == null ? [] : reminders, now ?? 0);
-    return { data: buckets.map((b, i) => ({ ...b, color: BUCKET_COLORS[i] })), total };
+    const { buckets } = remindersByDueBucket(now == null ? [] : reminders, now ?? 0);
+    // Drop the leading "En retard" bucket — only upcoming due windows are shown.
+    const future = buckets.slice(1).map((b, i) => ({ ...b, color: BUCKET_COLORS[i + 1] }));
+    return { data: future, total: future.reduce((s, b) => s + b.value, 0) };
   }, [reminders, now]);
-
-  const overdue = data[0].value;
 
   return (
     <Panel
       title="Rappels par échéance"
-      subtitle="Rappels en attente, regroupés par date d'envoi"
+      subtitle="Rappels à venir, regroupés par date d'envoi"
       actions={
-        overdue > 0 ? (
-          <span className="rounded-lg bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600 tabular-nums">
-            {overdue} en retard
-          </span>
-        ) : (
-          <span className="rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-[#5A5A7A] tabular-nums">
-            {total} en attente
-          </span>
-        )
+        <span className="rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-[#5A5A7A] tabular-nums">
+          {total} à venir
+        </span>
       }
     >
       {total === 0 ? (

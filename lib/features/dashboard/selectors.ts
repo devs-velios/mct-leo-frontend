@@ -14,6 +14,20 @@ export function dashboardMetrics(stats: DashboardStats | null | undefined) {
   };
 }
 
+/**
+ * Network completion ("Complétude réseau"): how many centres are actually active
+ * (ouvert) out of all centres that have entered onboarding (active + still in
+ * progress). Every centre carries a pipeline statut, so the denominator is the sum
+ * of all by_statut counts. Returns active/started counts + the percentage.
+ */
+export function networkCompletion(stats: DashboardStats | null | undefined) {
+  const byStatut = stats?.centres.by_statut ?? {};
+  const active = byStatut.ouvert ?? 0;
+  // All centres that have started onboarding (active ones + those not yet active).
+  const started = Object.values(byStatut).reduce((s, v) => s + v, 0);
+  return { active, started, pct: started > 0 ? Math.round((active / started) * 100) : 0 };
+}
+
 const STATUT_LABEL: Record<string, string> = {
   onboarding: "Onboarding",
   agrement_en_cours: "Agrément en cours",

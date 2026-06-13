@@ -25,6 +25,8 @@ export function dossierToRow(d: DossierListItem): Dossier {
     ville: d.centre?.ville ?? "",
     gerant: "",
     phase: STAGE_PHASE[d.etape_pipeline] ?? "Onboarding",
+    // Placeholder — DossiersView overrides this with the real value computed from the
+    // centre's last_activity_at (the dossier payload alone carries no activity date).
     joursInactif: 0,
     signatureDate: new Date(d.created_at).toLocaleDateString("fr-FR"),
     ouvertureDate: "—",

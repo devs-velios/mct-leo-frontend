@@ -73,8 +73,9 @@ export default function DossiersKanban({
               <span className="text-[10px] font-extrabold text-slate-400">{columnDossiers.length}</span>
             </div>
 
-            {/* Cards Container */}
-            <div className="flex-1 space-y-3 overflow-y-auto max-h-[500px] pr-1.5 custom-scrollbar min-h-[300px]">
+            {/* Cards Container — taller so cards past the 4th aren't hidden behind the
+                scroll fold; the extra height + bottom padding lets the next card peek. */}
+            <div className="flex-1 space-y-3 overflow-y-auto max-h-[680px] pr-1.5 pb-2 custom-scrollbar min-h-[300px]">
               {columnDossiers.map((dossier) => {
                 const dragId = dossier.dossierId ?? dossier.id;
                 return (

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ShieldCheck, XCircle, FileCheck2 } from "lucide-react";
+import { ShieldCheck, XCircle, FileCheck2, ExternalLink, HardDrive } from "lucide-react";
 import { Panel, EmptyState } from "./Panel";
 import { usePiecesContext, queueItemToValidation, pieceTypeLabel } from "@/lib/features/pieces";
 import { useDialog } from "@/components/ui/DialogProvider";
@@ -12,6 +13,7 @@ import { CentreCell } from "@/components/ui/centre-cell";
 const notify = (msg: string) => (/échec|erreur/i.test(msg) ? toast.error(msg) : toast.success(msg));
 
 export default function DocsToValidateTable() {
+  const router = useRouter();
   const { queue, ensureQueue, verify, reject } = usePiecesContext();
   const { confirm, prompt } = useDialog();
 
@@ -53,16 +55,46 @@ export default function DocsToValidateTable() {
   };
 
   return (
-    <Panel title="Derniers documents à valider" subtitle="Pièces en attente d'une décision humaine">
+    <Panel
+      title="Derniers documents à valider"
+      subtitle="Pièces en attente d'une décision humaine"
+      actions={
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/drive")}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#332151] transition-colors hover:bg-slate-50"
+          title="Ouvrir la gestion du Drive"
+        >
+          <HardDrive className="h-3.5 w-3.5" /> Drive
+        </button>
+      }
+    >
       {rows.length === 0 ? (
         <EmptyState icon={FileCheck2} message="Aucun document à valider" hint="Tout est à jour 🎉" />
       ) : (
         <div className="flex flex-col divide-y divide-slate-50">
           {rows.map((v) => (
             <div key={v.id} className="flex items-center gap-3 py-3">
+              {/* Column 1 — piece name + the Drive-linked file. */}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-[#332151]">{pieceTypeLabel(v.docType)}</p>
-                <div className="mt-0.5 scale-90 origin-left"><CentreCell name={v.nom} code={v.code} /></div>
+                <p className="truncate text-sm font-semibold text-[#332151]">{pieceTypeLabel(v.docType)}</p>
+                {v.fileName && (v.hasDrive && v.driveLink ? (
+                  <a
+                    href={v.driveLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Ouvrir le fichier lié dans le Drive"
+                    className="mt-0.5 inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-[#5A5A7A] hover:text-[#E34F2D]"
+                  >
+                    <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{v.fileName}</span>
+                  </a>
+                ) : (
+                  <span className="mt-0.5 block truncate font-mono text-[11px] text-slate-400">{v.fileName}</span>
+                ))}
+              </div>
+              {/* Column 2 — centre name + code. */}
+              <div className="hidden min-w-0 flex-1 sm:block">
+                <CentreCell name={v.nom} code={v.code} />
               </div>
               <span
                 className={`hidden w-12 shrink-0 text-right text-xs font-bold tabular-nums sm:block ${

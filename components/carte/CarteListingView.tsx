@@ -288,9 +288,13 @@ export default function CarteListingView({
             >
               {/* Inner Transform Group */}
               <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="transition-transform duration-100 ease-out">
-                {/* Regions paths */}
+                {/* Regions paths — the hovered region is rendered LAST so its full outline
+                    sits on top of its neighbours (otherwise regions drawn afterwards paint
+                    over the shared edges and only one side of the border shows). */}
                 <g>
-                  {REGIONS.map((region) => {
+                  {[...REGIONS]
+                    .sort((a, b) => Number(a.id === hoveredRegion) - Number(b.id === hoveredRegion))
+                    .map((region) => {
                     const isRegionHovered = hoveredRegion === region.id;
                     return (
                       <path

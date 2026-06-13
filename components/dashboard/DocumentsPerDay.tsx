@@ -65,7 +65,7 @@ export default function DocumentsPerDay() {
 
   return (
     <Panel
-      title="Documents par jour"
+      title="Documents et pièces"
       subtitle="Reçus à valider vs. validés"
       actions={<DateRangePicker value={range} onChange={setRange} align="end" />}
     >
@@ -77,7 +77,8 @@ export default function DocumentsPerDay() {
             <BarChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis dataKey="name" stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 700 }} dy={8} interval="preserveStartEnd" />
-              <YAxis stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 700 }} allowDecimals={false} />
+              {/* Dynamic max — top tick is the real data max (no fixed/over-scaled axis). */}
+              <YAxis stroke="#5A5A7A" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 700 }} allowDecimals={false} domain={[0, "dataMax"]} />
               <Tooltip content={<Tip />} cursor={{ fill: "#F8FAFC", opacity: 0.8 }} />
               <Legend
                 verticalAlign="top"

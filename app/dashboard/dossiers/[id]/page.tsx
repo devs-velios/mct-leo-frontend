@@ -13,6 +13,7 @@ const TAB_PATHS: Record<string, string> = {
   Validations: "/dashboard/validations",
   Centres: "/dashboard/centres",
   Dossiers: "/dashboard/dossiers",
+  Drive: "/dashboard/drive",
 };
 
 /**
@@ -89,6 +90,7 @@ function DossierDetailPageInner() {
       onClose={() => router.push("/dashboard/dossiers")}
       onNavigateToTab={(tab) => { const p = TAB_PATHS[tab]; if (p) router.push(p); }}
       onSwitch={handleSwitchCentre}
+      onOpenCentre={(cid) => router.push(`/dashboard/centres/${cid}`)}
     />
   );
 }
