@@ -69,8 +69,8 @@ export function apiMessageToMsg(m: ConvMessage): Message {
 }
 
 // ── Inbound-reply polling (Léo answers via the async inbound worker) ───────────
-const REPLY_POLL_INTERVAL_MS = 10_000;
-const REPLY_POLL_MAX_ATTEMPTS = 30; // ~5 min safety cap so we never poll forever
+const REPLY_POLL_INTERVAL_MS = 5_000;
+const REPLY_POLL_MAX_ATTEMPTS = 60; // ~5 min safety cap so we never poll forever
 const REPLY_EXPECTED_DELTA = 2; // client message + Léo's reply
 
 /**
