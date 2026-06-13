@@ -16,6 +16,8 @@ interface DossiersTableProps {
   totalPages: number;
   goToPage: (page: number) => void;
   getRowId: (row: Dossier) => string;
+  /** Resolve a dossier's etape_pipeline → its dynamic pipeline label (settings catalog). */
+  phaseLabel?: (etape?: string | null) => string;
   /** Clicking a row / the detail button opens the CENTRE profile. */
   onOpenCentre?: (centreId: string) => void;
   /** Hovering a row — warms the centre detail cache for a snappy open. */
@@ -35,6 +37,7 @@ export default function DossiersTable({
   totalPages,
   goToPage,
   getRowId,
+  phaseLabel,
   onOpenCentre,
   onHoverCentre,
   selection,
@@ -87,7 +90,7 @@ export default function DossiersTable({
         return (
           <span className="inline-flex items-center gap-1.5">
             <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#332151]">
-              {item.phase === "Dépôt" ? "Dépôt agrément" : item.phase}
+              {phaseLabel ? phaseLabel(item.etape) : (item.phase === "Dépôt" ? "Dépôt agrément" : item.phase)}
             </span>
             {blocked && (
               <span className="inline-flex items-center gap-1 rounded-md bg-[#E11D48]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#E11D48]" title="Dossier bloqué">

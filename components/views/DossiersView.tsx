@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { List, Kanban as KanbanIcon, Menu, X } from "lucide-react";
@@ -13,6 +13,7 @@ import {
   dossierToRow,
   filterDossiers,
   stageLabel,
+  MICRO_STAGES,
 } from "@/lib/features/dossiers";
 import { useCentresContext } from "@/lib/features/centres";
 import { usePipelineContext } from "@/lib/features/pipeline";
@@ -26,15 +27,6 @@ import { useRowSelection } from "@/components/hooks/useRowSelection";
 import { BulkActionBar } from "@/components/ui/bulk-action-bar";
 
 const DAY = 86_400_000;
-
-const PHASE_OPTIONS = [
-  { value: "all", label: "Toutes les phases" },
-  { value: "Signature", label: "Signature" },
-  { value: "Onboarding", label: "Onboarding" },
-  { value: "Dépôt", label: "Dépôt agrément" },
-  { value: "Ouvert", label: "Ouvert" },
-  { value: "Suivi qualité", label: "Suivi qualité" },
-];
 
 interface DossiersViewProps {
   /** Clicking a row opens the CENTRE profile (not a dossier view). */
@@ -95,9 +87,25 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
   }, [dossiers, centres, phases]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPhase, setSelectedPhase] = useState<string>("all");
   const [villeSel, setVilleSel] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"tableau" | "kanban">("tableau");
+
+  // Stages come from the dynamic pipeline catalog (settings page), in `order`. Fall back to
+  // the canonical MICRO_STAGES only until the catalog resolves, so columns/filters never flash empty.
+  const stages = useMemo(
+    () => (phases.length ? phases.map((p) => ({ key: p.name, label: p.label })) : MICRO_STAGES),
+    [phases],
+  );
+  // Dynamic phase filter dropdown — one option per pipeline stage, plus an "all" reset.
+  const phaseOptions = useMemo(
+    () => [{ value: "all", label: "Toutes les phases" }, ...stages.map((s) => ({ value: s.key, label: s.label }))],
+    [stages],
+  );
+  // Resolve an etape_pipeline slug → its pipeline label (humanized fallback for unknown values).
+  const phaseLabel = useMemo(() => {
+    const byKey = new Map(stages.map((s) => [s.key, s.label]));
+    return (key?: string | null) => (key && byKey.get(key)) || stageLabel(key);
+  }, [stages]);
 
   // Drag and Drop local states
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -110,10 +118,9 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSubFilter, searchQuery, selectedPhase, villeSel, etapeFilter]);
+  }, [selectedSubFilter, searchQuery, villeSel, etapeFilter]);
 
   const filteredDossiers = filterDossiers(dossiersList, {
-    phase: selectedPhase,
     search: searchQuery,
     subFilter: selectedSubFilter,
     villes: villeSel,
@@ -148,19 +155,21 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
   const handleDragEnter = (e: React.DragEvent, colName: string) => { e.preventDefault(); setActiveDropCol(colName); };
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); };
-  const handleDrop = (e: React.DragEvent, targetCol: Dossier["phase"]) => {
+  const handleDrop = (e: React.DragEvent, targetCol: string) => {
     e.preventDefault();
     const id = e.dataTransfer.getData("text/plain") || draggedId;
     if (id) {
+      // Optimistic, local-only move to the target pipeline stage (etape_pipeline).
+      // TODO(backend): persist the stage change (advance-stage / PATCH dossier etape_pipeline).
       setDossiersList((prevList) =>
-        prevList.map((dossier) => (dossier.id === id ? { ...dossier, phase: targetCol } : dossier)),
+        prevList.map((dossier) => ((dossier.dossierId ?? dossier.id) === id ? { ...dossier, etape: targetCol } : dossier)),
       );
     }
     setDraggedId(null);
     setActiveDropCol(null);
   };
 
-  const hasChips = selectedSubFilter === "bloques" || Boolean(etapeFilter);
+  const hasChips = selectedSubFilter === "bloques";
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F5F5F7]">
@@ -202,7 +211,12 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
                 <TabsTrigger value="kanban"><KanbanIcon className="h-3.5 w-3.5" /> Kanban</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Select value={selectedPhase} options={PHASE_OPTIONS} onChange={setSelectedPhase} className="min-w-[170px]" />
+            <Select
+              value={etapeFilter ?? "all"}
+              options={phaseOptions}
+              onChange={(v) => setEtapeFilter(v === "all" ? null : v)}
+              className="min-w-[170px]"
+            />
             <CityFilter cities={dossiersList.map((d) => d.ville)} selected={villeSel} onChange={setVilleSel} />
           </TableToolbar>
 
@@ -213,14 +227,6 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E11D48]/10 px-3 py-1 text-[11px] font-bold text-[#E11D48]">
                   Bloqués
                   <button onClick={() => setSelectedSubFilter("tout")} className="rounded-full p-0.5 hover:bg-[#E11D48]/20" aria-label="Retirer le filtre">
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {etapeFilter && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E34F2D]/10 px-3 py-1 text-[11px] font-bold text-[#E34F2D]">
-                  Phase : {stageLabel(etapeFilter)}
-                  <button onClick={() => setEtapeFilter(null)} className="rounded-full p-0.5 hover:bg-[#E34F2D]/20" aria-label="Retirer le filtre de phase">
                     <X className="h-3 w-3" />
                   </button>
                 </span>
@@ -240,6 +246,7 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
                   totalPages={totalPages}
                   goToPage={setCurrentPage}
                   getRowId={rowKey}
+                  phaseLabel={phaseLabel}
                   onOpenCentre={onOpenCentre}
                   onHoverCentre={(id) => { void getDetail(id).catch(() => {}); }}
                   selection={selection}
@@ -247,6 +254,7 @@ export default function DossiersView({ onOpenCentre, setMobileMenuOpen }: Dossie
               ) : (
                 <DossiersKanban
                   filteredDossiers={filteredDossiers}
+                  columns={stages}
                   draggedId={draggedId}
                   activeDropCol={activeDropCol}
                   onDragStart={handleDragStart}
