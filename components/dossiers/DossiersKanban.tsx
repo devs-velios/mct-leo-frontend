@@ -78,7 +78,7 @@ export default function DossiersKanban({
                   key={dossier.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, dossier.id)}
-                  onClick={() => onOpenDossier?.(dossier.dossierId ?? dossier.id)}
+                  onClick={() => onOpenDossier?.(dossier.id)}
                   className={`bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer active:cursor-grabbing ${
                     draggedId === dossier.id ? "opacity-40 scale-95" : ""
                   }`}
