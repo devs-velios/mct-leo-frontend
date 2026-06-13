@@ -110,8 +110,8 @@ export default function DirectionView({ setMobileMenuOpen, onOpenDossier }: Dire
           ) : (
             <div className="flex rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
               {/* Fixed Case column */}
-              <div className="shrink-0 w-[170px] border-r border-slate-100 sm:w-[230px]">
-                <div className="flex h-[58px] items-center bg-slate-50/60 px-5 text-xs font-bold uppercase tracking-wider text-[#332151]">
+              <div className="shrink-0 w-[150px] border-r border-slate-100 sm:w-[190px]">
+                <div className="flex h-[40px] items-center bg-slate-50/60 px-4 text-[11px] font-bold uppercase tracking-wider text-[#332151]">
                   Case
                 </div>
                 {rows.map((row) => (
@@ -119,10 +119,10 @@ export default function DirectionView({ setMobileMenuOpen, onOpenDossier }: Dire
                     key={row.dossier_id}
                     type="button"
                     onClick={() => onOpenDossier?.(row.dossier_id)}
-                    className="flex h-[68px] w-full items-center border-t border-slate-100 px-5 text-left transition-colors hover:bg-slate-50"
+                    className="flex h-[46px] w-full items-center border-t border-slate-100 px-4 text-left transition-colors hover:bg-slate-50"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#332151]">{rowCentreName(row)}</p>
+                      <p className="truncate text-[13px] font-semibold text-[#332151]">{rowCentreName(row)}</p>
                       <p className="truncate font-mono text-[10px] text-slate-400">{row.centre.code_centre}</p>
                     </div>
                   </button>
@@ -131,11 +131,11 @@ export default function DirectionView({ setMobileMenuOpen, onOpenDossier }: Dire
 
               {/* Scrollable pipeline panel (its own horizontal scrollbar) */}
               <div className="min-w-0 flex-1 overflow-x-auto custom-scrollbar">
-                <div style={{ minWidth: `${phases.length * 150}px` }}>
+                <div style={{ minWidth: `${phases.length * 116}px` }}>
                   {/* Header */}
-                  <div className="grid h-[58px] bg-slate-50/60" style={{ gridTemplateColumns: `repeat(${phases.length}, minmax(150px,1fr))` }}>
+                  <div className="grid h-[40px] bg-slate-50/60" style={{ gridTemplateColumns: `repeat(${phases.length}, minmax(116px,1fr))` }}>
                     {phases.map((p) => (
-                      <div key={p.name} className="flex items-center justify-center border-l border-slate-100 px-3 text-center text-[11px] font-bold leading-tight text-[#5A5A7A]">
+                      <div key={p.name} className="flex items-center justify-center border-l border-slate-100 px-2 text-center text-[10px] font-bold leading-tight text-[#5A5A7A]">
                         {p.label}
                       </div>
                     ))}
@@ -145,16 +145,16 @@ export default function DirectionView({ setMobileMenuOpen, onOpenDossier }: Dire
                     <div
                       key={row.dossier_id}
                       onClick={() => onOpenDossier?.(row.dossier_id)}
-                      className="grid h-[68px] cursor-pointer border-t border-slate-100"
-                      style={{ gridTemplateColumns: `repeat(${phases.length}, minmax(150px,1fr))` }}
+                      className="grid h-[46px] cursor-pointer border-t border-slate-100"
+                      style={{ gridTemplateColumns: `repeat(${phases.length}, minmax(116px,1fr))` }}
                     >
                       {phases.map((p) => {
                         const cell = cellFor(row, p.name);
                         return (
-                          <div key={p.name} className="border-l border-slate-100 p-1.5">
+                          <div key={p.name} className="border-l border-slate-100 p-1">
                             {cell ? (
                               <div
-                                className={`flex h-full items-center justify-center rounded-lg text-sm font-bold tabular-nums ${HEATMAP_TONE[cell.color]} ${
+                                className={`flex h-full items-center justify-center rounded-md text-xs font-bold tabular-nums ${HEATMAP_TONE[cell.color]} ${
                                   cell.current ? "ring-2 ring-[#332151]/40 shadow-sm" : ""
                                 }`}
                                 title={cell.current ? "Phase en cours" : undefined}
@@ -162,7 +162,7 @@ export default function DirectionView({ setMobileMenuOpen, onOpenDossier }: Dire
                                 {fmtDays(cell.days)}
                               </div>
                             ) : (
-                              <div className={`flex h-full items-center justify-center rounded-lg text-xs font-semibold ${HEATMAP_EMPTY_TONE}`}>—</div>
+                              <div className={`flex h-full items-center justify-center rounded-md text-xs font-semibold ${HEATMAP_EMPTY_TONE}`}>—</div>
                             )}
                           </div>
                         );

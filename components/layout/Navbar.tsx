@@ -56,15 +56,8 @@ export default function Navbar({ setMobileMenuOpen, onOpenDossier }: NavbarProps
           onMarkAllAsRead={() => setReadIds(new Set(openAlerts.map((a) => a.id)))}
           emptyLabel="Aucune alerte active 🎉"
         />
-        <Button
-          variant="outline"
-          onClick={() => router.push("/dashboard/simulateur")}
-          className="hidden gap-1.5 text-xs font-bold text-[#332151] sm:inline-flex"
-        >
-          Lancer onboarding
-        </Button>
         <Button onClick={() => router.push("/dashboard/simulateur")} className="gap-1.5 text-xs font-bold">
-          <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nouveau dossier</span>
+          <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Lancer onboarding</span>
         </Button>
         {/* Hamburger — right side, mobile only */}
         <button

@@ -1,7 +1,9 @@
-// Users feature — shared types. Mirrors POST /api/admin/users.
+// Users feature — shared types.
 //
-// NOTE: the backend exposes NO "list users" endpoint — only invite. So this feature
-// is invite-only; `invited` below is just the in-session log of invitations sent.
+// Invite goes through the Léo backend (POST /api/admin/users). The backend exposes
+// NO list/delete, so listing + removal go through the frontend's own server routes
+// (GET /api/users, DELETE /api/users/:id), which read `profiles` and the Supabase
+// Admin API with the server-held service key — the Léo backend stays untouched.
 
 export type Role = "operateur" | "direction";
 
@@ -17,6 +19,18 @@ export interface InviteResult {
   invited: boolean;
 }
 
+/** A row from the `profiles` table (the app's user directory). */
+export interface AppUser {
+  id: string;
+  email: string | null;
+  role: string | null;
+  created_at: string;
+}
+
 export interface UsersState {
+  list: AppUser[];
+  status: "idle" | "loading" | "loaded" | "error";
+  error: string | null;
+  /** In-session log of invitations sent. */
   invited: InviteResult[];
 }

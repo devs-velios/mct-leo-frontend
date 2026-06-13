@@ -83,6 +83,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   else if (pathname.includes("/whitelist")) activeTab = "Whitelist";
   else if (pathname.includes("/audit")) activeTab = "Audit";
   else if (pathname.includes("/documents-requis")) activeTab = "Documents requis";
+  else if (pathname.includes("/sujets-sensibles")) activeTab = "Sujets sensibles";
   else if (pathname.includes("/pipeline")) activeTab = "Pipeline";
   else if (pathname.includes("/simulateur")) activeTab = "Simulateur";
   else if (pathname.includes("/fonctionnement")) activeTab = "Fonctionnement";
@@ -108,6 +109,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     else if (tab === "Utilisateurs") router.push("/dashboard/utilisateurs");
     else if (tab === "Pipeline") router.push("/dashboard/pipeline");
     else if (tab === "Documents requis") router.push("/dashboard/documents-requis");
+    else if (tab === "Sujets sensibles") router.push("/dashboard/sujets-sensibles");
     else if (tab === "Whitelist") router.push("/dashboard/whitelist");
     else if (tab === "Audit") router.push("/dashboard/audit");
     else if (tab === "Simulateur") router.push("/dashboard/simulateur");

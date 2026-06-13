@@ -27,6 +27,7 @@ import { PipelineProvider } from "./pipeline";
 import { IntervenersProvider } from "./interveners";
 import { DepartmentsProvider } from "./departments";
 import { RequiredDocumentsProvider } from "./required-documents";
+import { RagTopicsProvider } from "./rag-topics";
 import { HeatmapProvider } from "./heatmap";
 
 // Order is irrelevant — the providers are independent. Compose from an array to keep
@@ -52,6 +53,7 @@ const PROVIDERS = [
   IntervenersProvider,
   DepartmentsProvider,
   RequiredDocumentsProvider,
+  RagTopicsProvider,
   HeatmapProvider,
 ] as const;
 
