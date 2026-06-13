@@ -521,6 +521,16 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
               {/* Scroll Messages feed area */}
               <div ref={messagesScrollRef} className="flex-1 p-5 overflow-y-auto space-y-2.5 bg-slate-50/60 custom-scrollbar">
                 {dossier.messages.map((msg, idx) => {
+                  // System status line (e.g. "parked for approval") — centered, not a bubble.
+                  if (msg.type === "system") {
+                    return (
+                      <div key={idx} className="flex justify-center">
+                        <span className="max-w-[90%] rounded-full bg-amber-50 px-3 py-1 text-center text-[11px] font-semibold text-amber-700">
+                          {msg.text}
+                        </span>
+                      </div>
+                    );
+                  }
                   const outgoing = msg.type === "ai" || msg.type === "operator";
                   return (
                     <div key={idx} className={`flex ${outgoing ? "justify-end" : "justify-start"}`}>

@@ -25,7 +25,8 @@ export interface Message {
   sender: string;
   text: string;
   time: string;
-  type: "ai" | "user" | "operator";
+  // "system" = a backend status line (e.g. message parked for approval), shown centered.
+  type: "ai" | "user" | "operator" | "system";
 }
 
 export interface DossierDetail {
@@ -95,10 +96,10 @@ export function centreDetailToDossier(data: CentreDetail): DossierDetail {
     presentPieces: present,
     missingPieces: data.missingPieces ?? [],
     messages: (data.messages ?? []).map((m) => ({
-      sender: m.sender === "leo" ? "Léo" : "Client",
+      sender: m.sender === "leo" ? "Léo" : m.sender === "systeme" ? "Système" : "Client",
       text: m.contenu,
       time: new Date(m.received_at).toLocaleString("fr-FR"),
-      type: m.sender === "leo" ? "ai" : "user",
+      type: m.sender === "leo" ? "ai" : m.sender === "systeme" ? "system" : "user",
     })),
   };
 }
