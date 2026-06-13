@@ -16,7 +16,9 @@ import {
   ExternalLink,
   ShieldCheck,
   Clock,
-  BellPlus
+  BellPlus,
+  Loader2,
+  X
 } from "lucide-react";
 
 import PipelineBoards from "@/components/dossier-details/PipelineBoards";
@@ -191,14 +193,28 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
     }
   };
 
-  // Resolve an open operator alert for this centre.
-  const handleResolveAlert = async (id: string) => {
+  // Resolve (unblock) an open operator alert — via a confirmation popup that freezes
+  // the UI with a spinner while the request runs, then closes on success.
+  const [unblockTarget, setUnblockTarget] = useState<{ id: string; type: string; message: string } | null>(null);
+  const [unblocking, setUnblocking] = useState(false);
+
+  const handleConfirmUnblock = async () => {
+    if (!unblockTarget) return;
+    const alertId = unblockTarget.id;
+    setUnblocking(true);
     try {
-      await resolveAlert(id);
-      await load(true);
+      await resolveAlert(alertId);
+      // Drop the resolved alert from the local payload immediately so the red strip
+      // disappears right away, then reload the dossier in the background to reconcile
+      // the rest of its state (pipeline status, etc.).
+      setRaw((r) => (r ? { ...r, alerts: (r.alerts ?? []).filter((al) => al.id !== alertId) } : r));
+      setUnblockTarget(null);
       triggerToast("Alerte résolue.");
+      void load(true);
     } catch {
       triggerToast("Échec de la résolution de l'alerte.");
+    } finally {
+      setUnblocking(false);
     }
   };
 
@@ -394,7 +410,7 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
                     <p className="text-xs font-semibold text-[#332151] leading-relaxed break-words">{a.message}</p>
                   </div>
                   <button
-                    onClick={() => handleResolveAlert(a.id)}
+                    onClick={() => setUnblockTarget({ id: a.id, type: a.type, message: a.message })}
                     className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-700 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all cursor-pointer"
                   >
                     <Check className="h-3 w-3" /> Résoudre
@@ -759,6 +775,75 @@ export default function DossierDetailsView({ dossierId, focusDossierId, onClose,
         )}
         onClose={() => setReminderOpen(false)}
       />
+
+      {/* Unblock confirmation — freezes the UI with a spinner while resolving, then closes. */}
+      <AnimatePresence>
+        {unblockTarget && (
+          <motion.div
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-[#332151]/30 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            // While unblocking, the overlay blocks all interaction (frozen UI).
+            onClick={() => { if (!unblocking) setUnblockTarget(null); }}
+          >
+            <motion.div
+              className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl"
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <ShieldCheck className="h-4.5 w-4.5" />
+                  </div>
+                  <h3 className="font-serif-mct text-base font-bold text-[#332151]">Débloquer ce dossier ?</h3>
+                </div>
+                <button
+                  onClick={() => setUnblockTarget(null)}
+                  disabled={unblocking}
+                  aria-label="Fermer"
+                  className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#332151] disabled:opacity-40"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 p-5">
+                <p className="text-xs leading-relaxed text-[#5A5A7A]">
+                  L&apos;alerte sera marquée comme résolue et le dossier repassera en traitement normal.
+                </p>
+                <div className="rounded-2xl border border-red-100 bg-red-50/40 px-4 py-3">
+                  <span className="mb-1 block text-[8.5px] font-extrabold uppercase tracking-wider text-red-500">{unblockTarget.type}</span>
+                  <p className="break-words text-xs font-semibold leading-relaxed text-[#332151]">{unblockTarget.message}</p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setUnblockTarget(null)}
+                    disabled={unblocking}
+                    className="rounded-xl px-4 py-2.5 text-xs font-bold text-[#5A5A7A] transition-colors hover:bg-slate-100 disabled:opacity-40"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmUnblock}
+                    disabled={unblocking}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-[0_4px_12px_rgba(16,185,129,0.2)] transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-70"
+                  >
+                    {unblocking ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Déblocage…</> : <><Check className="h-3.5 w-3.5" /> Confirmer le déblocage</>}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -97,7 +97,7 @@ export function NotificationPopover({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 z-50 mt-2 max-h-[60vh] w-80 overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-2xl"
+            className="fixed inset-x-3 top-[4.5rem] z-[60] max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:max-h-[60vh] sm:w-80"
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
               <h3 className="text-[11px] font-extrabold uppercase tracking-widest text-[#5A5A7A]">Notifications</h3>
