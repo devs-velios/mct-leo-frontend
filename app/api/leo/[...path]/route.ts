@@ -25,18 +25,29 @@ async function handle(req: NextRequest, path: string[]): Promise<Response> {
   }
 
   const token = req.cookies.get(TOKEN_COOKIE)?.value;
-  const upstream = await leoFetch(target, init, token);
-  const body = await upstream.arrayBuffer();
 
-  return new Response(body, {
-    status: upstream.status,
-    headers: {
-      "content-type": upstream.headers.get("content-type") ?? "application/json",
-      ...(upstream.headers.get("content-range")
-        ? { "content-range": upstream.headers.get("content-range") as string }
-        : {})
-    }
-  });
+  try {
+    const upstream = await leoFetch(target, init, token);
+    const body = await upstream.arrayBuffer();
+
+    return new Response(body, {
+      status: upstream.status,
+      headers: {
+        "content-type": upstream.headers.get("content-type") ?? "application/json",
+        ...(upstream.headers.get("content-range")
+          ? { "content-range": upstream.headers.get("content-range") as string }
+          : {})
+      }
+    });
+  } catch (err) {
+    // The backend was unreachable/timed out even after a retry. Return a clean JSON
+    // 502 so the client gets a real error to handle instead of a bare empty 500.
+    const message = err instanceof Error ? err.message : "Upstream request failed";
+    return Response.json(
+      { error: "Service momentanément indisponible. Veuillez réessayer.", detail: message },
+      { status: 502 },
+    );
+  }
 }
 
 type Ctx = { params: Promise<{ path: string[] }> };

@@ -19,8 +19,11 @@ export async function GET(req: NextRequest) {
   if (!email) return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   if (!hasSupabaseEnv()) return NextResponse.json({ error: "Supabase non configuré." }, { status: 500 });
 
-  // 1) Login accounts from the Auth admin API.
-  const authRes = await supabaseFetch("auth/v1/admin/users?per_page=1000");
+  // Login accounts (Auth admin) + app roles (profiles), fetched in parallel.
+  const [authRes, profRes] = await Promise.all([
+    supabaseFetch("auth/v1/admin/users?per_page=1000"),
+    supabaseFetch("rest/v1/profiles?select=id,role"),
+  ]);
   if (!authRes.ok) {
     const detail = await authRes.text().catch(() => "");
     return NextResponse.json({ error: detail || "Échec du chargement des comptes." }, { status: authRes.status });
@@ -32,8 +35,6 @@ export async function GET(req: NextRequest) {
       ? authJson
       : [];
 
-  // 2) App roles from `profiles` (may be empty) → map by id.
-  const profRes = await supabaseFetch("rest/v1/profiles?select=id,role");
   const profRows = profRes.ok ? await profRes.json().catch(() => []) : [];
   const roleById = new Map<string, string | null>(
     (Array.isArray(profRows) ? profRows : []).map((p: { id: string; role: string | null }) => [p.id, p.role]),

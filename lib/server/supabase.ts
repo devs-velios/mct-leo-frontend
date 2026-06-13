@@ -4,6 +4,7 @@
 // nothing Supabase-related leaks into the browser console / network tab.
 
 import { SUPABASE_URL as CONFIG_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "@/lib/config";
+import { resilientFetch } from "@/lib/server/http";
 
 export const SUPABASE_URL = CONFIG_SUPABASE_URL;
 export const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY;
@@ -24,5 +25,5 @@ export async function supabaseFetch(path: string, init: RequestInit = {}): Promi
   if (!headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${SUPABASE_KEY}`);
   }
-  return fetch(`${SUPABASE_URL}/${cleanPath}`, { ...init, headers });
+  return resilientFetch(`${SUPABASE_URL}/${cleanPath}`, { ...init, headers });
 }

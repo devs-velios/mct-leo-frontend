@@ -28,15 +28,24 @@ function fromB64Url(value: string): string {
   return new TextDecoder().decode(bytes);
 }
 
+// Import the HMAC key once and reuse it — importKey ran on every sign/verify before,
+// which is pure overhead on a hot path (the edge middleware verifies on every request).
+let keyPromise: Promise<CryptoKey> | null = null;
+function getKey(): Promise<CryptoKey> {
+  if (!keyPromise) {
+    keyPromise = crypto.subtle.importKey(
+      "raw",
+      enc.encode(getSecret()),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+  }
+  return keyPromise;
+}
+
 async function hmac(payload: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(getSecret()),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const mac = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
+  const mac = await crypto.subtle.sign("HMAC", await getKey(), enc.encode(payload));
   return toB64Url(mac);
 }
 

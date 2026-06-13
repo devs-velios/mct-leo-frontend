@@ -9,7 +9,22 @@ export class ApiError extends Error {
   }
 }
 
+// In-flight GET de-duplication: if two components request the same path at the same
+// time (common on first paint), they share one network call instead of firing N.
+const inflightGets = new Map<string, Promise<unknown>>();
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  if (method === "GET" && body === undefined) {
+    const existing = inflightGets.get(path);
+    if (existing) return existing as Promise<T>;
+    const p = doRequest<T>(method, path, body).finally(() => inflightGets.delete(path));
+    inflightGets.set(path, p as Promise<unknown>);
+    return p;
+  }
+  return doRequest<T>(method, path, body);
+}
+
+async function doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   const init: RequestInit = { method, credentials: "same-origin", headers: {} };
   if (body !== undefined) {
     (init.headers as Record<string, string>)["content-type"] = "application/json";

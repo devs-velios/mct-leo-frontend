@@ -3,6 +3,7 @@
 // (when present) so nothing but a same-origin call is exposed to the client.
 
 import { LEO_API_URL as CONFIG_LEO_API_URL } from "@/lib/config";
+import { resilientFetch } from "@/lib/server/http";
 
 export const LEO_API_URL = CONFIG_LEO_API_URL;
 
@@ -20,5 +21,5 @@ export async function leoFetch(path: string, init: RequestInit = {}, token?: str
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  return fetch(`${LEO_API_URL}/${cleanPath}`, { ...init, headers });
+  return resilientFetch(`${LEO_API_URL}/${cleanPath}`, { ...init, headers });
 }

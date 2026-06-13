@@ -16,8 +16,8 @@ export default function AnalyticsCards() {
   const { reminders, ensureLoaded: ensureReminders } = useRemindersContext();
   const loading = stats == null;
 
-  useEffect(() => { ensureQueue(); }, [ensureQueue]);
-  useEffect(() => { ensureReminders(); }, [ensureReminders]);
+  // Both are independent + cache-guarded → fire in parallel from one effect.
+  useEffect(() => { void Promise.all([ensureQueue(), ensureReminders()]); }, [ensureQueue, ensureReminders]);
   // Capture "now" once after mount so render stays pure.
   const [now, setNow] = useState<number | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect

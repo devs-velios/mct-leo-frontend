@@ -38,11 +38,19 @@ export function useDashboard({ poll = false }: { poll?: boolean } = {}) {
     };
   }, [refresh]);
 
-  // Optional polling
+  // Optional polling — paused while the tab is hidden (no point refreshing KPIs the
+  // user can't see), and we refresh once immediately on re-focus so they're current.
   useEffect(() => {
     if (!poll) return;
-    const id = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
+    let id: ReturnType<typeof setInterval> | null = null;
+    const start = () => { if (id === null) id = setInterval(refresh, POLL_INTERVAL_MS); };
+    const stop = () => { if (id !== null) { clearInterval(id); id = null; } };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") { refresh(); start(); } else { stop(); }
+    };
+    if (document.visibilityState === "visible") start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { stop(); document.removeEventListener("visibilitychange", onVisibility); };
   }, [poll, refresh]);
 
   return {
